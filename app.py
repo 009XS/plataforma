@@ -28224,6 +28224,188 @@ def api_responder_encuesta_docente():
 
 # ==================== MAIN EXECUTION ====================
 
+
+
+# --- APIs para Panel de Alumno (Agregadas por Jules) ---
+
+@app.route('/api/student/stats', methods=['GET'])
+@login_required
+def get_student_stats():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT nombre, rango, xp, educoins, avatar_url FROM usuarios WHERE id = %s", (session['user_id'],))
+        user = cursor.fetchone()
+
+        # Calcular porcentaje XP (ejemplo simple: cada nivel son 1000 XP)
+        xp = user['xp'] if user and user['xp'] else 0
+        xp_percent = (xp % 1000) / 10  # 0-100
+
+        return jsonify({
+            'nombre': user['nombre'],
+            'rango': user['rango'],
+            'xp': xp,
+            'educoins': user['educoins'],
+            'avatar_url': user['avatar_url'] if user['avatar_url'] else 'https://ui-avatars.com/api/?name=' + user['nombre'],
+            'xp_percent': xp_percent
+        })
+    except Exception as e:
+        print(f"Error getting stats: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/student/missions', methods=['GET'])
+@login_required
+def get_student_missions():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        # Obtener misiones activas y su progreso
+        cursor.execute("""
+            SELECT m.titulo as title, m.tipo as type, m.xp_recompensa as xp_reward,
+                   IFNULL(p.progreso_actual, 0) as progress, m.requisito_cantidad as total
+            FROM misiones_alumno m
+            LEFT JOIN progreso_misiones p ON m.id = p.mision_id AND p.alumno_id = %s
+            WHERE m.activa = 1
+        """, (session['user_id'],))
+        missions = cursor.fetchall()
+        return jsonify(missions)
+    except Exception as e:
+        print(f"Error getting missions: {e}")
+        return jsonify([])
+
+@app.route('/api/assignments', methods=['GET'])
+@login_required
+def get_student_assignments():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        # Obtener tareas pendientes y su estado
+        cursor.execute("""
+            SELECT t.id, t.titulo as title, m.nombre as subject, t.fecha_vencimiento as due_date,
+                   CASE WHEN e.id IS NOT NULL THEN 'Done' ELSE 'Pending' END as status
+            FROM tareas t
+            JOIN materias m ON t.materia_id = m.id
+            LEFT JOIN entregas_tareas e ON t.id = e.tarea_id AND e.estudiante_id = %s
+            WHERE t.activo = 1
+            ORDER BY t.fecha_vencimiento ASC
+            LIMIT 20
+        """, (session['user_id'],))
+
+        assignments = cursor.fetchall()
+        # Formatear fecha
+        for a in assignments:
+            if a['due_date']:
+                a['due_date'] = a['due_date'].strftime('%b %d')
+
+        return jsonify(assignments)
+    except Exception as e:
+        print(f"Error getting assignments: {e}")
+        return jsonify([])
+
+@app.route('/api/assignments/<int:id>/submit', methods=['POST'])
+@login_required
+def submit_assignment_api(id):
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}), 400
+
+        if file:
+            filename = secure_filename(f"{session['user_id']}_{id}_{int(time.time())}_{file.filename}")
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+
+            cursor = mysql.connection.cursor()
+            # Verificar si ya existe entrega
+            cursor.execute("SELECT id FROM entregas_tareas WHERE tarea_id = %s AND estudiante_id = %s", (id, session['user_id']))
+            exists = cursor.fetchone()
+
+            if exists:
+                cursor.execute("""
+                    UPDATE entregas_tareas SET archivo_nombre = %s, archivo_ruta = %s, fecha_entrega = NOW()
+                    WHERE id = %s
+                """, (filename, filepath, exists[0]))
+            else:
+                cursor.execute("""
+                    INSERT INTO entregas_tareas (tarea_id, estudiante_id, archivo_nombre, archivo_ruta)
+                    VALUES (%s, %s, %s, %s)
+                """, (id, session['user_id'], filename, filepath))
+
+            mysql.connection.commit()
+
+            return jsonify({'message': 'File uploaded successfully'})
+    except Exception as e:
+        print(f"Error submitting assignment: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/student/subjects', methods=['GET'])
+@login_required
+def get_student_subjects():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        # Obtener materias del alumno
+        # Asumiendo que el alumno esta en grupos y las materias en esos grupos
+        # O todas las materias si no hay logica compleja aun
+        cursor.execute("""
+            SELECT m.id, m.nombre as name, u.nombre as prof, 'menu_book' as icon, 'blue' as color
+            FROM materias m
+            LEFT JOIN usuarios u ON m.docente_id = u.id
+            WHERE m.activo = 1
+            LIMIT 10
+        """)
+        subjects = cursor.fetchall()
+        return jsonify(subjects)
+    except Exception as e:
+        print(f"Error getting subjects: {e}")
+        return jsonify([])
+
+@app.route('/api/courses/<int:id>/resources', methods=['GET'])
+@login_required
+def get_course_resources(id):
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT id, titulo as name, tipo_archivo as type, '1 MB' as size
+            FROM recursos
+            WHERE materia_id = %s AND activo = 1
+        """, (id,))
+        resources = cursor.fetchall()
+        return jsonify(resources)
+    except Exception as e:
+        print(f"Error getting resources: {e}")
+        return jsonify([])
+
+@app.route('/api/chat_ai', methods=['POST'])
+@login_required
+def chat_ai_api():
+    try:
+        data = request.json
+        user_message = data.get('message')
+        # Simulacion respuesta IA
+        return jsonify({'response': f"Interesante pregunta sobre '{user_message}'. Como IA educativa, te sugiero revisar los recursos de la materia."})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/quiz/<int:id>', methods=['GET'])
+@login_required
+def get_quiz_api(id):
+    # Mock para demo
+    return jsonify({
+        'id': id,
+        'title': "Examen Rápido",
+        'questions': [
+            { 'id': 1, 'text': "¿Cuál es la raíz cuadrada de 64?", 'options': ["6", "7", "8", "9"] },
+            { 'id': 2, 'text': "¿Fórmula del agua?", 'options': ["HO", "H2O", "CO2", "H2O2"] },
+            { 'id': 3, 'text': "¿Capital de España?", 'options': ["Barcelona", "Sevilla", "Madrid", "Valencia"] }
+        ]
+    })
+
+@app.route('/api/submit_quiz', methods=['POST'])
+@login_required
+def submit_quiz_api():
+    return jsonify({'score': 10})
+
+# --- Fin APIs Panel Alumno ---
+
 if __name__ == '__main__':
     # Inicializa solo una vez las tablas principales y adicionales
     with app.app_context():
