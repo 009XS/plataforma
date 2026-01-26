@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Post del Foro | EduPlatform{% endblock %}
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-4xl mx-auto px-6">
+        <a href="/forums" class="text-brand-600 hover:underline mb-4 inline-block"><i
+                class="fas fa-arrow-left mr-2"></i>Volver al foro</a>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-8 border-b">
+                <div class="flex items-center space-x-4 mb-4">
+                    <div
+                        class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 font-bold">
+                        {{ post.autor_nombre[0] }}</div>
+                    <div>
+                        <p class="font-semibold">{{ post.autor_nombre }}</p>
+                        <p class="text-sm text-gray-500">{{ post.fecha }}</p>
+                    </div>
+                </div>
+                <h1 class="text-2xl font-bold">{{ post.titulo }}</h1>
+            </div>
+            <div class="p-8">
+                <div class="prose max-w-none">{{ post.contenido|safe }}</div>
+            </div>
+        </div>
+        <div class="mt-8">
+            <h2 class="text-xl font-bold mb-4">Respuestas ({{ respuestas|length }})</h2>
+            {% for r in respuestas %}
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-4">
+                <div class="flex items-center space-x-4 mb-3">
+                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">{{
+                        r.autor_nombre[0] }}</div>
+                    <div>
+                        <p class="font-semibold text-sm">{{ r.autor_nombre }}</p>
+                        <p class="text-xs text-gray-500">{{ r.fecha }}</p>
+                    </div>
+                </div>
+                <p>{{ r.contenido }}</p>
+            </div>
+            {% endfor %}
+            <form action="/api/create_post" method="POST" class="bg-white rounded-xl shadow-sm p-6">
+                <input type="hidden" name="parent_id" value="{{ post.id }}">
+                <textarea name="contenido" class="w-full border rounded-lg px-4 py-3 mb-4" rows="3"
+                    placeholder="Escribe una respuesta..." required></textarea>
+                <button type="submit"
+                    class="bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700">Responder</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

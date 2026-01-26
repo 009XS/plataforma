@@ -1,0 +1,657 @@
+======================================================================
+REPORTE DE RUTAS DUPLICADAS EN app.py
+======================================================================
+
+Total de rutas: 764
+Rutas con duplicados: 67
+Total de instancias duplicadas para eliminar: 118
+
+======================================================================
+DUPLICADOS ORDENADOS POR CANTIDAD
+======================================================================
+
+--- /api/teams (7 definiciones) ---
+  L1862: api_teams -> @app.route('/api/teams', methods=['GET', 'POST'])...
+  L18295: _old_manage_study_teams -> # @app.route('/api/teams', methods=['GET', 'POST'])...
+  L19646: get_user_teams -> @app.route('/api/teams', methods=['GET'])...
+  L19664: create_team -> @app.route('/api/teams', methods=['POST'])...
+  L20420: alumno_get_teams -> @app.route('/api/teams', methods=['GET'])...
+  L20443: alumno_create_team -> @app.route('/api/teams', methods=['POST'])...
+  L27896: api_teams_list -> @app.route('/api/teams', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L27896 y eliminar las anteriores]
+
+--- /api/portfolio (6 definiciones) ---
+  L1941: api_portfolio -> @app.route('/api/portfolio', methods=['GET', 'POST'])...
+  L18378: manage_portfolio -> @app.route('/api/portfolio', methods=['GET', 'POST'])...
+  L19718: get_portfolio -> @app.route('/api/portfolio', methods=['GET'])...
+  L19731: add_portfolio_item -> @app.route('/api/portfolio', methods=['POST'])...
+  L20504: alumno_get_portfolio -> @app.route('/api/portfolio', methods=['GET'])...
+  L27841: api_portfolio_list -> @app.route('/api/portfolio', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L27841 y eliminar las anteriores]
+
+--- /api/notes (6 definiciones) ---
+  L18105: manage_notes -> @app.route('/api/notes', methods=['GET', 'POST'])...
+  L19577: get_notes -> @app.route('/api/notes', methods=['GET'])...
+  L19583: create_note -> @app.route('/api/notes', methods=['POST'])...
+  L20213: alumno_get_notes -> @app.route('/api/notes', methods=['GET'])...
+  L20239: alumno_create_note -> @app.route('/api/notes', methods=['POST'])...
+  L27949: api_notes -> @app.route('/api/notes', methods=['GET', 'POST'])...
+  [RECOMENDACIÓN: Conservar L27949 y eliminar las anteriores]
+
+--- /api/notes/<int:note_id> (6 definiciones) ---
+  L18148: update_delete_note -> @app.route('/api/notes/<int:note_id>', methods=['PUT', 'DELE...
+  L19589: delete_note -> @app.route('/api/notes/<int:note_id>', methods=['DELETE'])...
+  L20258: alumno_get_note -> @app.route('/api/notes/<int:note_id>', methods=['GET'])...
+  L20278: alumno_update_note -> @app.route('/api/notes/<int:note_id>', methods=['PUT'])...
+  L20297: alumno_delete_note -> @app.route('/api/notes/<int:note_id>', methods=['DELETE'])...
+  L27980: api_notes_detail -> @app.route('/api/notes/<int:note_id>', methods=['GET', 'PUT'...
+  [RECOMENDACIÓN: Conservar L27980 y eliminar las anteriores]
+
+--- /api/flashcards/mazos (6 definiciones) ---
+  L18184: _old_manage_mazos -> # @app.route('/api/flashcards/mazos', methods=['GET', 'POST'...
+  L19598: get_flashcard_decks -> @app.route('/api/flashcards/mazos', methods=['GET'])...
+  L19627: create_flashcard_deck -> @app.route('/api/flashcards/mazos', methods=['POST'])...
+  L20312: alumno_get_flashcard_decks -> @app.route('/api/flashcards/mazos', methods=['GET'])...
+  L20339: alumno_create_flashcard_deck -> @app.route('/api/flashcards/mazos', methods=['POST'])...
+  L27754: api_flashcards_mazos -> @app.route('/api/flashcards/mazos', methods=['GET', 'POST'])...
+  [RECOMENDACIÓN: Conservar L27754 y eliminar las anteriores]
+
+--- /api/calendar/events (6 definiciones) ---
+  L19095: get_calendar_events_v1 -> @app.route('/api/calendar/events', methods=['GET'])...
+  L19170: create_calendar_event_v1 -> @app.route('/api/calendar/events', methods=['POST'])...
+  L19749: get_calendar_events -> # @app.route('/api/calendar/events', methods=['GET'])...
+  L19827: create_calendar_event -> # @app.route('/api/calendar/events', methods=['POST'])...
+  L20136: alumno_get_calendar_events -> @app.route('/api/calendar/events', methods=['GET'])...
+  L20191: alumno_create_calendar_event -> @app.route('/api/calendar/events', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L20191 y eliminar las anteriores]
+
+--- /api/notifications (4 definiciones) ---
+  L1953: api_notifications -> @app.route('/api/notifications', methods=['GET'])...
+  L19230: get_notifications -> @app.route('/api/notifications', methods=['GET'])...
+  L20595: alumno_get_notifications -> @app.route('/api/notifications', methods=['GET'])...
+  L28057: api_notifications -> @app.route('/api/notifications', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L28057 y eliminar las anteriores]
+
+--- /api/orientador/reportes (4 definiciones) ---
+  L3817: api_orientador_reportes -> @app.route('/api/orientador/reportes', methods=['GET', 'POST...
+  L6414: listar_reportes_conducta -> @app.route('/api/orientador/reportes', methods=['GET'])...
+  L6936: crear_reporte_conducta -> @app.route('/api/orientador/reportes', methods=['POST'])...
+  L22465: orientador_historial_reportes -> @app.route('/api/orientador/reportes', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L22465 y eliminar las anteriores]
+
+--- /api/tutor/citas (4 definiciones) ---
+  L4284: api_tutor_citas -> @app.route('/api/tutor/citas', methods=['GET', 'POST'])...
+  L7219: tutor_citas -> @app.route('/api/tutor/citas', methods=['GET', 'POST'])...
+  L22533: tutor_citas_v2 -> @app.route('/api/tutor/citas', methods=['GET', 'POST'])...
+  L28117: api_tutor_citas_alias -> @app.route('/api/tutor/citas', methods=['GET', 'POST'])...
+  [RECOMENDACIÓN: Conservar L28117 y eliminar las anteriores]
+
+--- /api/flashcards/mazos/<int:mazo_id>/cards (4 definiciones) ---
+  L18225: _old_manage_flashcards -> # @app.route('/api/flashcards/mazos/<int:mazo_id>/cards', me...
+  L20358: alumno_get_flashcard_cards -> @app.route('/api/flashcards/mazos/<int:mazo_id>/cards', meth...
+  L20378: alumno_create_flashcard_card -> @app.route('/api/flashcards/mazos/<int:mazo_id>/cards', meth...
+  L27784: api_flashcards_cards -> @app.route('/api/flashcards/mazos/<int:mazo_id>/cards', meth...
+  [RECOMENDACIÓN: Conservar L27784 y eliminar las anteriores]
+
+--- /api/portfolio/upload (3 definiciones) ---
+  L2003: api_portfolio_upload -> @app.route('/api/portfolio/upload', methods=['POST'])...
+  L18415: upload_portfolio_file -> @app.route('/api/portfolio/upload', methods=['POST'])...
+  L27860: api_portfolio_upload -> @app.route('/api/portfolio/upload', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L27860 y eliminar las anteriores]
+
+--- /api/tutor/comunicados (3 definiciones) ---
+  L2086: api_tutor_comunicados -> @app.route('/api/tutor/comunicados', methods=['GET'])...
+  L7346: tutor_comunicados -> @app.route('/api/tutor/comunicados', methods=['GET'])...
+  L22511: tutor_comunicados_v2 -> @app.route('/api/tutor/comunicados', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L22511 y eliminar las anteriores]
+
+--- /api/buscar_alumnos (3 definiciones) ---
+  L2114: api_buscar_alumnos -> @app.route('/api/buscar_alumnos', methods=['GET'])...
+  L8583: buscar_alumnos -> @app.route('/api/buscar_alumnos')...
+  L22194: buscar_alumnos_orientador_endpoint -> @app.route('/api/buscar_alumnos', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L22194 y eliminar las anteriores]
+
+--- /api/enviar_reporte (3 definiciones) ---
+  L2125: api_enviar_reporte -> @app.route('/api/enviar_reporte', methods=['POST'])...
+  L8610: enviar_reporte -> @app.route('/api/enviar_reporte', methods=['POST'])...
+  L22217: enviar_reporte_conducta -> @app.route('/api/enviar_reporte', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L22217 y eliminar las anteriores]
+
+--- /api/buscar_horarios (3 definiciones) ---
+  L2142: api_buscar_horarios -> @app.route('/api/buscar_horarios', methods=['GET'])...
+  L7803: buscar_horarios -> @app.route('/api/buscar_horarios', methods=['GET'])...
+  L22248: buscar_horarios_grupo -> @app.route('/api/buscar_horarios', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L22248 y eliminar las anteriores]
+
+--- /api/orientador/avisos (3 definiciones) ---
+  L2150: api_orientador_avisos -> @app.route('/api/orientador/avisos', methods=['POST'])...
+  L21478: orientador_avisos -> @app.route('/api/orientador/avisos', methods=['GET', 'POST']...
+  L22292: orientador_enviar_aviso -> @app.route('/api/orientador/avisos', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L22292 y eliminar las anteriores]
+
+--- /api/eliminar_horario (3 definiciones) ---
+  L2229: api_eliminar_horario -> @app.route('/api/eliminar_horario', methods=['POST'])...
+  L7757: eliminar_horario_legacy -> @app.route('/api/eliminar_horario', methods=['POST'])...
+  L22270: eliminar_horario_clase -> @app.route('/api/eliminar_horario', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L22270 y eliminar las anteriores]
+
+--- /api/orientador/alertas (3 definiciones) ---
+  L3438: api_orientador_alertas -> @app.route('/api/orientador/alertas', methods=['GET'])...
+  L6233: listar_alertas_academicas -> @app.route('/api/orientador/alertas', methods=['GET'])...
+  L6282: crear_alerta_academica -> @app.route('/api/orientador/alertas', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L6282 y eliminar las anteriores]
+
+--- /api/orientador/citas/<int:cita_id> (3 definiciones) ---
+  L6116: obtener_cita_orientacion -> @app.route('/api/orientador/citas/<int:cita_id>', methods=['...
+  L6148: actualizar_cita_orientacion -> @app.route('/api/orientador/citas/<int:cita_id>', methods=['...
+  L6203: eliminar_cita_orientacion -> @app.route('/api/orientador/citas/<int:cita_id>', methods=['...
+  [RECOMENDACIÓN: Conservar L6203 y eliminar las anteriores]
+
+--- /api/orientador/alertas/<int:alerta_id> (3 definiciones) ---
+  L6317: obtener_alerta_academica -> @app.route('/api/orientador/alertas/<int:alerta_id>', method...
+  L6347: actualizar_alerta_academica -> @app.route('/api/orientador/alertas/<int:alerta_id>', method...
+  L6389: eliminar_alerta_academica -> @app.route('/api/orientador/alertas/<int:alerta_id>', method...
+  [RECOMENDACIÓN: Conservar L6389 y eliminar las anteriores]
+
+--- /api/orientador/reportes/<int:reporte_id> (3 definiciones) ---
+  L6456: obtener_reporte_conducta -> @app.route('/api/orientador/reportes/<int:reporte_id>', meth...
+  L6485: actualizar_reporte_conducta -> @app.route('/api/orientador/reportes/<int:reporte_id>', meth...
+  L6529: eliminar_reporte_conducta -> @app.route('/api/orientador/reportes/<int:reporte_id>', meth...
+  [RECOMENDACIÓN: Conservar L6529 y eliminar las anteriores]
+
+--- /api/tutor/mensajes (3 definiciones) ---
+  L7273: tutor_enviar_mensaje -> @app.route('/api/tutor/mensajes', methods=['POST'])...
+  L7297: tutor_inbox -> @app.route('/api/tutor/mensajes', methods=['GET'])...
+  L22683: tutor_mensajes -> @app.route('/api/tutor/mensajes', methods=['GET', 'POST'])...
+  [RECOMENDACIÓN: Conservar L22683 y eliminar las anteriores]
+
+--- /api/encuestas-docentes (3 definiciones) ---
+  L9570: listar_encuestas_docentes -> @app.route('/api/encuestas-docentes', methods=['GET'])...
+  L23267: get_encuestas_docentes -> @app.route('/api/encuestas-docentes', methods=['GET'])...
+  L28223: api_encuestas_docentes -> @app.route('/api/encuestas-docentes', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L28223 y eliminar las anteriores]
+
+--- /api/responder-encuesta-docente (3 definiciones) ---
+  L9603: responder_encuesta_docente -> @app.route('/api/responder-encuesta-docente', methods=['POST...
+  L23308: responder_encuesta_docente_v2 -> @app.route('/api/responder-encuesta-docente', methods=['POST...
+  L28258: api_responder_encuesta_docente -> @app.route('/api/responder-encuesta-docente', methods=['POST...
+  [RECOMENDACIÓN: Conservar L28258 y eliminar las anteriores]
+
+--- /api/ai-chat (3 definiciones) ---
+  L9748: ai_chat -> @app.route('/api/ai-chat', methods=['POST'])...
+  L23241: api_ai_chat -> @app.route('/api/ai-chat', methods=['POST'])...
+  L28180: api_ai_chat -> @app.route('/api/ai-chat', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L28180 y eliminar las anteriores]
+
+--- /api/flashcards/<int:card_id>/review (3 definiciones) ---
+  L18259: _old_review_flashcard -> # @app.route('/api/flashcards/<int:card_id>/review', methods...
+  L20397: alumno_review_flashcard -> @app.route('/api/flashcards/<int:card_id>/review', methods=[...
+  L27816: api_flashcards_review -> @app.route('/api/flashcards/<int:card_id>/review', methods=[...
+  [RECOMENDACIÓN: Conservar L27816 y eliminar las anteriores]
+
+--- /api/teams/join (3 definiciones) ---
+  L18343: join_study_team -> @app.route('/api/teams/join', methods=['POST'])...
+  L19688: _old_join_team -> @app.route('/api/teams/join', methods=['POST'])...
+  L20470: alumno_join_team -> @app.route('/api/teams/join', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L20470 y eliminar las anteriores]
+
+--- /api/whiteboard/<int:board_id> (3 definiciones) ---
+  L19474: get_whiteboard -> @app.route('/api/whiteboard/<int:board_id>', methods=['GET']...
+  L19524: update_whiteboard -> @app.route('/api/whiteboard/<int:board_id>', methods=['PUT']...
+  L19561: delete_whiteboard -> @app.route('/api/whiteboard/<int:board_id>', methods=['DELET...
+  [RECOMENDACIÓN: Conservar L19561 y eliminar las anteriores]
+
+--- /api/teams/create (2 definiciones) ---
+  L1910: api_teams_create -> @app.route('/api/teams/create', methods=['POST'])...
+  L27914: api_teams_create -> @app.route('/api/teams/create', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L27914 y eliminar las anteriores]
+
+--- /api/messages (2 definiciones) ---
+  L1927: api_messages -> @app.route('/api/messages', methods=['GET'])...
+  L28016: api_messages_list -> @app.route('/api/messages', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L28016 y eliminar las anteriores]
+
+--- /api/meet/join (2 definiciones) ---
+  L1976: api_meet_join -> @app.route('/api/meet/join', methods=['POST'])...
+  L28203: api_meet_join -> @app.route('/api/meet/join', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L28203 y eliminar las anteriores]
+
+--- /api/schedule (2 definiciones) ---
+  L1988: api_schedule -> @app.route('/api/schedule', methods=['GET'])...
+  L28038: api_schedule -> @app.route('/api/schedule', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L28038 y eliminar las anteriores]
+
+--- /api/tutor/justificantes (2 definiciones) ---
+  L2034: api_tutor_justificantes -> @app.route('/api/tutor/justificantes', methods=['POST'])...
+  L22826: tutor_justificantes -> @app.route('/api/tutor/justificantes', methods=['GET', 'POST...
+  [RECOMENDACIÓN: Conservar L22826 y eliminar las anteriores]
+
+--- /api/tutor/autorizaciones (2 definiciones) ---
+  L2058: api_tutor_autorizaciones -> @app.route('/api/tutor/autorizaciones', methods=['GET'])...
+  L23010: tutor_autorizaciones -> @app.route('/api/tutor/autorizaciones', methods=['GET', 'POS...
+  [RECOMENDACIÓN: Conservar L23010 y eliminar las anteriores]
+
+--- /api/tutor/pagos (2 definiciones) ---
+  L2073: api_tutor_pagos -> @app.route('/api/tutor/pagos', methods=['GET'])...
+  L22576: tutor_pagos -> @app.route('/api/tutor/pagos', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L22576 y eliminar las anteriores]
+
+--- /api/orientador/justificantes (2 definiciones) ---
+  L2164: api_orientador_justificantes_crear -> @app.route('/api/orientador/justificantes', methods=['POST']...
+  L22348: orientador_crear_justificante -> @app.route('/api/orientador/justificantes', methods=['POST']...
+  [RECOMENDACIÓN: Conservar L22348 y eliminar las anteriores]
+
+--- /api/tutor/notificaciones (2 definiciones) ---
+  L4410: api_tutor_notificaciones -> @app.route('/api/tutor/notificaciones', methods=['GET'])...
+  L21813: tutor_notificaciones -> @app.route('/api/tutor/notificaciones')...
+  [RECOMENDACIÓN: Conservar L21813 y eliminar las anteriores]
+
+--- /panel-orientador (2 definiciones) ---
+  L5924: panel_orientador -> @app.route('/panel-orientador')...
+  L27346: panel_orientador_v2 -> @app.route('/panel-orientador')...
+  [RECOMENDACIÓN: Conservar L27346 y eliminar las anteriores]
+
+--- /api/orientador/citas (2 definiciones) ---
+  L6029: listar_citas_orientacion -> @app.route('/api/orientador/citas', methods=['GET'])...
+  L6081: crear_cita_orientacion -> @app.route('/api/orientador/citas', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L6081 y eliminar las anteriores]
+
+--- /api/orientador/seguimiento (2 definiciones) ---
+  L6691: listar_seguimientos -> @app.route('/api/orientador/seguimiento', methods=['GET'])...
+  L6733: crear_seguimiento -> @app.route('/api/orientador/seguimiento', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L6733 y eliminar las anteriores]
+
+--- /panel-tutor (2 definiciones) ---
+  L7099: panel_tutor -> @app.route('/panel-tutor')...
+  L27380: panel_tutor_v2 -> @app.route('/panel-tutor')...
+  [RECOMENDACIÓN: Conservar L27380 y eliminar las anteriores]
+
+--- /api/tutor/estudiante/<int:estudiante_id>/detalle (2 definiciones) ---
+  L7157: tutor_estudiante_detalle -> @app.route('/api/tutor/estudiante/<int:estudiante_id>/detall...
+  L22605: tutor_estudiante_detalle_v2 -> @app.route('/api/tutor/estudiante/<int:estudiante_id>/detall...
+  [RECOMENDACIÓN: Conservar L22605 y eliminar las anteriores]
+
+--- /api/tasks (2 definiciones) ---
+  L8218: handle_tasks -> @app.route('/api/tasks', methods=['GET', 'POST'])...
+  L18868: create_task -> @app.route('/api/tasks', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L18868 y eliminar las anteriores]
+
+--- /api/resources (2 definiciones) ---
+  L8287: handle_resources -> @app.route('/api/resources', methods=['GET', 'POST'])...
+  L18989: upload_resource -> @app.route('/api/resources', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L18989 y eliminar las anteriores]
+
+--- /api/generar_quiz (2 definiciones) ---
+  L9080: generar_quiz -> @app.route('/api/generar_quiz', methods=['POST'])...
+  L23409: generar_quiz_ia -> @app.route('/api/generar_quiz', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L23409 y eliminar las anteriores]
+
+--- /api/detectar_plagio (2 definiciones) ---
+  L9120: detectar_plagio_v1 -> @app.route('/api/detectar_plagio', methods=['POST'])...
+  L23354: detectar_plagio -> @app.route('/api/detectar_plagio', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L23354 y eliminar las anteriores]
+
+--- /api/stats_encuestas (2 definiciones) ---
+  L9552: stats_encuestas -> @app.route('/api/stats_encuestas', methods=['GET'])...
+  L23444: stats_encuestas_v2 -> @app.route('/api/stats_encuestas', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L23444 y eliminar las anteriores]
+
+--- /api/crear-encuesta-docente (2 definiciones) ---
+  L9675: crear_encuesta_docente -> @app.route('/api/crear-encuesta-docente', methods=['POST'])...
+  L23522: crear_encuesta_docente_v2 -> @app.route('/api/crear-encuesta-docente', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L23522 y eliminar las anteriores]
+
+--- /api/ai-generar-encuesta (2 definiciones) ---
+  L9807: ai_generar_encuesta -> @app.route('/api/ai-generar-encuesta', methods=['POST'])...
+  L23557: ai_generar_encuesta_v2 -> @app.route('/api/ai-generar-encuesta', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L23557 y eliminar las anteriores]
+
+--- /api/stats_pagos (2 definiciones) ---
+  L9850: stats_pagos -> @app.route('/api/stats_pagos', methods=['GET'])...
+  L23463: stats_pagos_v2 -> @app.route('/api/stats_pagos', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L23463 y eliminar las anteriores]
+
+--- /api/stats_asistencias (2 definiciones) ---
+  L9865: stats_asistencias -> @app.route('/api/stats_asistencias', methods=['GET'])...
+  L23483: stats_asistencias_v2 -> @app.route('/api/stats_asistencias', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L23483 y eliminar las anteriores]
+
+--- /api/stats_gamificacion (2 definiciones) ---
+  L9908: stats_gamificacion -> @app.route('/api/stats_gamificacion', methods=['GET'])...
+  L23502: stats_gamificacion_v2 -> @app.route('/api/stats_gamificacion', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L23502 y eliminar las anteriores]
+
+--- /api/search_logs (2 definiciones) ---
+  L9926: search_logs -> @app.route('/api/search_logs', methods=['POST'])...
+  L23587: search_logs_v2 -> @app.route('/api/search_logs', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L23587 y eliminar las anteriores]
+
+--- /api/backup_bd (2 definiciones) ---
+  L9948: backup_bd -> @app.route('/api/backup_bd', methods=['POST'])...
+  L23638: backup_bd_v2 -> @app.route('/api/backup_bd', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L23638 y eliminar las anteriores]
+
+--- /api/restore_bd (2 definiciones) ---
+  L9963: restore_bd -> @app.route('/api/restore_bd', methods=['POST'])...
+  L23669: restore_bd_v2 -> @app.route('/api/restore_bd', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L23669 y eliminar las anteriores]
+
+--- /api/examen/<int:examen_id> (2 definiciones) ---
+  L14839: actualizar_examen -> @app.route('/api/examen/<int:examen_id>', methods=['PUT'])...
+  L14877: eliminar_examen -> @app.route('/api/examen/<int:examen_id>', methods=['DELETE']...
+  [RECOMENDACIÓN: Conservar L14877 y eliminar las anteriores]
+
+--- /api/alumno/entregar-tarea (2 definiciones) ---
+  L19032: submit_homework -> @app.route('/api/alumno/entregar-tarea', methods=['POST'])...
+  L28130: api_alumno_entregar_tarea -> @app.route('/api/alumno/entregar-tarea', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L28130 y eliminar las anteriores]
+
+--- /api/calendar/events/<int:event_id> (2 definiciones) ---
+  L19192: update_calendar_event -> @app.route('/api/calendar/events/<int:event_id>', methods=['...
+  L19214: delete_calendar_event -> @app.route('/api/calendar/events/<int:event_id>', methods=['...
+  [RECOMENDACIÓN: Conservar L19214 y eliminar las anteriores]
+
+--- /api/notifications/<int:notif_id>/read (2 definiciones) ---
+  L19309: mark_notification_read -> @app.route('/api/notifications/<int:notif_id>/read', methods...
+  L20626: alumno_mark_notification_read -> @app.route('/api/notifications/<int:notif_id>/read', methods...
+  [RECOMENDACIÓN: Conservar L20626 y eliminar las anteriores]
+
+--- /api/notifications/read-all (2 definiciones) ---
+  L19325: mark_all_notifications_read -> @app.route('/api/notifications/read-all', methods=['PUT'])...
+  L20643: alumno_mark_all_notifications_read -> @app.route('/api/notifications/read-all', methods=['PUT'])...
+  [RECOMENDACIÓN: Conservar L20643 y eliminar las anteriores]
+
+--- /api/profile (2 definiciones) ---
+  L19343: get_profile -> @app.route('/api/profile', methods=['GET'])...
+  L19412: update_profile_settings -> @app.route('/api/profile', methods=['PUT'])...
+  [RECOMENDACIÓN: Conservar L19412 y eliminar las anteriores]
+
+--- /api/profile/upload-photo (2 definiciones) ---
+  L19374: upload_profile_photo -> @app.route('/api/profile/upload-photo', methods=['POST'])...
+  L20661: alumno_upload_profile_photo -> @app.route('/api/profile/upload-photo', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L20661 y eliminar las anteriores]
+
+--- /api/whiteboard (2 definiciones) ---
+  L19444: get_whiteboards -> @app.route('/api/whiteboard', methods=['GET'])...
+  L19500: create_personal_whiteboard -> @app.route('/api/whiteboard', methods=['POST'])...
+  [RECOMENDACIÓN: Conservar L19500 y eliminar las anteriores]
+
+--- /api/chat/conversations (2 definiciones) ---
+  L19864: get_chat_conversations -> @app.route('/api/chat/conversations', methods=['GET'])...
+  L20528: alumno_get_chat_conversations -> @app.route('/api/chat/conversations', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L20528 y eliminar las anteriores]
+
+--- /api/alumno/tutorias (2 definiciones) ---
+  L20939: alumno_tutorias -> @app.route('/api/alumno/tutorias', methods=['GET'])...
+  L28084: api_alumno_tutorias -> @app.route('/api/alumno/tutorias', methods=['GET', 'POST'])...
+  [RECOMENDACIÓN: Conservar L28084 y eliminar las anteriores]
+
+--- /api/tutor/hijos (2 definiciones) ---
+  L21658: tutor_hijos -> @app.route('/api/tutor/hijos')...
+  L22495: tutor_hijos_v2 -> @app.route('/api/tutor/hijos', methods=['GET'])...
+  [RECOMENDACIÓN: Conservar L22495 y eliminar las anteriores]
+
+--- /api/admin/grupos (2 definiciones) ---
+  L21976: admin_grupos -> @app.route('/api/admin/grupos', methods=['GET', 'POST', 'PUT...
+  L27628: admin_grupos_crud -> @app.route('/api/admin/grupos', methods=['GET', 'POST'])...
+  [RECOMENDACIÓN: Conservar L27628 y eliminar las anteriores]
+
+======================================================================
+RANGOS DE LÍNEAS PARA ELIMINAR
+(Conservamos la última definición de cada ruta duplicada)
+======================================================================
+
+/api/teams:
+  ELIMINAR función 'api_teams' en línea 1862
+  ELIMINAR función '_old_manage_study_teams' en línea 18295
+  ELIMINAR función 'get_user_teams' en línea 19646
+  ELIMINAR función 'create_team' en línea 19664
+  ELIMINAR función 'alumno_get_teams' en línea 20420
+  ELIMINAR función 'alumno_create_team' en línea 20443
+
+/api/portfolio:
+  ELIMINAR función 'api_portfolio' en línea 1941
+  ELIMINAR función 'manage_portfolio' en línea 18378
+  ELIMINAR función 'get_portfolio' en línea 19718
+  ELIMINAR función 'add_portfolio_item' en línea 19731
+  ELIMINAR función 'alumno_get_portfolio' en línea 20504
+
+/api/notes:
+  ELIMINAR función 'manage_notes' en línea 18105
+  ELIMINAR función 'get_notes' en línea 19577
+  ELIMINAR función 'create_note' en línea 19583
+  ELIMINAR función 'alumno_get_notes' en línea 20213
+  ELIMINAR función 'alumno_create_note' en línea 20239
+
+/api/notes/<int:note_id>:
+  ELIMINAR función 'update_delete_note' en línea 18148
+  ELIMINAR función 'delete_note' en línea 19589
+  ELIMINAR función 'alumno_get_note' en línea 20258
+  ELIMINAR función 'alumno_update_note' en línea 20278
+  ELIMINAR función 'alumno_delete_note' en línea 20297
+
+/api/flashcards/mazos:
+  ELIMINAR función '_old_manage_mazos' en línea 18184
+  ELIMINAR función 'get_flashcard_decks' en línea 19598
+  ELIMINAR función 'create_flashcard_deck' en línea 19627
+  ELIMINAR función 'alumno_get_flashcard_decks' en línea 20312
+  ELIMINAR función 'alumno_create_flashcard_deck' en línea 20339
+
+/api/calendar/events:
+  ELIMINAR función 'get_calendar_events_v1' en línea 19095
+  ELIMINAR función 'create_calendar_event_v1' en línea 19170
+  ELIMINAR función 'get_calendar_events' en línea 19749
+  ELIMINAR función 'create_calendar_event' en línea 19827
+  ELIMINAR función 'alumno_get_calendar_events' en línea 20136
+
+/api/notifications:
+  ELIMINAR función 'api_notifications' en línea 1953
+  ELIMINAR función 'get_notifications' en línea 19230
+  ELIMINAR función 'alumno_get_notifications' en línea 20595
+
+/api/orientador/reportes:
+  ELIMINAR función 'api_orientador_reportes' en línea 3817
+  ELIMINAR función 'listar_reportes_conducta' en línea 6414
+  ELIMINAR función 'crear_reporte_conducta' en línea 6936
+
+/api/tutor/citas:
+  ELIMINAR función 'api_tutor_citas' en línea 4284
+  ELIMINAR función 'tutor_citas' en línea 7219
+  ELIMINAR función 'tutor_citas_v2' en línea 22533
+
+/api/flashcards/mazos/<int:mazo_id>/cards:
+  ELIMINAR función '_old_manage_flashcards' en línea 18225
+  ELIMINAR función 'alumno_get_flashcard_cards' en línea 20358
+  ELIMINAR función 'alumno_create_flashcard_card' en línea 20378
+
+/api/portfolio/upload:
+  ELIMINAR función 'api_portfolio_upload' en línea 2003
+  ELIMINAR función 'upload_portfolio_file' en línea 18415
+
+/api/tutor/comunicados:
+  ELIMINAR función 'api_tutor_comunicados' en línea 2086
+  ELIMINAR función 'tutor_comunicados' en línea 7346
+
+/api/buscar_alumnos:
+  ELIMINAR función 'api_buscar_alumnos' en línea 2114
+  ELIMINAR función 'buscar_alumnos' en línea 8583
+
+/api/enviar_reporte:
+  ELIMINAR función 'api_enviar_reporte' en línea 2125
+  ELIMINAR función 'enviar_reporte' en línea 8610
+
+/api/buscar_horarios:
+  ELIMINAR función 'api_buscar_horarios' en línea 2142
+  ELIMINAR función 'buscar_horarios' en línea 7803
+
+/api/orientador/avisos:
+  ELIMINAR función 'api_orientador_avisos' en línea 2150
+  ELIMINAR función 'orientador_avisos' en línea 21478
+
+/api/eliminar_horario:
+  ELIMINAR función 'api_eliminar_horario' en línea 2229
+  ELIMINAR función 'eliminar_horario_legacy' en línea 7757
+
+/api/orientador/alertas:
+  ELIMINAR función 'api_orientador_alertas' en línea 3438
+  ELIMINAR función 'listar_alertas_academicas' en línea 6233
+
+/api/orientador/citas/<int:cita_id>:
+  ELIMINAR función 'obtener_cita_orientacion' en línea 6116
+  ELIMINAR función 'actualizar_cita_orientacion' en línea 6148
+
+/api/orientador/alertas/<int:alerta_id>:
+  ELIMINAR función 'obtener_alerta_academica' en línea 6317
+  ELIMINAR función 'actualizar_alerta_academica' en línea 6347
+
+/api/orientador/reportes/<int:reporte_id>:
+  ELIMINAR función 'obtener_reporte_conducta' en línea 6456
+  ELIMINAR función 'actualizar_reporte_conducta' en línea 6485
+
+/api/tutor/mensajes:
+  ELIMINAR función 'tutor_enviar_mensaje' en línea 7273
+  ELIMINAR función 'tutor_inbox' en línea 7297
+
+/api/encuestas-docentes:
+  ELIMINAR función 'listar_encuestas_docentes' en línea 9570
+  ELIMINAR función 'get_encuestas_docentes' en línea 23267
+
+/api/responder-encuesta-docente:
+  ELIMINAR función 'responder_encuesta_docente' en línea 9603
+  ELIMINAR función 'responder_encuesta_docente_v2' en línea 23308
+
+/api/ai-chat:
+  ELIMINAR función 'ai_chat' en línea 9748
+  ELIMINAR función 'api_ai_chat' en línea 23241
+
+/api/flashcards/<int:card_id>/review:
+  ELIMINAR función '_old_review_flashcard' en línea 18259
+  ELIMINAR función 'alumno_review_flashcard' en línea 20397
+
+/api/teams/join:
+  ELIMINAR función 'join_study_team' en línea 18343
+  ELIMINAR función '_old_join_team' en línea 19688
+
+/api/whiteboard/<int:board_id>:
+  ELIMINAR función 'get_whiteboard' en línea 19474
+  ELIMINAR función 'update_whiteboard' en línea 19524
+
+/api/teams/create:
+  ELIMINAR función 'api_teams_create' en línea 1910
+
+/api/messages:
+  ELIMINAR función 'api_messages' en línea 1927
+
+/api/meet/join:
+  ELIMINAR función 'api_meet_join' en línea 1976
+
+/api/schedule:
+  ELIMINAR función 'api_schedule' en línea 1988
+
+/api/tutor/justificantes:
+  ELIMINAR función 'api_tutor_justificantes' en línea 2034
+
+/api/tutor/autorizaciones:
+  ELIMINAR función 'api_tutor_autorizaciones' en línea 2058
+
+/api/tutor/pagos:
+  ELIMINAR función 'api_tutor_pagos' en línea 2073
+
+/api/orientador/justificantes:
+  ELIMINAR función 'api_orientador_justificantes_crear' en línea 2164
+
+/api/tutor/notificaciones:
+  ELIMINAR función 'api_tutor_notificaciones' en línea 4410
+
+/panel-orientador:
+  ELIMINAR función 'panel_orientador' en línea 5924
+
+/api/orientador/citas:
+  ELIMINAR función 'listar_citas_orientacion' en línea 6029
+
+/api/orientador/seguimiento:
+  ELIMINAR función 'listar_seguimientos' en línea 6691
+
+/panel-tutor:
+  ELIMINAR función 'panel_tutor' en línea 7099
+
+/api/tutor/estudiante/<int:estudiante_id>/detalle:
+  ELIMINAR función 'tutor_estudiante_detalle' en línea 7157
+
+/api/tasks:
+  ELIMINAR función 'handle_tasks' en línea 8218
+
+/api/resources:
+  ELIMINAR función 'handle_resources' en línea 8287
+
+/api/generar_quiz:
+  ELIMINAR función 'generar_quiz' en línea 9080
+
+/api/detectar_plagio:
+  ELIMINAR función 'detectar_plagio_v1' en línea 9120
+
+/api/stats_encuestas:
+  ELIMINAR función 'stats_encuestas' en línea 9552
+
+/api/crear-encuesta-docente:
+  ELIMINAR función 'crear_encuesta_docente' en línea 9675
+
+/api/ai-generar-encuesta:
+  ELIMINAR función 'ai_generar_encuesta' en línea 9807
+
+/api/stats_pagos:
+  ELIMINAR función 'stats_pagos' en línea 9850
+
+/api/stats_asistencias:
+  ELIMINAR función 'stats_asistencias' en línea 9865
+
+/api/stats_gamificacion:
+  ELIMINAR función 'stats_gamificacion' en línea 9908
+
+/api/search_logs:
+  ELIMINAR función 'search_logs' en línea 9926
+
+/api/backup_bd:
+  ELIMINAR función 'backup_bd' en línea 9948
+
+/api/restore_bd:
+  ELIMINAR función 'restore_bd' en línea 9963
+
+/api/examen/<int:examen_id>:
+  ELIMINAR función 'actualizar_examen' en línea 14839
+
+/api/alumno/entregar-tarea:
+  ELIMINAR función 'submit_homework' en línea 19032
+
+/api/calendar/events/<int:event_id>:
+  ELIMINAR función 'update_calendar_event' en línea 19192
+
+/api/notifications/<int:notif_id>/read:
+  ELIMINAR función 'mark_notification_read' en línea 19309
+
+/api/notifications/read-all:
+  ELIMINAR función 'mark_all_notifications_read' en línea 19325
+
+/api/profile:
+  ELIMINAR función 'get_profile' en línea 19343
+
+/api/profile/upload-photo:
+  ELIMINAR función 'upload_profile_photo' en línea 19374
+
+/api/whiteboard:
+  ELIMINAR función 'get_whiteboards' en línea 19444
+
+/api/chat/conversations:
+  ELIMINAR función 'get_chat_conversations' en línea 19864
+
+/api/alumno/tutorias:
+  ELIMINAR función 'alumno_tutorias' en línea 20939
+
+/api/tutor/hijos:
+  ELIMINAR función 'tutor_hijos' en línea 21658
+
+/api/admin/grupos:
+  ELIMINAR función 'admin_grupos' en línea 21976
+
+
+TOTAL DE FUNCIONES DUPLICADAS A ELIMINAR: 118

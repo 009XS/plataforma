@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensajería - Panel Docente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%);
+            min-height: 100vh;
+        }
+
+        /* === CABECERA FIJA === */
+        .navbar {
+            background: #FFFFFF;
+            padding: 15px 0;
+            box-shadow: rgba(0,0,0,0.1) 0px 2px 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 700;
+            color: #000000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            color: #8A6BBE;
+            font-size: 28px;
+        }
+
+        .logo span { color: #8A6BBE; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #8A6BBE, #5A9BD5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(138,107,190,0.3);
+        }
+
+        .user-details h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .user-details p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* === BOTÓN ATRÁS === */
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* === CONTENEDOR PRINCIPAL === */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            background: linear-gradient(135deg, #8A6BBE, #5A9BD5);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(138,107,190,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title h1 {
+            font-size: 28px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-title h1 i {
+            font-size: 32px;
+        }
+
+        .page-title p {
+            margin: 8px 0 0;
+            font-size: 15px;
+            opacity: 0.9;
+        }
+
+        /* === SISTEMA DE MENSAJERÍA === */
+        .messaging-wrapper {
+            background: white;
+            border-radius: 16px;
+            box-shadow: rgba(0,0,0,0.1) 0px 8px 25px;
+            overflow: hidden;
+            height: calc(100vh - 220px);
+            display: flex;
+        }
+
+        /* ... (todo el resto del CSS que ya tenías) ... */
+        .conversations-sidebar {
+            width: 340px;
+            background: #f8f9fa;
+            border-right: 1px solid #e5e5e5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-box { padding: 16px; border-bottom: 1px solid #e5e5e5; background: white; }
+        .search-box-wrapper { position: relative; }
+        .search-box-wrapper i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #999; font-size: 14px; }
+        .search-box input {
+            width: 100%; padding: 12px 16px 12px 44px; border: 2px solid #E8E9EA; border-radius: 12px;
+            font-family: 'Poppins', sans-serif; font-size: 14px; transition: all 0.3s ease;
+        }
+        .search-box input:focus { outline: none; border-color: #5A9BD5; box-shadow: 0 0 0 3px rgba(90,155,213,0.1); }
+
+        .conversations-list { flex: 1; overflow-y: auto; }
+        .conversation-item {
+            display: flex; padding: 14px 16px; cursor: pointer; transition: all 0.2s ease;
+            border-bottom: 1px solid #eee; position: relative;
+        }
+        .conversation-item:hover { background: #edf0f3; transform: translateX(3px); }
+        .conversation-item.active { background: #8A6BBE; color: white; }
+        .conversation-item.active .message-time { color: rgba(255,255,255,0.8); }
+        .conversation-item.active h4, .conversation-item.active p { color: white !important; }
+        .conversation-item.unread::before {
+            content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+            width: 4px; height: 60%; background: #5A9BD5; border-radius: 0 4px 4px 0;
+        }
+
+        .conversation-avatar {
+            width: 48px; height: 48px; background: linear-gradient(135deg, #8A6BBE, #5A9BD5);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 600; font-size: 15px; flex-shrink: 0;
+            box-shadow: 0 3px 10px rgba(138,107,190,0.2); position: relative;
+        }
+        .conversation-avatar.online::after {
+            content: ''; position: absolute; bottom: 2px; right: 2px;
+            width: 12px; height: 12px; background: #22c55e; border: 2px solid white; border-radius: 50%;
+        }
+
+        .conversation-info { margin-left: 12px; flex: 1; min-width: 0; }
+        .conversation-info h4 {
+            font-size: 14.5px; font-weight: 600; margin-bottom: 4px; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px;
+        }
+        .conversation-info h4 i { font-size: 12px; opacity: 0.7; }
+        .conversation-info p { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .message-time { position: absolute; right: 16px; top: 14px; font-size: 11px; color: #999; font-weight: 500; }
+        .unread-badge { position: absolute; right: 16px; bottom: 14px; background: #5A9BD5; color: white;
+            font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: #fcfcfc; }
+        .chat-header {
+            padding: 18px 24px; border-bottom: 1px solid #e5e5e5; display: flex;
+            align-items: center; justify-content: space-between; background: white;
+        }
+        .chat-header-left { display: flex; align-items: center; gap: 14px; }
+        .chat-header h3 { margin: 0; font-size: 17px; font-weight: 600; }
+        .chat-header p { margin: 4px 0 0; font-size: 13px; color: #666; display: flex; align-items: center; gap: 6px; }
+        .chat-header p i { font-size: 10px; color: #22c55e; }
+
+        .chat-header-actions { display: flex; gap: 8px; }
+        .icon-btn {
+            width: 40px; height: 40px; border: none; background: #f8f9fa; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: all 0.3s ease; color: #666; font-size: 16px;
+        }
+        .icon-btn:hover { background: #8A6BBE; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(138,107,190,0.3); }
+
+        .messages-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .message-wrapper { display: flex; flex-direction: column; max-width: 70%; }
+        .message-wrapper.sent { align-self: flex-end; }
+        .message-wrapper.received { align-self: flex-start; }
+
+        .message-bubble {
+            padding: 11px 16px; border-radius: 18px; line-height: 1.45; word-wrap: break-word;
+            animation: fadeIn 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .message-received { background: #e9ecef; color: #333; border-bottom-left-radius: 4px; }
+        .message-sent { background: #8A6BBE; color: white; border-bottom-right-radius: 4px; }
+
+        .message-time-small { font-size: 11px; opacity: 0.8; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+        .message-sent .message-time-small { justify-content: flex-end; }
+        .message-status { font-size: 10px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .message-input-area { padding: 16px 20px; background: white; border-top: 1px solid #e5e5e5; }
+        .message-input-wrapper { display: flex; gap: 12px; align-items: flex-end; }
+        .input-actions { display: flex; gap: 8px; }
+        .input-icon-btn {
+            width: 44px; height: 44px; border: none; background: #f8f9fa; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: all 0.3s ease; color: #666; font-size: 18px;
+        }
+        .input-icon-btn:hover { background: #e9ecef; color: #8A6BBE; transform: translateY(-2px); }
+
+        #messageInput {
+            flex: 1; padding: 14px 18px; border: 2px solid #E8E9EA; border-radius: 16px;
+            resize: none; font-family: 'Poppins', sans-serif; font-size: 14.5px; max-height: 120px;
+            transition: all 0.3s ease;
+        }
+        #messageInput:focus { outline: none; border-color: #5A9BD5; box-shadow: 0 0 0 3px rgba(90,155,213,0.1); }
+
+        .send-btn {
+            width: 52px; height: 52px; background: linear-gradient(135deg, #8A6BBE, #7a5ba8);
+            color: white; border: none; border-radius: 50%; font-size: 20px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(138,107,190,0.3);
+        }
+        .send-btn:hover { background: linear-gradient(135deg, #7a5ba8, #6a4b98); transform: scale(1.08) rotate(15deg); box-shadow: 0 6px 20px rgba(138,107,190,0.4); }
+        .send-btn:active { transform: scale(0.95); }
+
+        .empty-chat { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-size: 15px; }
+        .empty-chat i { font-size: 64px; margin-bottom: 16px; opacity: 0.3; color: #8A6BBE; }
+
+        .typing-indicator { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #e9ecef; border-radius: 18px; width: fit-content; border-bottom-left-radius: 4px; }
+        .typing-indicator span { width: 8px; height: 8px; background: #999; border-radius: 50%; animation: typing 1.4s infinite; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 60%, 100% { transform: translateY(0); opacity: 0.7; } 30% { transform: translateY(-10px); opacity: 1; } }
+
+        .conversations-list::-webkit-scrollbar, .messages-container::-webkit-scrollbar { width: 6px; }
+        .conversations-list::-webkit-scrollbar-track, .messages-container::-webkit-scrollbar-track { background: #f1f1f1; }
+        .conversations-list::-webkit-scrollbar-thumb, .messages-container::-webkit-scrollbar-thumb { background: #8A6BBE; border-radius: 3px; }
+        .conversations-list::-webkit-scrollbar-thumb:hover, .messages-container::-webkit-scrollbar-thumb:hover { background: #7a5ba8; }
+
+        @media (max-width: 900px) {
+            .messaging-wrapper { flex-direction: column; height: calc(100vh - 180px); }
+            .conversations-sidebar { width: 100%; max-height: 280px; }
+            .chat-header-actions { display: none; }
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 0 10px; margin: 15px auto; }
+            .page-title h1 { font-size: 24px; }
+            .user-details { display: none; }
+            .input-actions { display: none; }
+            .back-btn { padding: 8px 14px; font-size: 13px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                Edu<span>Pro</span>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">{{ session['user_name']|default('JD')|upper[0:2] }}</div>  <!-- Corregido aquí también si aplica -->
+                <div class="user-details">
+                    <h3>{{ session['user_name']|default('Prof. Juan Delgado') }}</h3>
+                    <p><i class="fas fa-envelope"></i> {{ session['user_email']|default('juan@colegio.edu') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-title">
+            <div>
+                <h1>
+                    <i class="fas fa-comments"></i>
+                    Mensajería Privada
+                </h1>
+                <p>Comunícate con tus alumnos y grupos de forma rápida y segura</p>
+            </div>
+            <!-- BOTÓN ATRÁS -->
+            <a href="{{ url_for('panel_docente') }}" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Volver al inicio
+            </a>
+        </div>
+
+        <!-- === RESTO DEL CHAT (igual que antes) === -->
+        <div class="messaging-wrapper">
+            <!-- Sidebar -->
+            <div class="conversations-sidebar">
+                <div class="search-box">
+                    <div class="search-box-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar alumno o grupo...">
+                    </div>
+                </div>
+                <div class="conversations-list" id="conversationsList">
+                    <!-- Grupos (Materias) -->
+                    {% for materia in materias %}
+                    <div class="conversation-item" onclick="selectChat('group_{{ materia.id }}', '{{ materia.nombre }}', 'Grupo', false)">
+                        <div class="conversation-avatar"><i class="fas fa-users"></i></div>
+                        <div class="conversation-info">
+                            <h4>{{ materia.nombre }} <i class="fas fa-users"></i></h4>
+                            <p>Grupo de {{ materia.semestre or 'Sin semestre' }}</p>
+                        </div>
+                        <div class="message-time"></div>
+                        <!-- Unread badge: Agrega lógica en Flask para contar no leídos si lo necesitas -->
+                    </div>
+                    {% endfor %}
+
+                    <!-- Alumnos -->
+                    {% for alumno in alumnos %}
+                    <div class="conversation-item {% if alumno.is_online %}unread{% endif %}" onclick="selectChat('user_{{ alumno.id }}', '{{ alumno.nombre }}', '{{ alumno.semestre or 'Sin semestre' }}', {{ alumno.is_online | lower }})">
+                        <div class="conversation-avatar {{ 'online' if alumno.is_online else '' }}">{{ alumno.nombre[0:2]|upper }}</div>  <!-- Corregido aquí -->
+                        <div class="conversation-info">
+                            <h4>{{ alumno.nombre }} <i class="fas fa-user"></i></h4>
+                            <p>Alumno de {{ alumno.semestre or 'Sin semestre' }}</p>
+                        </div>
+                        <div class="message-time"></div>
+                        <!-- Unread badge: Similar, agrega lógica en Flask -->
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Chat -->
+            <div class="chat-area">
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <div class="conversation-avatar online" id="activeAvatar">MG</div>  <!-- Este es un placeholder inicial; se actualiza con JS -->
+                        <div>
+                            <h3 id="activeName">Selecciona una conversación</h3>
+                            <p id="activeStatus"><i class="fas fa-circle"></i> En línea</p>
+                        </div>
+                    </div>
+                    <div class="chat-header-actions">
+                        <button class="icon-btn" title="Buscar"><i class="fas fa-search"></i></button>
+                        <button class="icon-btn" title="Info"><i class="fas fa-info-circle"></i></button>
+                        <button class="icon-btn" title="Más"><i class="fas fa-ellipsis-v"></i></button>
+                    </div>
+                </div>
+
+                <div class="messages-container" id="messagesContainer"></div>
+
+                <div class="empty-chat" id="emptyState" style="display: flex;">
+                    <i class="fas fa-comments"></i>
+                    <p>Selecciona una conversación para comenzar</p>
+                </div>
+
+                <div class="message-input-area">
+                    <div class="message-input-wrapper">
+                        <div class="input-actions">
+                            <button class="input-icon-btn" title="Adjuntar"><i class="fas fa-paperclip"></i></button>
+                            <button class="input-icon-btn" title="Emojis"><i class="far fa-smile"></i></button>
+                        </div>
+                        <textarea id="messageInput" placeholder="Escribe tu mensaje aquí..." rows="1"></textarea>
+                        <button class="send-btn" onclick="sendMessage()" title="Enviar">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === JavaScript (corregido y completo) === -->
+    <script>
+        let currentChat = null;
+
+        async function selectChat(id, name, subtitle, isOnline) {
+            currentChat = { id, name, subtitle, isOnline };
+            document.getElementById('activeName').textContent = name;
+            const statusEl = document.getElementById('activeStatus');
+            const avatarEl = document.getElementById('activeAvatar');
+
+            if (subtitle === 'Grupo') {
+                statusEl.innerHTML = '<i class="fas fa-users"></i> Grupo';
+                avatarEl.innerHTML = '<i class="fas fa-users"></i>';
+                avatarEl.style.background = '#22c55e';
+                avatarEl.classList.remove('online');
+            } else {
+                statusEl.innerHTML = isOnline ? '<i class="fas fa-circle"></i> En línea' : '<i class="fas fa-circle" style="color:#999"></i> Desconectado';
+                avatarEl.textContent = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                avatarEl.style.background = 'linear-gradient(135deg, #8A6BBE, #5A9BD5)';
+                if (isOnline) avatarEl.classList.add('online');
+                else avatarEl.classList.remove('online');
+            }
+
+            document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            event.currentTarget.classList.remove('unread');
+            const badge = event.currentTarget.querySelector('.unread-badge');
+            if (badge) badge.remove();
+
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+            document.getElementById('emptyState').style.display = 'none';
+
+            // Cargar mensajes reales vía API
+            try {
+                const response = await fetch(`/get_messages?chat_id=${id}`);
+                const mensajes = await response.json();
+                mensajes.forEach(msg => {
+                    const type = msg.remitente_id === {{ session['user_id'] }} ? 'sent' : 'received';
+                    addMessage(msg.contenido, type, msg.fecha_envio);
+                });
+            }  catch (error) {
+                console.error('Error cargando mensajes:', error);
+            }
+        
+    
+
+        function addMessage(text, type, timestamp) {
+            const container = document.getElementById('messagesContainer');
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${type}`;
+            const bubble = document.createElement('div');
+            bubble.className = `message-bubble message-${type}`;
+            const time = new Date(timestamp).toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
+            const status = type === 'sent' ? '<i class="fas fa-check-double message-status"></i>' : '';
+            bubble.innerHTML = `${text}<div class="message-time-small">${time} ${status}</div>`;
+            wrapper.appendChild(bubble);
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (!text || !currentChat) return;
+
+            try {
+                const response = await fetch('/send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: currentChat.id, contenido: text })
+                });
+                if (response.ok) {
+                    addMessage(text, 'sent', new Date());
+                    input.value = '';
+                    input.style.height = 'auto';
+                } else {
+                    console.error('Error enviando mensaje');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        document.getElementById('messageInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        });
+
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+
+        document.getElementById('searchInput').addEventListener('input', e => {
+            const search = e.target.value.toLowerCase();
+            document.querySelectorAll('.conversation-item').forEach(item => {
+                const name = item.querySelector('h4').textContent.toLowerCase();
+                const msg = item.querySelector('p').textContent.toLowerCase();
+                item.style.display = (name.includes(search) || msg.includes(search)) ? 'flex' : 'none';
+            });
+        });
+
+        window.onload = () => {
+            const firstChat = document.querySelector('.conversation-item');
+            if (firstChat) firstChat.click();
+        };
+    </script>
+</body>
+</html>

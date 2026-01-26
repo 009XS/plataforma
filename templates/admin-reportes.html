@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Reportes Admin | EduPlatform{% endblock %}
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-6xl mx-auto px-6">
+        <h1 class="text-3xl font-bold mb-8">Reportes del Sistema</h1>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <a href="/exportar-reporte/usuarios" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+                <i class="fas fa-users text-brand-500 text-3xl mb-4"></i>
+                <h3 class="font-bold">Reporte de Usuarios</h3>
+                <p class="text-sm text-gray-500">Exportar lista de usuarios</p>
+            </a>
+            <a href="/exportar-reporte/academico" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+                <i class="fas fa-graduation-cap text-green-500 text-3xl mb-4"></i>
+                <h3 class="font-bold">Reporte Académico</h3>
+                <p class="text-sm text-gray-500">Calificaciones y progreso</p>
+            </a>
+            <a href="/exportar-reporte/financiero" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+                <i class="fas fa-dollar-sign text-orange-500 text-3xl mb-4"></i>
+                <h3 class="font-bold">Reporte Financiero</h3>
+                <p class="text-sm text-gray-500">Ingresos y pagos</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Notificaciones | EduPlatform{% endblock %}
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-3xl mx-auto px-6">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Notificaciones</h1>
+            <button onclick="marcarTodasLeidas()" class="text-brand-600 hover:underline text-sm">
+                <i class="fas fa-check-double mr-1"></i>Marcar todas como leídas
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="divide-y">
+                {% for notif in notificaciones %}
+                <div class="p-6 hover:bg-gray-50 {% if not notif.leida %}bg-blue-50{% endif %}">
+                    <div class="flex items-start space-x-4">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
+                            {% if notif.tipo == 'tarea' %}bg-orange-100 text-orange-600
+                            {% elif notif.tipo == 'mensaje' %}bg-blue-100 text-blue-600
+                            {% elif notif.tipo == 'logro' %}bg-purple-100 text-purple-600
+                            {% else %}bg-gray-100 text-gray-600{% endif %}">
+                            <i class="fas {{ notif.icono or 'fa-bell' }}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold">{{ notif.titulo }}</p>
+                            <p class="text-gray-600 text-sm">{{ notif.contenido }}</p>
+                            <p class="text-xs text-gray-400 mt-2">{{ notif.fecha }}</p>
+                        </div>
+                        {% if not notif.leida %}
+                        <span class="w-2 h-2 bg-brand-500 rounded-full"></span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="p-12 text-center">
+                    <i class="fas fa-bell-slash text-gray-300 text-5xl mb-4"></i>
+                    <p class="text-gray-500">No tienes notificaciones</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function marcarTodasLeidas() {
+        await fetch('/api/notifications/read-all', { method: 'POST' });
+        location.reload();
+    }
+</script>
+{% endblock %}

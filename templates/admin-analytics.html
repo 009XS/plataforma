@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Analytics Admin | EduPlatform{% endblock %}
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-6xl mx-auto px-6">
+        <h1 class="text-3xl font-bold mb-8">Panel de Analytics</h1>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <p class="text-gray-500 text-sm">Usuarios Activos</p>
+                <p class="text-3xl font-bold text-brand-500">{{ usuarios_activos }}</p>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <p class="text-gray-500 text-sm">Nuevos Hoy</p>
+                <p class="text-3xl font-bold text-green-500">{{ usuarios_nuevos }}</p>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <p class="text-gray-500 text-sm">Tareas Entregadas</p>
+                <p class="text-3xl font-bold text-purple-500">{{ tareas_entregadas }}</p>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <p class="text-gray-500 text-sm">Ingresos</p>
+                <p class="text-3xl font-bold text-orange-500">${{ ingresos }}</p>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h2 class="font-bold mb-4">Estadísticas del Sistema</h2>
+            <p class="text-gray-500">Gráficas detalladas próximamente...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

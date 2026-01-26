@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ equipo.nombre }} | EduPlatform{% endblock %}
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-4xl mx-auto px-6">
+        <a href="/equipos" class="text-brand-600 hover:underline mb-4 inline-block"><i
+                class="fas fa-arrow-left mr-2"></i>Volver</a>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+            <div class="bg-gradient-to-r from-brand-500 to-purple-600 p-8 text-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div
+                            class="w-20 h-20 bg-white/20 rounded-xl flex items-center justify-center text-4xl font-bold">
+                            {{ equipo.nombre[0] }}
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold">{{ equipo.nombre }}</h1>
+                            <p class="opacity-80">{{ equipo.miembros|length }} miembros</p>
+                        </div>
+                    </div>
+                    {% if es_lider %}
+                    <button onclick="editarEquipo()" class="bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30">
+                        <i class="fas fa-edit mr-2"></i>Editar
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="p-6">
+                <p class="text-gray-600">{{ equipo.descripcion or 'Sin descripción' }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Miembros -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="font-bold text-lg mb-4">Miembros</h2>
+                <div class="space-y-3">
+                    {% for m in equipo.miembros %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold">
+                                {{ m.nombre[0] }}
+                            </div>
+                            <div>
+                                <p class="font-medium">{{ m.nombre }}</p>
+                                <p class="text-xs text-gray-500">{{ m.rol or 'Miembro' }}</p>
+                            </div>
+                        </div>
+                        {% if m.es_lider %}
+                        <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">Líder</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Chat del equipo -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="font-bold text-lg mb-4">Chat del Equipo</h2>
+                <div class="h-64 bg-gray-50 rounded-lg p-4 overflow-auto mb-4" id="team-chat">
+                    <p class="text-gray-400 text-center">Cargando mensajes...</p>
+                </div>
+                <div class="flex space-x-2">
+                    <input type="text" id="msg-input" placeholder="Escribe un mensaje..."
+                        class="flex-1 border rounded-lg px-4 py-2">
+                    <button onclick="enviarMensaje()" class="bg-brand-600 text-white px-4 py-2 rounded-lg"><i
+                            class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

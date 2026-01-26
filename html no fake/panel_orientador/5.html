@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Orientator Notices &amp; Reminders</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e2832",
+                        "border-light": "#dbe0e6",
+                        "border-dark": "#364152",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+            border-radius: 20px;
+        }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        .material-symbols-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-family: 'Material Symbols Outlined';
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-100 dark:bg-black font-display text-slate-900 dark:text-white antialiased h-screen flex justify-center items-center p-0 md:p-4">
+<!-- Main Mobile Container -->
+<div class="relative flex h-full w-full max-w-[430px] flex-col bg-background-light dark:bg-background-dark md:h-[850px] md:rounded-3xl md:shadow-2xl md:border md:border-gray-200 dark:md:border-gray-800 overflow-hidden group/design-root">
+<!-- Header -->
+<header class="flex items-center justify-between bg-surface-light dark:bg-surface-dark px-4 py-3 border-b border-border-light dark:border-border-dark shrink-0 z-20">
+<button class="text-primary text-base font-medium hover:opacity-80 transition-opacity">
+                Cancel
+            </button>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">Compose Notice</h2>
+<div class="w-[50px]"></div> <!-- Spacer to balance layout -->
+</header>
+<!-- Scrollable Form Content -->
+<div class="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24">
+<!-- Recipient Input -->
+<div class="flex flex-col gap-2 mb-6">
+<label class="text-slate-900 dark:text-gray-200 text-sm font-semibold leading-normal ml-1">To</label>
+<div class="flex w-full items-center rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all shadow-sm">
+<div class="pl-3 flex gap-2 overflow-x-auto max-w-[70%] py-2 no-scrollbar">
+<!-- Example Chip -->
+<div class="flex items-center gap-1 bg-primary/10 text-primary px-2 py-1 rounded-md text-sm font-medium whitespace-nowrap">
+<span>Grade 10-A</span>
+<span class="material-symbols-outlined text-[16px] cursor-pointer hover:text-primary/70">close</span>
+</div>
+</div>
+<input class="flex-1 bg-transparent border-none text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-0 text-base h-12 min-w-[50px]" placeholder="Search..."/>
+<button class="flex items-center justify-center w-12 h-12 text-primary hover:bg-gray-50 dark:hover:bg-white/5 rounded-r-xl transition-colors">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+</div>
+</div>
+<!-- Notice Type Toggle -->
+<div class="mb-6">
+<div class="flex p-1 bg-gray-200 dark:bg-gray-800 rounded-lg">
+<!-- Active Tab -->
+<label class="flex-1 cursor-pointer">
+<input checked="" class="peer sr-only" name="msg_type" type="radio" value="notice"/>
+<div class="flex items-center justify-center py-2 rounded-md transition-all duration-200 text-sm font-semibold text-slate-500 peer-checked:bg-white dark:peer-checked:bg-surface-dark peer-checked:text-primary peer-checked:shadow-sm">
+<span class="material-symbols-outlined text-[18px] mr-2">campaign</span>
+                            Notice
+                        </div>
+</label>
+<!-- Inactive Tab -->
+<label class="flex-1 cursor-pointer">
+<input class="peer sr-only" name="msg_type" type="radio" value="reminder"/>
+<div class="flex items-center justify-center py-2 rounded-md transition-all duration-200 text-sm font-semibold text-slate-500 peer-checked:bg-white dark:peer-checked:bg-surface-dark peer-checked:text-primary peer-checked:shadow-sm">
+<span class="material-symbols-outlined text-[18px] mr-2">alarm</span>
+                            Reminder
+                        </div>
+</label>
+</div>
+</div>
+<!-- Subject Field -->
+<div class="flex flex-col gap-2 mb-6">
+<label class="text-slate-900 dark:text-gray-200 text-sm font-semibold leading-normal ml-1">Subject</label>
+<input class="w-full rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-sm" placeholder="e.g. End of Semester Schedule"/>
+</div>
+<!-- Message Body -->
+<div class="flex flex-col gap-2 mb-6">
+<div class="flex justify-between items-end ml-1">
+<label class="text-slate-900 dark:text-gray-200 text-sm font-semibold leading-normal">Message</label>
+<span class="text-xs text-slate-400 font-medium">0/500</span>
+</div>
+<textarea class="w-full min-h-[160px] rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-3 text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none transition-all shadow-sm" placeholder="Write your message here. Be clear and concise..."></textarea>
+</div>
+<!-- Date & Time Picker Row -->
+<div class="flex flex-col gap-2 mb-6">
+<label class="text-slate-900 dark:text-gray-200 text-sm font-semibold leading-normal ml-1">Send Date</label>
+<button class="flex items-center justify-between w-full rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-3 text-left hover:border-primary/50 transition-colors shadow-sm group">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-white text-sm font-medium">Immediately</span>
+<span class="text-slate-500 text-xs">Tap to schedule for later</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Sticky Footer Action -->
+<div class="absolute bottom-0 left-0 right-0 p-4 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur-md border-t border-border-light dark:border-border-dark z-20">
+<button class="w-full h-12 flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white font-semibold rounded-xl transition-all shadow-lg shadow-primary/30 active:scale-[0.98]">
+<span>Send Notice</span>
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+<!-- Success Modal (Simulated Overlay for Demo) -->
+<!-- Hidden by default with 'hidden', remove 'hidden' to see the state -->
+<div class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+<div class="bg-surface-light dark:bg-surface-dark w-full max-w-[320px] rounded-2xl p-6 shadow-2xl flex flex-col items-center text-center transform scale-100 animate-in zoom-in-95 duration-200">
+<div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4 text-green-600 dark:text-green-400">
+<span class="material-symbols-filled text-[32px]">check_circle</span>
+</div>
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Notice Sent!</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Your message has been successfully sent to 1 group.</p>
+<button class="w-full py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-slate-900 dark:text-white font-semibold rounded-xl transition-colors">
+                    Close
+                </button>
+</div>
+</div>
+</div>
+</body></html>

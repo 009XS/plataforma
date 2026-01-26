@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Logros y Gamificación | EduPlatform{% endblock %}
+{% block content %}
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <div class="w-64 bg-dark-900 text-white p-4 flex-shrink-0">
+        <div class="text-2xl font-bold mb-8">Edu<span class="text-brand-500">Platform</span></div>
+        <nav class="space-y-2">
+            <a href="/panel-alumno" class="block py-2 px-4 rounded hover:bg-dark-800"><i
+                    class="fas fa-arrow-left mr-2"></i>Volver</a>
+            <a href="#" class="nav-item active bg-brand-500 py-2 px-4 rounded"><i
+                    class="fas fa-trophy mr-2"></i>Logros</a>
+            <a href="/ranking" class="block py-2 px-4 rounded hover:bg-dark-800"><i
+                    class="fas fa-crown mr-2"></i>Ranking</a>
+            <a href="/mis-insignias" class="block py-2 px-4 rounded hover:bg-dark-800"><i
+                    class="fas fa-medal mr-2"></i>Insignias</a>
+            <a href="/tienda" class="block py-2 px-4 rounded hover:bg-dark-800"><i
+                    class="fas fa-store mr-2"></i>Tienda</a>
+        </nav>
+    </div>
+
+    <!-- Main -->
+    <div class="flex-1 p-8">
+        <!-- Header Stats -->
+        <div class="bg-gradient-to-r from-brand-500 to-purple-600 rounded-2xl p-8 text-white mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2">{{ nombre_usuario or 'Estudiante' }}</h1>
+                    <p class="opacity-80">Nivel {{ nivel or 1 }} • Liga {{ liga or 'Bronce' }}</p>
+                </div>
+                <div class="flex items-center space-x-8">
+                    <div class="text-center">
+                        <p class="text-4xl font-bold">{{ xp or 0 }}</p>
+                        <p class="text-sm opacity-80">XP Total</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-4xl font-bold">{{ racha or 0 }}</p>
+                        <p class="text-sm opacity-80">Días de Racha</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-4xl font-bold">{{ educoins or 0 }}</p>
+                        <p class="text-sm opacity-80">EduCoins</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- XP Progress -->
+            <div class="mt-6">
+                <div class="flex justify-between text-sm mb-2">
+                    <span>Nivel {{ nivel or 1 }}</span>
+                    <span>{{ xp_para_siguiente or 100 }} XP para Nivel {{ (nivel or 1) + 1 }}</span>
+                </div>
+                <div class="bg-white/20 rounded-full h-3">
+                    <div class="bg-white rounded-full h-3" style="width: {{ progreso_nivel or 50 }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Misiones Diarias -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold">Misiones Diarias</h2>
+                <span class="text-sm text-gray-500">Se reinician en {{ tiempo_reset or '12:00' }}</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="daily-quests">
+                {% for quest in misiones_diarias %}
+                <div class="border rounded-xl p-4 {% if quest.completada %}bg-green-50 border-green-200{% endif %}">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-3">
+                            <div
+                                class="w-10 h-10 rounded-lg flex items-center justify-center
+                                {% if quest.completada %}bg-green-100 text-green-600{% else %}bg-brand-100 text-brand-600{% endif %}">
+                                <i class="fas {{ quest.icono or 'fa-star' }}"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">{{ quest.titulo }}</p>
+                                <p class="text-xs text-gray-500">+{{ quest.xp }} XP</p>
+                            </div>
+                        </div>
+                        {% if quest.completada %}
+                        <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                        {% endif %}
+                    </div>
+                    <div class="bg-gray-100 rounded-full h-2">
+                        <div class="{% if quest.completada %}bg-green-500{% else %}bg-brand-500{% endif %} rounded-full h-2"
+                            style="width: {{ (quest.progreso / quest.meta * 100) if quest.meta else 0 }}%"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">{{ quest.progreso or 0 }}/{{ quest.meta or 1 }}</p>
+                </div>
+                {% else %}
+                <p class="col-span-3 text-center text-gray-500 py-8">Cargando misiones...</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Logros -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h2 class="text-xl font-bold mb-6">Mis Logros</h2>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="logros-grid">
+                {% for logro in logros %}
+                <div
+                    class="text-center p-4 rounded-xl border-2 transition hover:shadow-lg
+                    {% if logro.desbloqueado %}border-brand-200 bg-brand-50{% else %}border-gray-200 opacity-50{% endif %}">
+                    <div
+                        class="w-16 h-16 mx-auto mb-3 rounded-full flex items-center justify-center
+                        {% if logro.desbloqueado %}bg-brand-100 text-brand-600{% else %}bg-gray-200 text-gray-400{% endif %}">
+                        <i class="fas {{ logro.icono or 'fa-trophy' }} text-2xl"></i>
+                    </div>
+                    <p class="font-medium text-sm {% if not logro.desbloqueado %}text-gray-400{% endif %}">{{
+                        logro.nombre }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ logro.descripcion }}</p>
+                    {% if logro.desbloqueado %}
+                    <span class="inline-block mt-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                        <i class="fas fa-check mr-1"></i>Desbloqueado
+                    </span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p class="col-span-6 text-center text-gray-500 py-8">No hay logros disponibles</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Panel Alumno</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Theme Configuration -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1A2633",
+                        "text-main-light": "#111418",
+                        "text-main-dark": "#F3F4F6",
+                        "text-sec-light": "#617589",
+                        "text-sec-dark": "#9CA3AF",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Hide scrollbar for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            /* IE and Edge */
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased transition-colors duration-200">
+    <div id="main-app-container"
+        class="relative flex h-full min-h-screen w-full flex-col overflow-hidden max-w-md mx-auto bg-white dark:bg-background-dark shadow-2xl pb-20">
+
+        <!-- Header / Stats Container -->
+        <!-- ID requested for: header-stats (XP, Nivel, Monedas) -->
+        <div id="header-stats" class="w-full flex flex-col items-center pt-8 pb-4 bg-white dark:bg-background-dark">
+            <!-- Profile Section -->
+            <div class="relative mb-3">
+                <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center"
+                    style="background-image: url('https://ui-avatars.com/api/?name=Alex+Doe&background=random');"></div>
+                <div
+                    class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark cursor-pointer hover:bg-blue-600 transition">
+                    <span class="material-symbols-outlined text-[16px] block">edit</span>
+                </div>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Alex Doe</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Level 5 • Student</p>
+
+            <!-- Stats Cards Grid -->
+            <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
+                <!-- XP Card -->
+                <div
+                    class="bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden group">
+                    <div
+                        class="absolute -right-2 -top-2 opacity-20 group-hover:scale-110 transition-transform duration-500">
+                        <span class="material-symbols-outlined text-[80px]">star</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Total XP</p>
+                    <h3 class="text-2xl font-bold">1,250</h3>
+                    <div class="w-full bg-white/30 h-1 rounded-full mt-2">
+                        <div class="bg-white h-1 rounded-full w-[70%]"></div>
+                    </div>
+                </div>
+                <!-- Coins Card -->
+                <div
+                    class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl p-4 text-white shadow-lg relative overflow-hidden group">
+                    <div
+                        class="absolute -right-2 -top-2 opacity-20 group-hover:scale-110 transition-transform duration-500">
+                        <span class="material-symbols-outlined text-[80px]">monetization_on</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">EduCoins</p>
+                    <h3 class="text-2xl font-bold">350</h3>
+                    <button
+                        class="mt-2 text-[10px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-white font-medium transition">
+                        Redeem
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <!-- Main scrollable area -->
+        <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6">
+
+            <!-- Missions Container -->
+            <!-- ID requested: missions-container -->
+            <!-- Missions Container -->
+            <div id="missions-container" class="w-full">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Daily Missions</h3>
+                    <span class="text-xs text-primary font-medium cursor-pointer hover:underline">View All</span>
+                </div>
+                <!-- Horizontal Scroll List -->
+                <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                    <!-- Mission 1 -->
+                    <div
+                        class="min-w-[200px] bg-white dark:bg-surface-dark p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg shrink-0">
+                                <span class="material-symbols-outlined text-[20px]">target</span>
+                            </div>
+                            <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Complete 2 Tasks
+                            </p>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-1">
+                            <div class="bg-purple-500 h-1.5 rounded-full w-[50%]"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-slate-500">
+                            <span>+50 XP</span>
+                            <span>1/2</span>
+                        </div>
+                    </div>
+                    <!-- Mission 2 -->
+                    <div
+                        class="min-w-[200px] bg-white dark:bg-surface-dark p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg shrink-0">
+                                <span class="material-symbols-outlined text-[20px]">menu_book</span>
+                            </div>
+                            <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Read 15 mins</p>
+                        </div>
+                        <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-1">
+                            <div class="bg-green-500 h-1.5 rounded-full w-[100%]"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-slate-500">
+                            <span>+30 XP</span>
+                            <span class="text-green-500 font-bold">Done</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Container -->
+            <!-- ID requested: schedule-container -->
+            <!-- Schedule Container -->
+            <div id="schedule-container" class="w-full">
+                <div
+                    class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Schedule</h3>
+                        <span class="text-xs text-primary font-medium cursor-pointer hover:underline">Full
+                            Calendar</span>
+                    </div>
+                    <!-- Timeline Item: Current -->
+                    <div class="flex gap-3 mb-4 relative">
+                        <div class="flex flex-col items-center">
+                            <div
+                                class="w-3 h-3 bg-green-500 rounded-full ring-2 ring-green-100 dark:ring-green-900/30 z-10">
+                            </div>
+                            <div class="w-0.5 bg-slate-200 dark:bg-slate-700 h-full -my-1 absolute top-3"></div>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-xs text-green-600 font-bold uppercase tracking-wide mb-0.5">Now
+                                        (09:00 - 10:30)</p>
+                                    <p class="text-base font-bold text-slate-900 dark:text-white">Mathematics</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Room 304 • Mr. Anderson</p>
+                                </div>
+                                <span class="material-symbols-outlined text-green-500 text-[20px]">play_circle</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Timeline Item: Next -->
+                    <div class="flex gap-3">
+                        <div class="flex flex-col items-center">
+                            <div class="w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full z-10"></div>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 font-bold uppercase tracking-wide mb-0.5">Next (10:45 -
+                                12:15)</p>
+                            <p class="text-base font-bold text-slate-900 dark:text-white">History</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Room 102 • Mrs. Smith</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignments Container -->
+            <!-- ID requested: assignments-container -->
+            <!-- Assignments Container -->
+            <div id="assignments-container" class="w-full pb-6">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Assignments</h3>
+                    <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+                        <button
+                            class="px-2 py-0.5 text-xs font-medium rounded-md bg-white dark:bg-surface-dark shadow-sm text-slate-900 dark:text-white">To
+                            Do</button>
+                        <button
+                            class="px-2 py-0.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Done</button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <!-- Card 1: Pending (From 7.html) -->
+                    <div
+                        class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex flex-1 flex-col gap-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-orange-100 dark:bg-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
+                                        Pending
+                                    </span>
+                                    <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
+                                    <span
+                                        class="text-xs font-medium text-slate-500 dark:text-slate-400">Mathematics</span>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">Algebra II -
+                                    Quadratic Equations</h3>
+                                <div class="mt-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                    <span class="material-symbols-outlined text-[18px]">event</span>
+                                    <p class="text-sm">Due Oct 12, 11:59 PM</p>
+                                </div>
+                            </div>
+                            <!-- Thumbnail with darker background fallback -->
+                            <div
+                                class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300">
+                                <span class="material-symbols-outlined text-[32px]">calculate</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: In Progress (From 7.html) -->
+                    <div
+                        class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex flex-1 flex-col gap-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+                                        In Progress
+                                    </span>
+                                    <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
+                                    <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Biology</span>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">Lab Report:
+                                    Photosynthesis</h3>
+                                <div class="mt-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                    <span class="material-symbols-outlined text-[18px]">schedule</span>
+                                    <p class="text-sm">Due Oct 14</p>
+                                </div>
+                            </div>
+                            <div
+                                class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300">
+                                <span class="material-symbols-outlined text-[32px]">science</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button
+                    class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
+                    View All Assignments
+                    <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                </button>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation -->
+        <!-- Based on 4.html (Fixed Bottom Nav) -->
+        <nav
+            class="fixed bottom-0 left-0 right-0 z-30 max-w-md mx-auto bg-white/90 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800">
+            <div class="flex h-16 items-center justify-around px-2">
+                <!-- Home (Active by default for Panel) -->
+                <a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined fill-current">home</span>
+                    <span class="text-[10px] font-medium">Home</span>
+                </a>
+
+                <!-- Courses -->
+                <a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary dark:text-slate-500 dark:hover:text-primary transition-colors"
+                    href="#" onclick="showPanel('subjects'); return false;">
+                    <span class="material-symbols-outlined">school</span>
+                    <span class="text-[10px] font-medium">Courses</span>
+                </a>
+
+                <!-- Messages -->
+                <!-- Community/Messages -->
+                <a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary dark:text-slate-500 dark:hover:text-primary transition-colors"
+                    href="#" onclick="showPanel('community'); return false;">
+                    <div class="relative">
+                        <span class="material-symbols-outlined">chat_bubble</span>
+                    </div>
+                    <span class="text-[10px] font-medium">Community</span>
+                </a>
+
+                <!-- Profile -->
+                <a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary dark:text-slate-500 dark:hover:text-primary transition-colors"
+                    href="#">
+                    <span class="material-symbols-outlined">person</span>
+                    <span class="text-[10px] font-medium">Profile</span>
+                </a>
+            </div>
+
+            <!-- Home Indicator (iOS Style) -->
+            <div class="flex justify-center pb-2 pt-1">
+                <div class="h-1 w-32 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- Quiz Zen Mode (Phase 6) -->
+    <div id="quiz-mode"
+        class="fixed inset-0 z-[200] bg-white dark:bg-background-dark flex flex-col hidden overflow-hidden">
+        <!-- Progress Header -->
+        <div class="px-6 py-4">
+            <div class="flex justify-between items-center mb-2">
+                <span id="quiz-progress-text"
+                    class="text-xs font-bold text-slate-500 uppercase tracking-widest">Question 1/10</span>
+                <button onclick="quitQuiz()" class="text-slate-400 hover:text-red-500 transition">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div id="quiz-progress-bar" class="h-full bg-purple-600 transition-all duration-500" style="width: 0%">
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Container -->
+        <div class="flex-1 flex flex-col justify-center px-6 max-w-lg mx-auto w-full">
+            <div id="quiz-content" class="space-y-8">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+            <button id="quiz-next-btn" onclick="nextQuestion()"
+                class="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 dark:shadow-none transition flex items-center gap-2">
+                Siguiente
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="upload-modal"
+        class="fixed inset-0 z-[60] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div
+            class="bg-white dark:bg-surface-dark w-full max-w-md rounded-2xl p-6 shadow-2xl transform scale-95 transition-transform duration-300">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">Subir Entrega</h3>
+            <input type="hidden" id="upload-task-id">
+
+            <div
+                class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition relative">
+                <input type="file" id="fileInput" class="absolute inset-0 opacity-0 cursor-pointer"
+                    accept=".pdf,.doc,.docx,.jpg,.png">
+                <span class="material-symbols-outlined text-4xl text-slate-400 mb-2">cloud_upload</span>
+                <p class="text-sm font-medium text-slate-700 dark:text-slate-300">Click para seleccionar archivo</p>
+                <p id="file-name-display" class="text-xs text-slate-500 mt-1">PDF, Word, Imagen (Max 10MB)</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="upload-progress-container" class="hidden mt-4">
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="text-slate-500">Subiendo...</span>
+                    <span id="upload-percent" class="text-primary font-bold">0%</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div id="upload-bar" class="bg-primary h-full rounded-full transition-all duration-300"
+                        style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeUploadModal()"
+                    class="flex-1 py-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition font-medium">Cancelar</button>
+                <button onclick="submitCurrentAssignment()"
+                    class="flex-1 py-2 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition">Entregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal (Phase 4) -->
+    <div id="profile-modal"
+        class="fixed inset-0 z-[60] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div
+            class="bg-white dark:bg-surface-dark w-full max-w-md rounded-2xl p-6 shadow-2xl transform scale-95 transition-transform duration-300">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Perfil & Ajustes</h3>
+                <button onclick="closeProfileModal()"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form onsubmit="updateProfile(event)" class="space-y-4">
+                <!-- Avatar Upload -->
+                <div class="flex flex-col items-center gap-2 mb-4">
+                    <div class="relative group cursor-pointer">
+                        <div id="profile-preview"
+                            class="h-24 w-24 rounded-full border-4 border-slate-100 dark:border-slate-700 bg-cover bg-center"
+                            style="background-image: url('https://ui-avatars.com/api/?name=User&background=random');">
+                        </div>
+                        <div
+                            class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <span class="material-symbols-outlined text-white">camera_alt</span>
+                        </div>
+                        <input type="file" name="avatar" class="absolute inset-0 opacity-0 cursor-pointer"
+                            accept="image/*" onchange="previewAvatar(this)">
+                    </div>
+                    <p class="text-xs text-slate-500">Toque para cambiar foto</p>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-slate-500 uppercase">Nueva Contraseña</label>
+                    <input type="password" name="password" placeholder="Mínimo 6 caracteres"
+                        class="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+
+                <div class="pt-4 flex flex-col gap-3">
+                    <button type="submit"
+                        class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition">
+                        Guardar Cambios
+                    </button>
+                    <button type="button" onclick="logout()"
+                        class="w-full py-3 rounded-lg border border-red-200 dark:border-red-900/30 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition font-medium">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Courses View (Grid) -->
+    <div id="courses-view"
+        class="hidden w-full h-full min-h-screen max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('dashboard')"
+                class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mis Materias</h2>
+        </div>
+        <div id="courses-list" class="grid grid-cols-2 gap-4">
+            <!-- Courses injected here -->
+        </div>
+    </div>
+
+    <!-- Resources View (Detail) -->
+    <div id="resources-view"
+        class="hidden w-full h-full min-h-screen max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('subjects')"
+                class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 id="resource-subject-title" class="text-xl font-bold text-slate-900 dark:text-white">Recursos</h2>
+        </div>
+        <div id="resources-list" class="flex flex-col gap-3">
+            <!-- Resources injected here -->
+        </div>
+    </div>
+    <!-- Community/Chat Container (Hidden) -->
+    <div id="community-container"
+        class="hidden w-full h-full min-h-screen max-w-md mx-auto bg-white dark:bg-background-dark flex flex-col pb-20">
+        <!-- Chat Header -->
+        <div
+            class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center sticky top-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-sm z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="showPanel('dashboard')"
+                    class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <div class="relative">
+                    <div class="h-10 w-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                        <span class="material-symbols-outlined">groups</span>
+                    </div>
+                    <span
+                        class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
+                </div>
+                <div>
+                    <h2 class="font-bold text-slate-900 dark:text-white leading-tight">Aula General</h2>
+                    <p class="text-xs text-slate-500">32 Online • Grupo 501</p>
+                </div>
+            </div>
+            <button class="text-slate-400 hover:text-indigo-600 transition">
+                <span class="material-symbols-outlined">info</span>
+            </button>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="community-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-slate-900/50">
+            <!-- Messages will be injected here via JS -->
+            <!-- Placeholder -->
+            <div class="flex justify-center my-4">
+                <span class="text-xs bg-slate-200 dark:bg-slate-800 text-slate-500 px-3 py-1 rounded-full">Hoy</span>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="p-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-surface-dark">
+            <form onsubmit="sendGroupMessage(event)" class="flex gap-2 items-center">
+                <button type="button" class="text-slate-400 hover:text-indigo-500 transition p-2">
+                    <span class="material-symbols-outlined text-[20px]">add_circle</span>
+                </button>
+                <input type="text" id="group-chat-input" placeholder="Escribe un mensaje..."
+                    class="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <button type="submit"
+                    class="p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition shadow-md">
+                    <span class="material-symbols-outlined text-[18px] block">send</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Notification Sound -->
+    <audio id="notification-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+        preload="auto"></audio>
+
+    <!-- AI Chat Plugin -->
+    <!-- AI Chat Plugin (Phase 7 Final) -->
+    <!-- FAB -->
+    <button onclick="toggleChat()"
+        class="fixed bottom-20 right-4 z-50 h-14 w-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full shadow-lg flex items-center justify-center text-white hover:scale-110 transition-transform animate-bounce-slow">
+        <span class="material-symbols-outlined text-[28px]">smart_toy</span>
+    </button>
+
+    <!-- Chat Widget -->
+    <div id="ai-chat-widget"
+        class="fixed bottom-4 right-6 z-[60] w-80 md:w-96 h-[500px] bg-white dark:bg-surface-dark rounded-2xl shadow-2xl flex flex-col hidden border border-slate-200 dark:border-slate-800 transform origin-bottom-right transition-all duration-300 scale-90 opacity-0">
+        <!-- Header -->
+        <div
+            class="h-16 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-t-2xl flex items-center justify-between px-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-1.5 rounded-lg">
+                    <span class="material-symbols-outlined text-white">psychology</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-sm">AI Tutor</h3>
+                    <p class="text-[10px] text-white/80 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span> Online
+                    </p>
+                </div>
+            </div>
+            <button onclick="toggleChat()" class="text-white/80 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-background-dark/50">
+            <!-- Welcome Message -->
+            <div class="flex gap-3">
+                <div
+                    class="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 shrink-0">
+                    <span class="material-symbols-outlined text-[18px]">smart_toy</span>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark p-3 rounded-2xl rounded-tl-none shadow-sm text-sm text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-800 max-w-[85%]">
+                    ¡Hola Alex! Soy tu tutor IA. ¿En qué materia necesitas ayuda hoy? 🤖
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-4 bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 rounded-b-2xl">
+            <form onsubmit="sendAIMessage(event)" class="relative">
+                <input type="text" id="ai-input" placeholder="Pregunta algo..."
+                    class="w-full bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white rounded-full pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <button type="submit"
+                    class="absolute right-2 top-2 h-8 w-8 bg-purple-600 rounded-full flex items-center justify-center text-white hover:bg-purple-700 transition">
+                    <span class="material-symbols-outlined text-[18px]">send</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Socket.IO & SweetAlert2 -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Student Panel Logic Initialized');
+
+            // 1. Socket.IO Connection
+            const socket = io();
+
+            socket.on('connect', () => {
+                console.log('Conectado al servidor SocketIO');
+                // Join default room (e.g., student's group)
+                socket.emit('room_join', { room: 'grupo_501' });
+            });
+
+            // Listen for Real-time Notifications
+            socket.on('notification', (data) => {
+                showToast(data.message, data.type || 'info');
+                // Play Sound
+                const audio = document.getElementById('notification-sound');
+                if (audio) audio.play().catch(e => console.log('Audio blocked', e));
+            });
+
+            // Listen for Group Messages
+            socket.on('message', (data) => {
+                // data = { user: "Name", text: "Hello", avatar: "url", time: "10:00" }
+                appendGroupMessage(data);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Desconectado del servidor');
+            });
+
+            // 2. Load Data
+            loadStats();
+            loadMissions();
+            loadAssignments();
+
+            // --- Functions ---
+
+            async function loadStats() {
+                try {
+                    const response = await fetch('/api/student/stats');
+                    if (!response.ok) throw new Error('Failed to fetch stats');
+                    const data = await response.json();
+
+                    // Render Header Stats
+                    const headerHTML = `
+                        <!-- Profile Section -->
+                        <div class="relative mb-3">
+                            <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center" 
+                                 style="background-image: url('${data.avatar_url || 'https://ui-avatars.com/api/?name=' + (data.nombre || 'User') + '&background=random'}');"></div>
+                            <div class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark cursor-pointer hover:bg-blue-600 transition" onclick="openProfileModal()">
+                                 <span class="material-symbols-outlined text-[16px] block">edit</span>
+                            </div>
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">${data.nombre || 'Estudiante'}</h2>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">${data.rango || 'Nivel 1'} • ${data.xp} XP</p>
+
+                        <!-- Stats Cards Grid -->
+                        <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
+                            <!-- XP Card -->
+                            <div class="bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden group">
+                                 <div class="absolute -right-2 -top-2 opacity-20 group-hover:scale-110 transition-transform duration-500">
+                                    <span class="material-symbols-outlined text-[80px]">star</span>
+                                 </div>
+                                 <p class="text-white/80 text-xs font-medium mb-1">Total XP</p>
+                                 <h3 class="text-2xl font-bold">${data.xp || 0}</h3>
+                                 <div class="w-full bg-white/30 h-1 rounded-full mt-2">
+                                    <div class="bg-white h-1 rounded-full" style="width: ${data.xp_percent || 0}%"></div>
+                                 </div>
+                            </div>
+                            <!-- Coins Card -->
+                            <div class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl p-4 text-white shadow-lg relative overflow-hidden group">
+                                 <div class="absolute -right-2 -top-2 opacity-20 group-hover:scale-110 transition-transform duration-500">
+                                    <span class="material-symbols-outlined text-[80px]">monetization_on</span>
+                                 </div>
+                                 <p class="text-white/80 text-xs font-medium mb-1">EduCoins</p>
+                                 <h3 class="text-2xl font-bold">${data.educoins || 0}</h3>
+                                 <button class="mt-2 text-[10px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-white font-medium transition" onclick="alert('Ir a Tienda')">
+                                    Redeem
+                                 </button>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('header-stats').innerHTML = headerHTML;
+
+                } catch (error) {
+                    console.error('Error loading stats:', error);
+                    // Keep dummy data if fail or cleaner handling
+                }
+            }
+
+            async function loadMissions() {
+                try {
+                    const response = await fetch('/api/student/missions');
+                    if (!response.ok) throw new Error('Failed to fetch missions');
+                    const missions = await response.json();
+
+                    const container = document.getElementById('missions-container');
+
+                    if (!missions || missions.length === 0) {
+                        container.innerHTML = '<p class="text-center text-sm text-slate-500 p-4">No hay misiones activas.</p>';
+                        return;
+                    }
+
+                    // Shell for scrollable area
+                    let html = `
+                        <div class="flex items-center justify-between mb-3 px-1">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Misiones Diarias</h3>
+                            <span class="text-xs text-primary font-medium cursor-pointer hover:underline">Ver Todas</span>
+                        </div>
+                        <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                    `;
+
+                    missions.forEach(m => {
+                        // Determine colors/icons based on mission type
+                        const isTarget = m.type === 'target';
+                        const bgColor = isTarget ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-green-100 dark:bg-green-900/30';
+                        const textColor = isTarget ? 'text-purple-600' : 'text-green-600';
+                        const barColor = isTarget ? 'bg-purple-500' : 'bg-green-500';
+                        const icon = m.type === 'target' ? 'target' : 'menu_book';
+                        const percent = (m.progress / m.total) * 100;
+
+                        html += `
+                            <div class="min-w-[200px] bg-white dark:bg-surface-dark p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2">
+                                <div class="flex items-center gap-2">
+                                    <div class="p-2 ${bgColor} ${textColor} rounded-lg shrink-0">
+                                        <span class="material-symbols-outlined text-[20px]">${icon}</span>
+                                    </div>
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight">${m.title}</p>
+                                </div>
+                                <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-1">
+                                    <div class="${barColor} h-1.5 rounded-full" style="width: ${percent}%"></div>
+                                </div>
+                                <div class="flex justify-between items-center text-xs text-slate-500">
+                                    <span>+${m.xp_reward} XP</span>
+                                    <span>${m.progress}/${m.total}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `</div>`;
+                    container.innerHTML = html;
+
+                } catch (error) {
+                    console.error('Error loading missions:', error);
+                }
+            }
+
+            async function loadAssignments() {
+                try {
+                    const response = await fetch('/api/assignments');
+                    if (!response.ok) throw new Error('Failed to fetch assignments');
+                    const assignments = await response.json();
+
+                    const container = document.getElementById('assignments-container');
+
+                    // Header reused
+                    let html = `
+                        <div class="flex items-center justify-between mb-3 px-1">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Assignments</h3>
+                            <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+                                <button class="px-2 py-0.5 text-xs font-medium rounded-md bg-white dark:bg-surface-dark shadow-sm text-slate-900 dark:text-white">To Do</button>
+                                <button class="px-2 py-0.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Done</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-3">
+                    `;
+
+                    if (!assignments || assignments.length === 0) {
+                        html += `
+                            <div class="flex flex-col items-center justify-center py-8 text-center bg-white dark:bg-surface-dark rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                                <span class="material-symbols-outlined text-4xl text-green-500 mb-2">check_circle</span>
+                                <p class="text-slate-900 dark:text-white font-medium">¡Todo al día!</p>
+                                <p class="text-xs text-slate-500">No tienes tareas pendientes.</p>
+                            </div>
+                         `;
+                    } else {
+                        assignments.forEach(task => {
+                            // Style Logic based on status/subject
+                            const isPending = task.status === 'Pending';
+                            const badgeBg = isPending ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-blue-100 dark:bg-blue-900/30';
+                            const badgeText = isPending ? 'text-orange-700 dark:text-orange-300' : 'text-blue-700 dark:text-blue-300';
+
+                            // Image / Icon placeholder
+                            // Using a consistent placeholder logic or random colors for thumb
+
+                            html += `
+                            <div class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer" onclick="openAssignment(${task.id})">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div class="flex flex-1 flex-col gap-1">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="inline-flex items-center rounded-full ${badgeBg} px-2.5 py-0.5 text-xs font-medium ${badgeText}">
+                                                ${task.status}
+                                            </span>
+                                            <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
+                                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">${task.subject}</span>
+                                        </div>
+                                        <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">${task.title}</h3>
+                                        <div class="mt-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                            <span class="material-symbols-outlined text-[18px]">event</span>
+                                            <p class="text-sm">Due ${task.due_date}</p>
+                                        </div>
+                                    </div>
+                                    <div class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300">
+                                         <span class="material-symbols-outlined text-[32px]">description</span>
+                                    </div>
+                                </div>
+                            </div>
+                            `;
+                        });
+                    }
+
+                    html += `
+                        </div>
+                        <button class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
+                            View All Assignments
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                        </button>
+                    `;
+
+                    container.innerHTML = html;
+
+                } catch (error) {
+                    console.error('Error loading assignments:', error);
+                }
+            }
+        });
+        // Helper for interactivity
+        function openAssignment(id) {
+            Swal.fire({
+                title: 'Entregar Tarea',
+                text: 'Selecciona tu archivo (PDF, Word, Imagen)',
+                input: 'file',
+                inputAttributes: {
+                    'accept': '.pdf,.doc,.docx,.jpg',
+                    'aria-label': 'Sube tu tarea aquí'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Enviar Entrega',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#137fec',
+                showLoaderOnConfirm: true,
+                preConfirm: async (file) => {
+                    if (!file) {
+                        Swal.showValidationMessage('Por favor selecciona un archivo');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('assignment_id', id);
+
+                    try {
+                        const response = await fetch('/api/submit_assignment', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(response.statusText);
+                        }
+
+                        return await response.json();
+                    } catch (error) {
+                        Swal.showValidationMessage(
+                            `Error al subir: ${error}`
+                        );
+                    }
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: '¡Enviado!',
+                        text: 'Tu tarea ha sido enviada correctamente.',
+                        icon: 'success',
+                        confirmButtonColor: '#137fec'
+                    });
+                    // Refresh stats/assignments
+                    loadStats();
+                    loadAssignments();
+                }
+            });
+        }
+        // --- Phase 1: Academic Core Additions ---
+
+        // Panel Switching
+        function showPanel(panelName) {
+            const dashboard = document.querySelector('main');
+            const header = document.getElementById('header-stats');
+            const subjects = document.getElementById('subjects-container');
+
+            if (panelName === 'subjects') {
+                dashboard.classList.add('hidden');
+                header.classList.add('hidden'); // Hide header in subjects view
+                subjects.classList.remove('hidden');
+                loadSubjects();
+            } else {
+                dashboard.classList.remove('hidden');
+                header.classList.remove('hidden');
+                subjects.classList.add('hidden');
+            }
+        }
+
+        // Modal Logic
+        function openUploadModal(id) {
+            document.getElementById('upload-task-id').value = id;
+            const modal = document.getElementById('upload-modal');
+            modal.classList.remove('hidden');
+            // Tick to allow transition
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            }, 10);
+
+            // File input listener for name display
+            document.getElementById('fileInput').onchange = function () {
+                if (this.files[0]) document.getElementById('file-name-display').innerText = this.files[0].name;
+            };
+        }
+
+        function closeUploadModal() {
+            const modal = document.getElementById('upload-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('upload-progress-container').classList.add('hidden');
+                document.getElementById('fileInput').value = '';
+                document.getElementById('file-name-display').innerText = 'PDF, Word, Imagen (Max 10MB)';
+            }, 300);
+        }
+
+        async function submitCurrentAssignment() {
+            const id = document.getElementById('upload-task-id').value;
+            const fileInput = document.getElementById('fileInput');
+
+            if (!fileInput.files[0]) {
+                Swal.fire('Error', 'Debes seleccionar un archivo', 'warning');
+                return;
+            }
+
+            // Show Progress
+            const progressContainer = document.getElementById('upload-progress-container');
+            const progressBar = document.getElementById('upload-bar');
+            const progressText = document.getElementById('upload-percent');
+
+            progressContainer.classList.remove('hidden');
+
+            // Simulate Progress (since fetch doesn't support progress events easily without XHR)
+            let percent = 0;
+            const interval = setInterval(() => {
+                percent += 10;
+                if (percent > 90) clearInterval(interval);
+                progressBar.style.width = percent + '%';
+                progressText.innerText = percent + '%';
+            }, 200);
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch(`/api/assignments/${id}/submit`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(interval);
+                progressBar.style.width = '100%';
+                progressText.innerText = '100%';
+
+                if (!response.ok) throw new Error(response.statusText);
+
+                setTimeout(() => {
+                    closeUploadModal();
+                    Swal.fire({
+                        title: '¡Enviado!',
+                        text: 'Tu tarea se ha subido correctamente.',
+                        icon: 'success',
+                        confirmButtonColor: '#137fec'
+                    });
+                    loadAssignments(); // Refresh
+                }, 500);
+
+            } catch (error) {
+                clearInterval(interval);
+                progressContainer.classList.add('hidden');
+                Swal.fire('Error', 'Hubo un problema al subir el archivo.', 'error');
+                console.error(error);
+            }
+        }
+
+        // 5. Courses & Resources Logic
+        async function loadCourses() {
+            let courses = [];
+            try {
+                // const res = await fetch('/api/student/subjects');
+                // courses = await res.json();
+                courses = [
+                    { id: 1, name: 'Matemáticas', prof: 'Mr. Anderson', icon: 'calculate', color: 'orange' },
+                    { id: 2, name: 'Historia', prof: 'Mrs. Smith', icon: 'history_edu', color: 'blue' },
+                    { id: 3, name: 'Física', prof: 'Dr. Feynman', icon: 'science', color: 'purple' },
+                    { id: 4, name: 'Literatura', prof: 'Ms. Rowling', icon: 'menu_book', color: 'pink' }
+                ];
+            } catch (e) { console.log(e); }
+
+            const list = document.getElementById('courses-list');
+            list.innerHTML = courses.map(c => `
+            <div onclick="openSubjectDetails(${c.id}, '${c.name}')"
+                class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-3 cursor-pointer hover:shadow-md transition">
+                <div
+                    class="h-10 w-10 rounded-lg bg-gradient-to-br from-${c.color}-400 to-${c.color}-600 flex items-center justify-center text-white shadow-lg shadow-${c.color}-200">
+                    <span class="material-symbols-outlined">${c.icon}</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 dark:text-white truncate">${c.name}</h3>
+                    <p class="text-xs text-slate-500 truncate">${c.prof}</p>
+                </div>
+            </div>
+            `).join('');
+        }
+
+        async function openSubjectDetails(courseId, courseName) {
+            // Switch to Resources Panel manually
+            document.getElementById('courses-view').classList.add('hidden');
+            document.getElementById('resources-view').classList.remove('hidden');
+            document.getElementById('resource-subject-title').innerText = courseName;
+
+            const list = document.getElementById('resources-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Loading...</span></div>';
+
+            try {
+                // const res = await fetch(`/api/courses/${courseId}/resources`);
+                // const resources = await res.json();
+
+                // Mock Resources
+                const resources = [
+                    { id: 101, name: 'Guía de Estudio.pdf', type: 'pdf', size: '2.4 MB' },
+                    { id: 102, name: 'Clase Grabada.mp4', type: 'video', size: '150 MB' },
+                    { id: 103, name: 'Ejercicios Resueltos.docx', type: 'doc', size: '500 KB' }
+                ];
+
+                list.innerHTML = resources.map(r => `
+                <div class="flex items-center justify-between p-3 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="h-10 w-10 shrink-0 rounded-lg ${r.type === 'pdf' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'} flex items-center justify-center">
+                            <span class="material-symbols-outlined">${r.type === 'pdf' ? 'picture_as_pdf' : 'description'}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-medium text-sm text-slate-900 dark:text-white truncate">${r.name}</h4>
+                            <p class="text-xs text-slate-500">${r.size} • ${r.type.toUpperCase()}</p>
+                        </div>
+                    </div>
+                    <a href="/download/${r.id}" target="_blank" class="p-2 text-slate-400 hover:text-primary transition rounded-full hover:bg-slate-50 dark:hover:bg-slate-800">
+                        <span class="material-symbols-outlined">download</span>
+                    </a>
+                </div>
+                `).join('');
+
+            } catch (e) {
+                list.innerHTML = '<p class="text-center text-slate-500">Error cargando recursos.</p>';
+            }
+        }
+
+        // Alias for compat
+        const loadSubjects = loadCourses;
+        // --- Phase 2: The Brain (AI & Quiz) ---
+
+        // 1. AI Chat
+        function toggleChat() {
+            const widget = document.getElementById('ai-chat-widget');
+            const isHidden = widget.classList.contains('hidden');
+
+            if (isHidden) {
+                widget.classList.remove('hidden');
+                // Animate In
+                setTimeout(() => {
+                    widget.classList.remove('scale-90', 'opacity-0');
+                    widget.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                // Animate Out
+                widget.classList.remove('scale-100', 'opacity-100');
+                widget.classList.add('scale-90', 'opacity-0');
+                setTimeout(() => {
+                    widget.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        async function sendAIMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('ai-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add User Message
+            addChatMessage(message, 'user');
+            input.value = '';
+
+            // Show Typing Indicator
+            const typingId = addTypingIndicator();
+
+            try {
+                const response = await fetch('/api/chat_ai', { // Endpoint Update
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+
+                removeChatMessage(typingId);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addChatMessage(data.response, 'bot'); // Assumed { response: "text" }
+                } else {
+                    addChatMessage("Lo siento, no puedo conectarme con mi cerebro ahora. 🧠💤", 'bot');
+                }
+
+            } catch (error) {
+                removeChatMessage(typingId);
+                addChatMessage("Error de conexión. Intenta más tarde.", 'bot');
+                console.error(error);
+            }
+
+            // Auto scroll
+            const container = document.getElementById('chat-messages');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addChatMessage(text, sender) {
+            const container = document.getElementById('chat-messages');
+            const isBot = sender === 'bot';
+
+            const html = `
+    <div class="flex gap-3 ${isBot ? '' : 'flex-row-reverse'} animate-fade-in-up">
+        ${isBot ? `
+        <div
+            class="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 shrink-0">
+            <span class="material-symbols-outlined text-[18px]">smart_toy</span>
+        </div>` : ''}
+
+        <div class="p-3 rounded-2xl shadow-sm text-sm max-w-[85%] 
+                    ${isBot ? 'bg-white dark:bg-surface-dark text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-800 rounded-tl-none'
+                    : 'bg-purple-600 text-white rounded-tr-none'}">
+            ${text}
+        </div>
+    </div>
+    `;
+            container.insertAdjacentHTML('beforeend', html);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addTypingIndicator() {
+            const id = 'typing-' + Date.now();
+            const container = document.getElementById('chat-messages');
+            const html = `
+    <div id="${id}" class="flex gap-3 animate-pulse">
+        <div
+            class="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 shrink-0">
+            <span class="material-symbols-outlined text-[18px]">smart_toy</span>
+        </div>
+        <div
+            class="bg-white dark:bg-surface-dark p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 dark:border-slate-800">
+            <div class="flex gap-1 h-5 items-center">
+                <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+                <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-100"></div>
+                <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce delay-200"></div>
+            </div>
+        </div>
+    </div>
+    `;
+            container.insertAdjacentHTML('beforeend', html);
+            return id;
+        }
+        function removeChatMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        // 2. Quiz Module (Phase 6 Refactor)
+        let currentQuiz = null;
+        let currentQuestionIndex = 0;
+        let quizAnswers = {};
+
+        async function startQuiz(quizId) {
+            Swal.fire({
+                title: 'Preparando Entorno...',
+                timer: 800,
+                didOpen: () => Swal.showLoading()
+            }).then(async () => {
+                try {
+                    // Fetch Quiz Data (Mock or Real)
+                    // const res = await fetch(`/api/quiz/${quizId}`);
+                    // currentQuiz = await res.json();
+
+                    // Mock Data
+                    currentQuiz = {
+                        id: quizId,
+                        title: "Física Fundamental",
+                        questions: [
+                            { id: 1, text: "¿Cuál es la unidad de fuerza en el SI?", options: ["Newton", "Joule", "Pascal", "Watt"] },
+                            { id: 2, text: "La velocidad es una magnitud...", options: ["Escalar", "Vectorial", "Fundamental", "Derivada"] },
+                            { id: 3, text: "¿Quién formuló las leyes del movimiento?", options: ["Einstein", "Newton", "Galileo", "Tesla"] }
+                        ]
+                    };
+
+                    currentQuestionIndex = 0;
+                    quizAnswers = {};
+
+                    // Enter Zen Mode
+                    document.getElementById('main-app-container').classList.add('hidden');
+                    document.getElementById('quiz-mode').classList.remove('hidden');
+
+                    renderQuestion();
+
+                } catch (e) {
+                    Swal.fire('Error', 'No se pudo cargar el examen.', 'error');
+                }
+            });
+        }
+
+        function renderQuestion() {
+            const q = currentQuiz.questions[currentQuestionIndex];
+            const total = currentQuiz.questions.length;
+
+            // Update Progress
+            const progress = ((currentQuestionIndex + 1) / total) * 100;
+            document.getElementById('quiz-progress-bar').style.width = `${progress}%`;
+            document.getElementById('quiz-progress-text').innerText = `Pregunta ${currentQuestionIndex + 1}/${total}`;
+
+            // Render Content
+            const container = document.getElementById('quiz-content');
+            container.innerHTML = `
+                <h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight animate-fade-in-up">
+                     ${q.text}
+                </h2>
+                <div class="space-y-3 mt-6">
+                     ${q.options.map((opt, idx) => `
+                        <label class="block cursor-pointer group animate-fade-in-up" style="animation-delay: ${idx * 50}ms">
+                            <input type="radio" name="q_current" value="${idx}" class="peer sr-only" onchange="selectAnswer(${q.id}, ${idx})">
+                            <div class="w-full text-left p-4 rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-surface-dark 
+                                        peer-checked:border-purple-600 peer-checked:bg-purple-50 dark:peer-checked:bg-purple-900/20 
+                                        hover:border-purple-400 transition-all duration-200 flex items-center justify-between">
+                                <span class="font-medium text-slate-700 dark:text-slate-300 peer-checked:text-purple-700 dark:peer-checked:text-purple-300">${opt}</span>
+                                <span class="material-symbols-outlined text-purple-600 opacity-0 transform scale-50 peer-checked:opacity-100 peer-checked:scale-100 transition-all">check_circle</span>
+                            </div>
+                        </label>
+                     `).join('')}
+                </div>
+            `;
+
+            // Update Button Logic
+            const btn = document.getElementById('quiz-next-btn');
+            const isLast = currentQuestionIndex === total - 1;
+            btn.innerHTML = isLast ? 'Finalizar <span class="material-symbols-outlined">check</span>' : 'Siguiente <span class="material-symbols-outlined">arrow_forward</span>';
+            // Disable button until selection (optional, here we let them skip? No, assume selection required)
+            // btn.disabled = true; // Could re-enable on selectAnswer
+        }
+
+        function selectAnswer(qid, answerIdx) {
+            quizAnswers[qid] = answerIdx;
+        }
+
+        function nextQuestion() {
+            const q = currentQuiz.questions[currentQuestionIndex];
+            if (quizAnswers[q.id] === undefined) {
+                Swal.fire({
+                    toast: true, position: 'top', icon: 'warning',
+                    title: 'Selecciona una respuesta', showConfirmButton: false, timer: 1500
+                });
+                return;
+            }
+
+            if (currentQuestionIndex < currentQuiz.questions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                submitQuizResults();
+            }
+        }
+
+        async function submitQuizResults() {
+            Swal.fire({
+                title: 'Calificando...',
+                timer: 2000,
+                timerProgressBar: true,
+                didOpen: () => Swal.showLoading()
+            }).then(async () => {
+                // Mock Backend Submission
+                // await fetch('/api/submit_quiz', { method: 'POST', body: JSON.stringify(quizAnswers) });
+
+                // Mock Score randomized
+                const score = Math.floor(Math.random() * 3) + 8; // 8, 9 or 10
+
+                Swal.fire({
+                    title: '¡Examen Completado!',
+                    html: `
+                        <div class="flex flex-col items-center">
+                            <div class="h-24 w-24 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-4">
+                                <span class="material-symbols-outlined text-5xl">emoji_events</span>
+                            </div>
+                            <p class="text-4xl font-bold text-slate-900 dark:text-white mb-1">${score}/10</p>
+                            <p class="text-slate-500">¡Gran trabajo!</p>
+                        </div>
+                    `,
+                    confirmButtonText: 'Volver al Inicio',
+                    confirmButtonColor: '#137fec',
+                    allowOutsideClick: false
+                }).then(() => {
+                    quitQuiz();
+                });
+            });
+        }
+
+        function quitQuiz() {
+            document.getElementById('quiz-mode').classList.add('hidden');
+            document.getElementById('main-app-container').classList.remove('hidden');
+        }
+
+        function restoreDashboard() {
+            quitQuiz();
+        }
+
+
+
+        // --- Phase 3: Social & Real-time ---
+
+        // Panel Switching Updated
+        function showPanel(panelName) {
+            const dashboard = document.querySelector('main');
+            const header = document.getElementById('header-stats');
+            const courses = document.getElementById('courses-view');
+            const resources = document.getElementById('resources-view');
+            const community = document.getElementById('community-container');
+
+            // Reset all
+            dashboard.classList.add('hidden');
+            header.classList.add('hidden');
+            if (courses) courses.classList.add('hidden');
+            if (resources) resources.classList.add('hidden');
+            community.classList.add('hidden');
+
+            // Restore Main content backup if needed (from Quiz)
+            if (window.originalMainContent && document.querySelector('main').innerHTML !== window.originalMainContent) {
+                restoreDashboard(); // resets main to dashboard state
+                // If we are switching to non-dashboard, hide it again immediately below
+                if (panelName !== 'dashboard') document.querySelector('main').classList.add('hidden');
+            }
+
+            if (panelName === 'subjects') {
+                document.getElementById('courses-view').classList.remove('hidden');
+                loadCourses();
+            } else if (panelName === 'community') {
+                community.classList.remove('hidden');
+                scrollToBottomChat();
+            } else {
+                dashboard.classList.remove('hidden');
+                header.classList.remove('hidden');
+            }
+        }
+        // Group Chat Logic
+        function sendGroupMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('group-chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // Optimistic UI Update
+            const myData = {
+                user: "Yo",
+                text: text,
+                avatar: "https://ui-avatars.com/api/?name=Alex+Doe&background=random", // Current User Avatar
+                isMe: true,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            appendGroupMessage(myData);
+
+            // Emit to Server
+            socket.emit('message', { room: 'grupo_501', text: text, user: 'Alex Doe' }); // Mock user name
+
+            input.value = '';
+        }
+
+        function appendGroupMessage(data) {
+            const container = document.getElementById('community-messages');
+            const isMe = data.isMe || data.user === 'Alex Doe'; // Simple check
+
+            const html = `
+    <div class="flex gap-3 mb-4 ${isMe ? 'flex-row-reverse' : ''} animate-fade-in-up">
+        <div class="h-8 w-8 rounded-full bg-slate-200 border border-white shadow-sm flex-shrink-0 bg-cover bg-center"
+            style="background-image: url('${data.avatar || 'https://ui-avatars.com/api/?name=' + data.user}');"></div>
+
+        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]">
+            <span class="text-[10px] text-slate-500 mb-1 ml-1">${data.user} • ${data.time || 'Now'}</span>
+            <div
+                class="px-4 py-2 rounded-2xl shadow-sm text-sm 
+                        ${isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white dark:bg-surface-dark text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-800 rounded-tl-none'}">
+                ${data.text}
+            </div>
+        </div>
+    </div>
+    `;
+
+            container.insertAdjacentHTML('beforeend', html);
+            scrollToBottomChat();
+        }
+
+        function scrollToBottomChat() {
+            const container = document.getElementById('community-messages');
+            if (container) container.scrollTop = container.scrollHeight;
+        }
+
+        // Toast Notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+
+            // Icons/Colors
+            const config = {
+                success: { icon: 'check_circle', color: 'bg-green-500' },
+                error: { icon: 'error', color: 'bg-red-500' },
+                info: { icon: 'notifications_active', color: 'bg-blue-500' },
+                warning: { icon: 'warning', color: 'bg-orange-500' }
+            };
+            const style = config[type] || config.info;
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center gap-3 w-full max-w-xs p-4 rounded-xl shadow-lg bg-white
+    dark:bg-surface-dark border-l-4 ${style.color.replace('bg-', 'border-')} transform transition-all duration-300
+    translate-x-full opacity-0`;
+
+            toast.innerHTML = `
+    <div class="p-2 rounded-full ${style.color} text-white shrink-0">
+        <span class="material-symbols-outlined text-[20px]">${style.icon}</span>
+    </div>
+    <div>
+        <h4 class="font-bold text-sm text-slate-900 dark:text-white capitalize">${type}</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400">${message}</p>
+    </div>
+    `;
+
+            container.appendChild(toast);
+
+            // Animate In
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            });
+
+            // Auto Remove
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // --- Phase 4: Profile & Settings ---
+
+        function openProfileModal() {
+            // Pre-fill if we had the data stored, but for now just open
+            const modal = document.getElementById('profile-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profile-modal');
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function previewAvatar(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('profile-preview').style.backgroundImage = `url('${e.target.result}')`;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function updateProfile(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            // Basic validation
+            if (!formData.get('password') && !formData.get('avatar').name) {
+                Swal.fire('Info', 'No has realizado cambios.', 'info');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/update_profile', { // Endpoint assumed
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    Swal.fire('¡Éxito!', 'Perfil actualizado correctamente.', 'success');
+                    closeProfileModal();
+                    loadStats(); // Reload header
+                } else {
+                    throw new Error('Failed to update');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'No se pudo actualizar el perfil.', 'error');
+            }
+        }
+
+        function logout() {
+            Swal.fire({
+                title: '¿Cerrar Sesión?',
+                text: "Tendrás que iniciar sesión de nuevo.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Sí, cerrar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/logout';
+                }
+            });
+        }
+
+    </script>
+</body>
+
+</html>

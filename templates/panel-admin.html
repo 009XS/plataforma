@@ -1,0 +1,2269 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo - EduPlatform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #8A6BBE;
+            --primary-dark: #7a5ba8;
+            --secondary: #5A9BD5;
+            --sidebar-bg: #1e293b;
+            --sidebar-dark: #0f172a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: #FFFFFF;
+            padding: 15px 0;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #000000;
+        }
+
+        .logo span {
+            color: #8A6BBE;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8A6BBE, #5A9BD5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-details h3 {
+            font-size: 14px;
+            color: #000000;
+            font-weight: 600;
+        }
+
+        .user-details p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .logout-btn {
+            background: none;
+            border: 2px solid #8A6BBE;
+            color: #8A6BBE;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #8A6BBE;
+            color: white;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+
+        .welcome-section {
+            grid-column: span 4;
+            background: linear-gradient(135deg, #8A6BBE, #5A9BD5);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .welcome-section h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .welcome-section p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            font-size: 24px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .full-width {
+            grid-column: span 4;
+        }
+
+        .half-width {
+            grid-column: span 2;
+        }
+
+        .three-quarters {
+            grid-column: span 3;
+        }
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .quick-stat {
+            text-align: center;
+            padding: 25px 15px;
+            background: rgba(138, 107, 190, 0.05);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .quick-stat:hover {
+            background: rgba(138, 107, 190, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .quick-stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #8A6BBE;
+            margin-bottom: 5px;
+        }
+
+        .quick-stat-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: #5A9BD5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4a8bc2;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #8A6BBE;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7a5ba8;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #16a34a;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .user-management-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .user-management-table th,
+        .user-management-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #E8E9EA;
+        }
+
+        .user-management-table th {
+            background: rgba(138, 107, 190, 0.05);
+            font-weight: 600;
+            font-size: 14px;
+            color: #000000;
+        }
+
+        .user-management-table td {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .user-management-table tr:hover {
+            background: rgba(138, 107, 190, 0.02);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(34, 197, 94, 0.1);
+            color: #059669;
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .status-pending {
+            background: rgba(249, 115, 22, 0.1);
+            color: #ea580c;
+        }
+
+        .btn-table {
+            padding: 4px 8px;
+            font-size: 11px;
+            margin: 2px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            background: rgba(138, 107, 190, 0.05);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-placeholder {
+            text-align: center;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #000000;
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #E8E9EA;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #5A9BD5;
+        }
+
+        .search-filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: end;
+        }
+
+        .search-group {
+            flex: 1;
+        }
+
+        .filter-group {
+            min-width: 150px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #FFFFFF;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: rgba(0, 0, 0, 0.2) 0px 8px 24px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .notification-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            border: 1px solid #E8E9EA;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .notification-item:hover {
+            background: rgba(138, 107, 190, 0.02);
+            border-color: #8A6BBE;
+        }
+
+        .notification-icon {
+            font-size: 20px;
+        }
+
+        .notification-content h5 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 5px;
+        }
+
+        .notification-content p {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .notification-time {
+            font-size: 11px;
+            color: #8A6BBE;
+            margin-left: auto;
+        }
+
+        .table-error {
+            text-align: center;
+            padding: 20px;
+            color: #dc2626;
+            font-size: 14px;
+        }
+
+        .table-no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Estilos para el botón de apertura del modal */
+        .open-modal-btn {
+            padding: 12px 20px;
+            background-color: #8A6BBE;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            width: auto;
+        }
+
+        .open-modal-btn:hover {
+            background-color: #7a5ba8;
+            transform: translateY(-1px);
+        }
+
+        /* Estilos para el contenedor de botones dentro del modal */
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 48%;
+        }
+
+        #save-btn {
+            background-color: #22c55e;
+            color: white;
+        }
+
+        #save-btn:hover {
+            background-color: #16a34a;
+            transform: translateY(-1px);
+        }
+
+        #cancel-btn {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        #cancel-btn:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .success-msg {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #c3e6cb;
+            text-align: center;
+        }
+
+        .error-msg {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #f5c6cb;
+            text-align: center;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .full-width {
+                grid-column: span 3;
+            }
+
+            .half-width {
+                grid-column: span 2;
+            }
+
+            .three-quarters {
+                grid-column: span 3;
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 20px 15px;
+                gap: 20px;
+            }
+
+            .welcome-section {
+                grid-column: span 1;
+                padding: 25px 20px;
+            }
+
+            .welcome-section h1 {
+                font-size: 24px;
+            }
+
+            .full-width,
+            .half-width,
+            .three-quarters {
+                grid-column: span 1;
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .search-filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .nav-container {
+                padding: 0 15px;
+            }
+
+            .user-details {
+                display: none;
+            }
+        }
+
+        /* === SIDEBAR STYLES === */
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 50;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #374151;
+        }
+
+        .sidebar-header h1 {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .sidebar-header h1 span {
+            color: var(--primary);
+        }
+
+        .sidebar-user {
+            padding: 15px 20px;
+            background: var(--sidebar-dark);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .sidebar-user-info p {
+            font-size: 13px;
+        }
+
+        .sidebar-user-info small {
+            color: #9ca3af;
+            font-size: 11px;
+        }
+
+        .sidebar-nav {
+            padding: 15px 0;
+        }
+
+        .nav-section {
+            padding: 10px 20px 5px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #6b7280;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #d1d5db;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-link:hover {
+            background: rgba(138, 107, 190, 0.15);
+            color: white;
+        }
+
+        .nav-link.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-link i {
+            width: 24px;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        .nav-link span {
+            font-size: 14px;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .sidebar-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #374151;
+            margin-top: auto;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .top-header {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .content-section {
+            display: none;
+            padding: 25px 30px;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>Edu<span>Platform</span></h1>
+            </div>
+            <div class="sidebar-user">
+                <div class="sidebar-avatar" id="sidebarAvatar">AD</div>
+                <div class="sidebar-user-info">
+                    <p>{{ session['user_name'] or 'Administrador' }}</p>
+                    <small><i class="fas fa-shield-alt"></i> Administrador</small>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">Principal</div>
+                <a class="nav-link active" onclick="showSection('dashboard')"><i
+                        class="fas fa-home"></i><span>Dashboard</span></a>
+                <a class="nav-link" onclick="showSection('usuarios')"><i
+                        class="fas fa-users"></i><span>Usuarios</span></a>
+                <a class="nav-link" onclick="showSection('horarios')"><i
+                        class="fas fa-calendar-alt"></i><span>Horarios</span></a>
+
+                <div class="nav-section">Académico</div>
+                <a class="nav-link" onclick="showSection('encuestas')"><i class="fas fa-poll"></i><span>Encuestas
+                        Docentes</span></a>
+                <a class="nav-link" onclick="showSection('reportes')"><i
+                        class="fas fa-chart-bar"></i><span>Reportes</span></a>
+                <a class="nav-link" onclick="showSection('rendimiento')"><i
+                        class="fas fa-chart-line"></i><span>Rendimiento</span></a>
+
+                <div class="nav-section">Sistema</div>
+                <a class="nav-link" onclick="showSection('notificaciones')"><i
+                        class="fas fa-bell"></i><span>Notificaciones</span></a>
+                <a class="nav-link" onclick="showSection('logs')"><i class="fas fa-history"></i><span>Logs
+                        Auditoría</span></a>
+                <a class="nav-link" onclick="showSection('backup')"><i
+                        class="fas fa-database"></i><span>Backup/Restore</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{{ url_for('logout') }}" class="nav-link" style="color:#ef4444;"><i
+                        class="fas fa-sign-out-alt"></i><span>Cerrar Sesión</span></a>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <header class="top-header">
+                <div style="display:flex;align-items:center;gap:15px;">
+                    <button onclick="toggleSidebar()" class="action-btn"
+                        style="width:auto;padding:8px 12px;display:none;" id="menuBtn"><i
+                            class="fas fa-bars"></i></button>
+                    <h2 id="pageTitle" style="font-size:18px;font-weight:600;">Dashboard</h2>
+                </div>
+                <div style="display:flex;align-items:center;gap:15px;">
+                    <span style="font-size:13px;color:#666;">{{ session['user_name'] or 'Admin' }}</span>
+                    <div class="user-avatar" id="userAvatar" style="width:35px;height:35px;font-size:12px;"></div>
+                </div>
+            </header>
+
+            <!-- SECTION: Dashboard -->
+            <div id="section-dashboard" class="content-section active">
+                <h1 class="section-title">📊 Dashboard Administrativo</h1>
+                <p style="color:#666;margin-bottom:25px;">Gestiona usuarios, genera reportes y supervisa el rendimiento
+                    general de la institución.</p>
+
+                <!-- STATS CARD FIRST -->
+                <div class="card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">📊</span>
+                        <h2 class="card-title">Estadísticas Institucionales</h2>
+                    </div>
+
+                    <div class="quick-stats">
+                        <div class="quick-stat">
+                            <div class="quick-stat-number">{{ total_alumnos or '0' }}</div>
+                            <div class="quick-stat-label">Total Estudiantes</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="quick-stat-number">{{ active_teachers or '0' }}</div>
+                            <div class="quick-stat-label">Docentes Activos</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="quick-stat-number">{{ registered_tutors or '0' }}</div>
+                            <div class="quick-stat-label">Tutores Registrados</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="quick-stat-number">{{ general_average or '0.0' }}</div>
+                            <div class="quick-stat-label">Promedio General</div>
+                        </div>
+                        <div class="quick-stat">
+                            <div class="quick-stat-number">{{ average_attendance or '0' }}%</div>
+                            <div class="quick-stat-label">Asistencia Promedio</div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End section-dashboard -->
+
+            <!-- SECTION: Horarios -->
+            <div id="section-horarios" class="content-section">
+                <!-- NUEVO CARD: SUBIR HORARIOS -->
+                <div class="card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">🖼️📅</span>
+                        <h2 class="card-title">Gestión de Horarios de Clases</h2>
+                    </div>
+                    <form id="admin-upload-horario">
+                        <div class="form-group" style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+                            <div>
+                                <label class="form-label">Grupo</label>
+                                <input type="text" id="admin-grupo" placeholder="Ej: 1A" required class="form-input"
+                                    style="width: 120px;">
+                            </div>
+                            <div>
+                                <label class="form-label">Semestre</label>
+                                <input type="text" id="admin-semestre" value="2025-1" required class="form-input"
+                                    style="width: 120px;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label class="form-label">Archivo (Imagen o PDF)</label>
+                                <input type="file" id="admin-horario-file" accept="image/*,.pdf" required
+                                    class="form-input">
+                            </div>
+                            <button type="submit" class="action-btn btn-secondary"
+                                style="width: auto; padding: 12px 30px;">Subir Horario</button>
+                        </div>
+                    </form>
+                    <div id="admin-upload-msg"></div>
+                    <hr style="margin: 25px 0;">
+                    <h3 style="margin-bottom: 15px;">Horarios Cargados</h3>
+                    <div id="admin-horarios-list">Cargando horarios...</div>
+                </div>
+            </div>
+
+            <div id="section-usuarios" class="content-section">
+                <div class="card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">👥</span>
+                        <h2 class="card-title">Gestión de Usuarios</h2>
+                    </div>
+
+                    <div class="search-filter-bar">
+                        <div class="search-group">
+                            <input type="text" placeholder="Buscar usuario..." id="searchInput" class="form-input">
+                        </div>
+                        <div class="filter-group">
+                            <label class="form-label">Filtrar por Tipo</label>
+                            <select class="form-select" id="userTypeFilter">
+                                <option value="">Todos</option>
+                                <option value="alumno">Estudiantes</option>
+                                <option value="docente">Docentes</option>
+                                <option value="tutor">Tutores</option>
+                                <option value="admin">Administradores</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <button class="open-modal-btn" onclick="openUserModal('create')">➕ Nuevo Usuario</button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="user-management-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th>Último Acceso</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #E8E9EA;">
+                        <div style="font-size: 13px; color: #666;">Mostrando 1-10 de {{ total_users or '0' }} resultados
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            <button class="btn-table btn-primary">← Anterior</button>
+                            <button class="btn-table btn-primary">1</button>
+                            <button class="btn-table btn-secondary">2</button>
+                            <button class="btn-table btn-primary">3</button>
+                            <button class="btn-table btn-primary">Siguiente →</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div id="section-notificaciones" class="content-section">
+                <div class="card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">🔔</span>
+                        <h2 class="card-title">Notificaciones</h2>
+                    </div>
+
+                    {% for notification in notifications|default([]) %}
+                    <div class="notification-item">
+                        <span class="notification-icon">{{ notification.icon }}</span>
+                        <div class="notification-content">
+                            <h5>{{ notification.title }}</h5>
+                            <p>{{ notification.description }}</p>
+                        </div>
+                        <div class="notification-time">{{ notification.time }}</div>
+                    </div>
+                    {% else %}
+                    <p style="color:#666; text-align:center; padding:20px;">No hay notificaciones recientes.</p>
+                    {% endfor %}
+
+                    <button class="action-btn btn-primary" onclick="viewAllNotifications()" style="margin-top: 15px;">
+                        📋 Ver Todas
+                    </button>
+                </div>
+
+            </div>
+            <div id="section-reportes" class="content-section">
+                <div class="card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">📈</span>
+                        <h2 class="card-title">Generación de Reportes</h2>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label class="form-label">Tipo de Reporte</label>
+                            <select class="form-select" id="reportType">
+                                <option value="">Seleccionar tipo</option>
+                                <option value="academic">Rendimiento Académico</option>
+                                <option value="attendance">Asistencia</option>
+                                <option value="financial">Pagos y Finanzas</option>
+                                <option value="behavior">Conducta Estudiantil</option>
+                                <option value="teacher-performance">Desempeño Docente</option>
+                                <option value="institutional">Estadísticas Institucionales</option>
+                            </select>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label class="form-label">Fecha Inicio</label>
+                                <input type="date" class="form-input" id="reportStartDate">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Fecha Fin</label>
+                                <input type="date" class="form-input" id="reportEndDate">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Filtros Adicionales</label>
+                            <select class="form-select" id="reportFilters">
+                                <option value="">Sin filtros</option>
+                                <option value="semester">Por Semestre</option>
+                                <option value="group">Por Grupo</option>
+                                <option value="subject">Por Materia</option>
+                                <option value="teacher">Por Docente</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button class="action-btn btn-primary" onclick="generateReport()">
+                            📊 Generar
+                        </button>
+                        <button class="action-btn btn-secondary" onclick="scheduleReport()">
+                            ⏰ Programar
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #E8E9EA;">
+                        <h4 style="font-size: 14px; margin-bottom: 10px; color: #000000;">Reportes Recientes</h4>
+                        {% for report in recent_reports|default([]) %}
+                        <div style="font-size: 13px; color: #666; margin-bottom: 8px;">
+                            📄 {{ report.name }}
+                            <span style="float: right; color: #8A6BBE;">{{ report.time }}</span>
+                        </div>
+                        {% else %}
+                        <p style="color:#666;">No hay reportes recientes.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+            <div id="section-rendimiento" class="content-section">
+                <div class="card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">📊</span>
+                        <h2 class="card-title">Rendimiento General</h2>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-placeholder">
+                            <div style="font-size: 48px; margin-bottom: 15px;">📈</div>
+                            <h4 style="color: #8A6BBE; margin-bottom: 10px;">Gráfica de Rendimiento</h4>
+                            <p style="font-size: 14px;">Promedio general: {{ general_average or '0.0' }}/10</p>
+                            <p style="font-size: 12px; margin-top: 5px;">Tendencia: {{ trend or 'Estable' }} vs mes
+                                anterior</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div
+                            style="text-align: center; padding: 15px; background: rgba(34, 197, 94, 0.1); border-radius: 10px;">
+                            <div style="font-size: 20px; font-weight: 600; color: #059669;">{{ approval_rate or '0' }}%
+                            </div>
+                            <div style="font-size: 12px; color: #666;">Aprobación</div>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 15px; background: rgba(239, 68, 68, 0.1); border-radius: 10px;">
+                            <div style="font-size: 20px; font-weight: 600; color: #dc2626;">{{ reprobation_rate or '0'
+                                }}%</div>
+                            <div style="font-size: 12px; color: #666;">Reprobación</div>
+                        </div>
+                    </div>
+
+                    <button class="action-btn btn-primary" onclick="viewDetailedAnalytics()" style="margin-top: 15px;">
+                        🔍 Análisis Detallado
+                    </button>
+                </div>
+
+            </div>
+            <div id="section-encuestas" class="content-section">
+                <div class="card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">📝</span>
+                        <h2 class="card-title">Encuestas de Desempeño Docente</h2>
+                        <div style="margin-left: auto;">
+                            <button class="action-btn btn-primary" onclick="openAiSurveyModal()"
+                                style="font-size:12px; padding: 6px 12px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border:none;">
+                                ✨ Generar con IA
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        {% for teacher in teachers|default([]) %}
+                        <div style="border: 1px solid #E8E9EA; border-radius: 12px; padding: 20px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                                <div
+                                    style="width: 40px; height: 40px; background: {{ teacher.color|default('#8A6BBE') }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                    {{ teacher.initials|default('??') }}</div>
+                                <div>
+                                    <h4 style="font-size: 16px; font-weight: 600; color: #000000;">{{ teacher.name }}
+                                    </h4>
+                                    <p style="font-size: 13px; color: #666;">{{ teacher.subject }}</p>
+                                </div>
+                            </div>
+
+                            <div
+                                style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
+                                <div
+                                    style="text-align: center; padding: 10px; background: rgba(138, 107, 190, 0.05); border-radius: 8px;">
+                                    <div style="font-size: 18px; font-weight: 600; color: #8A6BBE;">{{
+                                        teacher.average|default('0.0') }}</div>
+                                    <div style="font-size: 11px; color: #666;">Promedio</div>
+                                </div>
+                                <div
+                                    style="text-align: center; padding: 10px; background: rgba(138, 107, 190, 0.05); border-radius: 8px;">
+                                    <div style="font-size: 18px; font-weight: 600; color: #8A6BBE;">{{
+                                        teacher.responses|default('0') }}</div>
+                                    <div style="font-size: 11px; color: #666;">Respuestas</div>
+                                </div>
+                                <div
+                                    style="text-align: center; padding: 10px; background: rgba(138, 107, 190, 0.05); border-radius: 8px;">
+                                    <div style="font-size: 18px; font-weight: 600; color: #8A6BBE;">{{
+                                        teacher.participation|default('0') }}%</div>
+                                    <div style="font-size: 11px; color: #666;">Participación</div>
+                                </div>
+                            </div>
+
+                            <button class="action-btn btn-secondary"
+                                onclick="openDetailsModal({{ teacher.teacher_id }})">
+                                📊 Ver Detalles
+                            </button>
+                        </div>
+                        {% else %}
+                        <p style="grid-column: 1 / -1; text-align:center; color:#666;">No hay encuestas disponibles.</p>
+                        {% endfor %}
+                    </div>
+
+                    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 25px;">
+                        <button class="action-btn btn-primary" onclick="createSurvey()">
+                            ➕ Nueva Encuesta
+                        </button>
+                        <button class="action-btn btn-secondary" onclick="viewAllSurveys()">
+                            📋 Ver Todas las Encuestas
+                        </button>
+                        <button class="action-btn btn-success" onclick="exportSurveyData()">
+                            📊 Exportar Datos
+                        </button>
+                    </div>
+                </div>
+
+                <!-- NUEVA SECCIÓN: Logs de Auditoría -->
+            </div>
+            <div id="section-logs" class="content-section">
+                <div class="card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">📜</span>
+                        <h2 class="card-title">Logs de Auditoría</h2>
+                    </div>
+                    <div id="logsContainer" style="max-height: 300px; overflow-y: auto;">
+                        {% for log in logs|default([]) %}
+                        <div style="padding: 10px; border-bottom: 1px solid #E8E9EA; font-size: 13px;">
+                            <strong>{{ log.usuario or 'Sistema' }}</strong> - {{ log.accion }}
+                            <br><span style="color: #666;">{{ log.descripcion[:50] }}{{ '...' if log.descripcion|length
+                                > 50
+                                else '' }}</span>
+                            <br><small style="color: #8A6BBE;">{{ log.fecha }}</small>
+                        </div>
+                        {% else %}
+                        <p style="color:#666; text-align:center; padding:20px;">No hay logs recientes.</p>
+                        {% endfor %}
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="action-btn btn-primary" onclick="searchLogs()">
+                            🔍 Buscar Logs
+                        </button>
+                        <button class="action-btn btn-secondary" onclick="exportLogs()">
+                            📥 Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- NUEVA SECCIÓN: Backup / Restore -->
+            </div>
+            <div id="section-backup" class="content-section">
+                <div class="card full-width">
+                    <div class="card-header">
+                        <span class="card-icon">💾</span>
+                        <h2 class="card-title">Backup y Restauración</h2>
+                    </div>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                        Gestiona copias de seguridad de la base de datos del sistema.
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div
+                            style="text-align: center; padding: 20px; background: rgba(34, 197, 94, 0.1); border-radius: 12px;">
+                            <div style="font-size: 32px; margin-bottom: 10px;">📦</div>
+                            <button class="action-btn btn-success" onclick="createBackup()" style="width: 100%;">
+                                Crear Backup
+                            </button>
+                        </div>
+                        <div
+                            style="text-align: center; padding: 20px; background: rgba(239, 68, 68, 0.1); border-radius: 12px;">
+                            <div style="font-size: 32px; margin-bottom: 10px;">🔄</div>
+                            <button class="action-btn btn-danger" onclick="restoreBackup()" style="width: 100%;">
+                                Restaurar
+                            </button>
+                        </div>
+                    </div>
+                    <div id="backupStatus" style="margin-top: 15px;"></div>
+                </div>
+            </div>
+
+            <!-- MODAL IA SURVEY -->
+            <div id="aiSurveyModal" class="modal">
+                <div class="modal-content" style="max-width: 600px;">
+                    <span class="close" onclick="closeDetailsModal('aiSurveyModal')">&times;</span>
+                    <div style="text-align:center; margin-bottom:20px;">
+                        <div style="font-size:40px; margin-bottom:10px;">✨🤖</div>
+                        <h2>Generar Encuesta con IA</h2>
+                        <p style="color:#666;">Describe el objetivo de la evaluación y la IA sugerirá las preguntas.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tema / Objetivo</label>
+                        <textarea id="aiSurveyPrompt" class="form-input" rows="3"
+                            placeholder="Ej: Evaluar la paciencia y claridad al explicar temas complejos..."></textarea>
+                    </div>
+
+                    <div id="aiSurveyResult"
+                        style="display:none; margin-top:15px; background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0;">
+                        <h4 style="margin-bottom:10px; font-size:14px; color:#475569;">Preguntas Sugeridas:</h4>
+                        <ul id="aiGeneratedList"
+                            style="padding-left:20px; font-size:13px; color:#333; margin-bottom:15px; max-height:150px; overflow-y:auto;">
+                        </ul>
+                        <button class="action-btn btn-success" onclick="useAiQuestions()" style="width:100%;">
+                            Usar estas preguntas
+                        </button>
+                    </div>
+
+                    <div class="button-container" style="margin-top:20px;">
+                        <button type="button" class="action-btn btn-primary" onclick="generateAiQuestions()"
+                            id="btnGenerateAi"
+                            style="background: linear-gradient(135deg, #6366f1, #8b5cf6); border:none;">
+                            ✨ Generar Preguntas
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para crear/editar usuario -->
+            <div id="userModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeUserModal()">&times;</span>
+                    <h2 id="userModalTitle">➕ Crear Nuevo Usuario</h2>
+                    <form id="userForm">
+                        <input type="hidden" id="userId" name="userId">
+                        <div class="form-group">
+                            <label for="nombre" class="form-label">Nombre Completo</label>
+                            <input type="text" id="nombre" name="nombre" placeholder="Juan Pérez López" required
+                                class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="tipo_usuario" class="form-label">Tipo de Usuario</label>
+                            <select id="tipo_usuario" name="tipo_usuario" required class="form-select">
+                                <option value="">Seleccionar</option>
+                                <option value="alumno">Alumno</option>
+                                <option value="docente">Docente</option>
+                                <option value="tutor">Tutor</option>
+                                <option value="admin">Admin</option>
+                                <option value="orientador">Orientador</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" id="email" name="email" placeholder="usuario@mail.com" required
+                                class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="telefono" class="form-label">Teléfono</label>
+                            <input type="tel" id="telefono" name="telefono" placeholder="555-123-4567" required
+                                class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="numero_control" class="form-label">Número de Control/ID</label>
+                            <input type="text" id="numero_control" name="numero_control" placeholder="2024030001"
+                                required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="curp" class="form-label">CURP</label>
+                            <input type="text" id="curp" name="curp" placeholder="ABCD123456HDFXYZ09" required
+                                class="form-input" oninput="this.value = this.value.toUpperCase()">
+                        </div>
+                        <div class="form-group">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <input type="text" id="direccion" name="direccion"
+                                placeholder="Calle, Número, Colonia, Ciudad" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="password_hash" class="form-label">Contraseña (temporal)</label>
+                            <input type="password" id="password_hash" name="password_hash" placeholder="********"
+                                class="form-input">
+                        </div>
+                        <div class="button-container">
+                            <button type="submit" id="save-btn">Guardar Usuario</button>
+                            <button type="button" id="cancel-btn" onclick="closeUserModal()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Modal para detalles del usuario -->
+            <div id="userDetailsModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeDetailsModal('userDetailsModal')">&times;</span>
+                    <h2>📋 Detalles del Usuario</h2>
+                    <div class="form-group">
+                        <label class="form-label">Nombre Completo</label>
+                        <p id="modal-nombre"
+                            style="padding: 12px; border: 2px solid #E8E9EA; border-radius: 8px; font-size: 14px;">N/A
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <p id="modal-email"
+                            style="padding: 12px; border: 2px solid #E8E9EA; border-radius: 8px; font-size: 14px;">N/A
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Número de Control</label>
+                        <p id="modal-numero_control"
+                            style="padding: 12px; border: 2px solid #E8E9EA; border-radius: 8px; font-size: 14px;">N/A
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CURP</label>
+                        <p id="modal-curp"
+                            style="padding: 12px; border: 2px solid #E8E9EA; border-radius: 8px; font-size: 14px;">N/A
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Teléfono</label>
+                        <p id="modal-telefono"
+                            style="padding: 12px; border: 2px solid #E8E9EA; border-radius: 8px; font-size: 14px;">N/A
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Dirección</label>
+                        <p id="modal-direccion"
+                            style="padding: 12px; border: 2px solid #E8E9EA; border-radius: 8px; font-size: 14px;">N/A
+                        </p>
+                    </div>
+                    <div class="button-container">
+                        <button type="button" id="close-details-btn"
+                            onclick="closeDetailsModal('userDetailsModal')">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para resultados de reportes -->
+            <div id="reportResultsModal" class="modal">
+                <div class="modal-content" style="max-width: 900px;">
+                    <span class="close" onclick="closeDetailsModal('reportResultsModal')">&times;</span>
+                    <div id="reportResultsContent">
+                        <!-- Contenido dinámico de reportes -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para estadísticas avanzadas -->
+            <div id="analyticsModal" class="modal">
+                <div class="modal-content" style="max-width: 800px;">
+                    <span class="close" onclick="closeDetailsModal('analyticsModal')">&times;</span>
+                    <div id="analyticsContent">
+                        <!-- Contenido dinámico de estadísticas -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para encuestas -->
+            <div id="surveysModal" class="modal">
+                <div class="modal-content" style="max-width: 700px;">
+                    <span class="close" onclick="closeDetailsModal('surveysModal')">&times;</span>
+                    <div id="surveysContent">
+                        <!-- Contenido dinámico de encuestas -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para detalles del docente -->
+            <div id="teacherDetailsModal" class="modal">
+                <div class="modal-content" style="max-width: 600px;">
+                    <span class="close" onclick="closeDetailsModal('teacherDetailsModal')">&times;</span>
+                    <div id="teacherDetailsContent">
+                        <!-- Contenido dinámico de detalles docente -->
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                // Inicializar avatar
+                const userName = "{{ session['user_name'] or 'Admin' }}";
+                const initials = userName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                $('#userAvatar').text(initials || 'AD');
+
+                // Función para abrir modal de usuario (create/edit)
+                function openUserModal(mode, userData = null) {
+                    $('#userModal').css('display', 'flex');
+                    if (mode === 'create') {
+                        $('#userModalTitle').text('➕ Crear Nuevo Usuario');
+                        $('#userForm')[0].reset();
+                        $('#userId').val('');
+                        $('#password_hash').attr('required', true);
+                    } else if (mode === 'edit') {
+                        $('#userModalTitle').text('✏️ Editar Usuario');
+                        $('#userId').val(userData.id);
+                        $('#nombre').val(userData.nombre);
+                        $('#tipo_usuario').val(userData.tipo_usuario);
+                        $('#email').val(userData.email);
+                        $('#telefono').val(userData.telefono);
+                        $('#numero_control').val(userData.numero_control);
+                        $('#curp').val(userData.curp);
+                        $('#direccion').val(userData.direccion);
+                        $('#password_hash').attr('required', false); // Opcional en edit
+                    }
+                }
+
+                // Cerrar modal usuario
+                function closeUserModal() {
+                    $('#userModal').css('display', 'none');
+                    $('#userForm')[0].reset();
+                }
+
+                // Guardar/Crear/Editar usuario
+                $('#userForm').on('submit', async function (e) {
+                    e.preventDefault();
+                    const formData = {
+                        id: $('#userId').val(),
+                        nombre: $('#nombre').val().trim(),
+                        tipo_usuario: $('#tipo_usuario').val(),
+                        email: $('#email').val().trim(),
+                        telefono: $('#telefono').val().trim(),
+                        numero_control: $('#numero_control').val().trim(),
+                        curp: $('#curp').val().toUpperCase().trim(),
+                        direccion: $('#direccion').val().trim(),
+                        password_hash: $('#password_hash').val()
+                    };
+
+                    if (formData.curp.length !== 18) {
+                        alert('La CURP debe tener exactamente 18 caracteres.');
+                        return;
+                    }
+
+                    try {
+                        const url = formData.id ? '/api/actualizar-usuario' : '/api/crear-usuario';
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(formData)
+                        });
+                        const result = await response.json();
+                        if (response.ok) {
+                            alert(result.success || 'Usuario guardado exitosamente!');
+                            closeUserModal();
+                            gestion_usuario(); // Recargar tabla
+                        } else {
+                            alert(result.error || 'Error al guardar el usuario.');
+                        }
+                    } catch (error) {
+                        alert('Error de conexión: ' + error.message);
+                    }
+                });
+
+                // SUBIR HORARIO
+                $('#admin-upload-horario').on('submit', function (e) {
+                    e.preventDefault();
+                    const formData = new FormData();
+                    const file = $('#admin-horario-file')[0].files[0];
+                    const grupo = $('#admin-grupo').val().trim().toUpperCase();
+                    const semestre = $('#admin-semestre').val().trim();
+
+                    if (!file || !grupo || !semestre) {
+                        $('#admin-upload-msg').html('<div class="error-msg">Completa todos los campos</div>');
+                        return;
+                    }
+
+                    formData.append('horario_file', file);
+                    formData.append('grupo', grupo);
+                    formData.append('semestre', semestre);
+
+                    fetch('/api/subir_horario_admin', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                $('#admin-upload-msg').html(`<div class="success-msg">${data.message}</div>`);
+                                $('#admin-upload-horario')[0].reset();
+                                cargarHorariosAdmin();
+                            } else {
+                                $('#admin-upload-msg').html(`<div class="error-msg">${data.error}</div>`);
+                            }
+                        })
+                        .catch(() => $('#admin-upload-msg').html('<div class="error-msg">Error de conexión</div>'));
+                });
+
+                // CARGAR HORARIOS CON BOTÓN ELIMINAR
+                function cargarHorariosAdmin() {
+                    fetch('/api/buscar_horarios')
+                        .then(r => r.json())
+                        .then(horarios => {
+                            if (!horarios || horarios.length === 0) {
+                                $('#admin-horarios-list').html('<p style="color:#666;text-align:center;">No hay horarios cargados.</p>');
+                                return;
+                            }
+                            let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">';
+                            horarios.forEach(h => {
+                                const url = `/uploads/${encodeURIComponent(h.archivo_ruta)}?t=${Date.now()}`;
+                                const esImagen = /\.(jpg|jpeg|png|gif|webp)$/i.test(h.archivo_ruta);
+                                const nombreArchivo = h.archivo_ruta.split('_').slice(1).join('_').split('.')[0];
+                                html += `
+                            <div style="border:2px solid #8A6BBE;border-radius:12px;padding:15px;background:#f8f5ff;text-align:center;position:relative;">
+                            <button onclick="eliminarHorario(${h.id}, '${h.archivo_ruta}')" 
+                                    style="position:absolute; top:8px; right:8px; background:#ef4444; color:white; width:100px; border:none; padding:4px 10px; border-radius:8px; cursor:pointer; font-size:13px; z-index:10; opacity:0.2; transition:all 0.3s;"
+                                    onmouseover="this.style.opacity='1'; this.style.background='#dc2626'"
+                                    onmouseout="this.style.opacity='0.2'; this.style.background='#ef4444'"
+                                    title="Eliminar horario">
+                                Eliminar
+                            </button>
+                                <strong style="font-size:18px;">${h.grupo}</strong> <small>(${h.semestre})</small><br><br>
+                                ${esImagen ?
+                                        `<img src="${url}" style="max-width:100%;max-height:350px;border-radius:4px;box-shadow:0 4px 8px rgba(0,0,0,0.1);">` :
+                                        `<a href="${url}" target="_blank" style="color:#8A6BBE;font-size:16px;">Abrir PDF</a>`
+                                    }
+                                <br><small style="color:#666;">Actualizado: ${new Date(h.fecha_actualizacion).toLocaleString('es-MX')}</small>
+                            </div>`;
+                            });
+                            html += '</div>';
+                            $('#admin-horarios-list').html(html);
+                        })
+                        .catch(() => $('#admin-horarios-list').html('<p style="color:#dc2626;">Error al cargar horarios.</p>'));
+                }
+
+                // ELIMINAR HORARIO
+                function eliminarHorario(id, archivo_ruta) {
+                    const nombre = archivo_ruta.split('_').slice(1).join('_').split('.')[0];
+                    if (!confirm(`¿Estás seguro de eliminar el horario "${nombre}"?`)) return;
+
+                    const msgDiv = $('#admin-upload-msg');
+                    msgDiv.html('<div class="success-msg">Eliminando...</div>');
+
+                    fetch('/api/eliminar_horario', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: id, archivo_ruta: archivo_ruta })
+                    })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                msgDiv.html(`<div class="success-msg">Horario eliminado</div>`);
+                                cargarHorariosAdmin();
+                            } else {
+                                msgDiv.html(`<div class="error-msg">${data.error}</div>`);
+                            }
+                        })
+                        .catch(() => msgDiv.html('<div class="error-msg">Error de conexión</div>'));
+                }
+
+                // CARGAR AL INICIO
+                $(document).ready(function () {
+                    cargarHorariosAdmin();
+                    gestion_usuario();
+                });
+
+                async function gestion_usuario() {
+                    const query = $('#searchInput').val();
+                    const filterType = $('#userTypeFilter').val();
+                    const userTableBody = $('#userTableBody');
+                    userTableBody.html('<tr><td colspan="6" style="text-align:center;padding:20px;">Buscando...</td></tr>');
+
+                    try {
+                        const response = await fetch('/search', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: `query=${encodeURIComponent(query)}&tipo_usuario=${encodeURIComponent(filterType)}`
+                        });
+                        const data = await response.json();
+
+                        userTableBody.empty();
+
+                        if (data.error || !data.results || data.results.length === 0) {
+                            userTableBody.html('<tr><td colspan="6" class="table-no-results">No se encontraron resultados.</td></tr>');
+                            return;
+                        }
+
+                        data.results.forEach(result => {
+                            const initials = result.nombre ? result.nombre.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() : 'NN';
+                            const avatarColor = result.tipo_usuario === 'alumno' ? '#5A9BD5' :
+                                result.tipo_usuario === 'docente' ? '#8A6BBE' :
+                                    result.tipo_usuario === 'admin' ? '#22c55e' : '#ef4444';
+                            const statusClass = result.activo === 1 ? 'status-active' :
+                                result.activo === 0 ? 'status-inactive' : 'status-pending';
+                            const statusText = result.activo === 1 ? 'Activo' : 'Inactivo';
+
+                            const row = `<tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 30px; height: 30px; background: ${avatarColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 600;">${initials}</div>
+                                <div>
+                                    <div style="font-weight: 500; color: #000000;">${result.nombre || 'Sin nombre'}</div>
+                                    <div style="font-size: 11px; color: #666;">${result.id || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${result.email || 'N/A'}</td>
+                        <td>${result.tipo_usuario || 'N/A'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${result.ultimo_acceso ? new Date(result.ultimo_acceso).toLocaleString('es-ES') : 'N/A'}</td>
+                        <td>
+                            <button class="btn-table btn-primary" onclick='editUser(${JSON.stringify(result)})'>✏️</button>
+                            <button class="btn-table btn-secondary" onclick='viewUser(${result.id})'>👁️</button>
+                            ${result.activo === 1 ?
+                                    `<button class="btn-table btn-danger" onclick="deactivateUser(${result.id}, '${result.nombre || ''}')">❌</button>` :
+                                    `<button class="btn-table btn-success" onclick="activateUser(${result.id}, '${result.nombre || ''}')">✅</button>`}
+                        </td>
+                    </tr>`;
+                            userTableBody.append(row);
+                        });
+                    } catch (error) {
+                        userTableBody.html('<tr><td colspan="6" class="table-error">Error en la búsqueda</td></tr>');
+                    }
+                }
+
+                // Eventos de búsqueda
+                $('#searchInput').on('keyup', gestion_usuario);
+                $('#userTypeFilter').on('change', gestion_usuario);
+
+                // Funciones para acciones de usuarios
+                function editUser(userData) {
+                    openUserModal('edit', userData);
+                }
+                async function viewUser(id) {
+                    try {
+                        const response = await fetch(`/api/user-details/${id}`);
+                        const userData = await response.json();
+                        if (response.ok) {
+                            $('#userDetailsModal').css('display', 'flex');
+                            $('#modal-nombre').text(userData.nombre || 'N/A');
+                            $('#modal-email').text(userData.email || 'N/A');
+                            $('#modal-numero_control').text(userData.numero_control || 'N/A');
+                            $('#modal-curp').text(userData.curp || 'N/A');
+                            $('#modal-telefono').text(userData.telefono || 'N/A');
+                            $('#modal-direccion').text(userData.direccion || 'N/A');
+                        } else {
+                            alert(userData.error || 'Error al obtener detalles');
+                        }
+                    } catch (error) {
+                        alert('Error de conexión: ' + error.message);
+                    }
+                }
+                async function deactivateUser(id, name) {
+                    if (confirm(`¿Desactivar a ${name}?`)) {
+                        try {
+                            const response = await fetch('/api/desactivar-usuario', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id })
+                            });
+                            const result = await response.json();
+                            alert(result.success || result.error);
+                            gestion_usuario();
+                        } catch (error) {
+                            alert('Error: ' + error.message);
+                        }
+                    }
+                }
+                async function activateUser(id, name) {
+                    if (confirm(`¿Activar a ${name}?`)) {
+                        try {
+                            const response = await fetch('/api/activar-usuario', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id })
+                            });
+                            const result = await response.json();
+                            alert(result.success || result.error);
+                            gestion_usuario();
+                        } catch (error) {
+                            alert('Error: ' + error.message);
+                        }
+                    }
+                }
+                // ============ GENERAR REPORTES ============
+                async function generateReport() {
+                    const tipo = $('#reportType').val();
+                    const fechaInicio = $('#reportStartDate').val();
+                    const fechaFin = $('#reportEndDate').val();
+
+                    if (!tipo || !fechaInicio || !fechaFin) {
+                        alert('Por favor complete todos los campos: tipo, fecha inicio y fecha fin');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/generar-reporte', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tipo, fecha_inicio: fechaInicio, fecha_fin: fechaFin })
+                        });
+                        const data = await response.json();
+
+                        if (data.success && data.datos) {
+                            // Mostrar resultados en modal
+                            let html = '<h3>Reporte: ' + tipo.toUpperCase() + '</h3>';
+                            html += '<p>Período: ' + fechaInicio + ' a ' + fechaFin + '</p>';
+                            html += '<table class="user-management-table"><thead><tr>';
+
+                            if (data.datos.length > 0) {
+                                Object.keys(data.datos[0]).forEach(key => {
+                                    html += '<th>' + key + '</th>';
+                                });
+                                html += '</tr></thead><tbody>';
+                                data.datos.forEach(row => {
+                                    html += '<tr>';
+                                    Object.values(row).forEach(val => {
+                                        html += '<td>' + (val || 'N/A') + '</td>';
+                                    });
+                                    html += '</tr>';
+                                });
+                                html += '</tbody></table>';
+                                html += '<button onclick="exportReportCSV()" class="action-btn btn-success" style="margin-top:15px;">📥 Exportar CSV</button>';
+                            } else {
+                                html += '<p>No se encontraron datos para el período seleccionado.</p>';
+                            }
+
+                            $('#reportResultsContent').html(html);
+                            $('#reportResultsModal').css('display', 'flex');
+                            window.lastReportData = data.datos; // Guardar para exportar
+                        } else {
+                            alert(data.error || 'Error al generar reporte');
+                        }
+                    } catch (error) {
+                        alert('Error de conexión: ' + error.message);
+                    }
+                }
+
+                function exportReportCSV() {
+                    if (!window.lastReportData || window.lastReportData.length === 0) {
+                        alert('No hay datos para exportar');
+                        return;
+                    }
+                    const headers = Object.keys(window.lastReportData[0]);
+                    let csv = headers.join(',') + '\n';
+                    window.lastReportData.forEach(row => {
+                        csv += Object.values(row).map(v => '"' + (v || '') + '"').join(',') + '\n';
+                    });
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'reporte_' + new Date().toISOString().slice(0, 10) + '.csv';
+                    a.click();
+                }
+
+                function scheduleReport() {
+                    alert('Función de programación de reportes en desarrollo. Los reportes programados se enviarán por email.');
+                }
+
+                // ============ NOTIFICACIONES ============
+                function viewAllNotifications() {
+                    window.location.href = '/comunicados';
+                }
+
+                // ============ ESTADÍSTICAS AVANZADAS ============
+                async function viewDetailedAnalytics() {
+                    try {
+                        const [encuestas, pagos, asistencias, gamificacion] = await Promise.all([
+                            fetch('/api/stats_encuestas').then(r => r.json()),
+                            fetch('/api/stats_pagos').then(r => r.json()),
+                            fetch('/api/stats_asistencias').then(r => r.json()),
+                            fetch('/api/stats_gamificacion').then(r => r.json())
+                        ]);
+
+                        let html = '<h3>📊 Estadísticas Avanzadas del Sistema</h3>';
+
+                        html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:20px;">';
+
+                        // Pagos
+                        html += '<div style="background:#f0fdf4;padding:15px;border-radius:10px;">';
+                        html += '<h4 style="color:#16a34a;">💰 Pagos</h4>';
+                        html += '<p>Total: $' + (pagos.total || 0).toLocaleString() + '</p>';
+                        html += '<p>Pagado: $' + (pagos.pagado || 0).toLocaleString() + '</p>';
+                        html += '<p>Pendientes: ' + (pagos.pendientes || 0) + '</p>';
+                        html += '</div>';
+
+                        // Asistencias
+                        html += '<div style="background:#fef3c7;padding:15px;border-radius:10px;">';
+                        html += '<h4 style="color:#d97706;">📋 Asistencias</h4>';
+                        html += '<p>Promedio Global: ' + (asistencias.promedio_global || 0).toFixed(1) + '%</p>';
+                        html += '<p>Total Faltas: ' + (asistencias.faltas_total || 0) + '</p>';
+                        html += '</div>';
+
+                        // Gamificación
+                        html += '<div style="background:#f3e8ff;padding:15px;border-radius:10px;">';
+                        html += '<h4 style="color:#7c3aed;">🎮 Gamificación</h4>';
+                        html += '<p>XP Promedio: ' + (gamificacion.promedios?.xp_promedio || 0).toFixed(0) + '</p>';
+                        html += '<p>Racha Promedio: ' + (gamificacion.promedios?.racha_promedio || 0).toFixed(1) + ' días</p>';
+                        if (gamificacion.rangos) {
+                            html += '<p>Distribución: ';
+                            gamificacion.rangos.forEach(r => {
+                                html += r.rango + ': ' + r.count + ' | ';
+                            });
+                            html += '</p>';
+                        }
+                        html += '</div>';
+
+                        // Encuestas
+                        html += '<div style="background:#e0f2fe;padding:15px;border-radius:10px;">';
+                        html += '<h4 style="color:#0284c7;">📝 Encuestas</h4>';
+                        if (encuestas && encuestas.length > 0) {
+                            encuestas.forEach(e => {
+                                html += '<p>' + e.titulo + ': ' + (e.promedio || 0).toFixed(1) + '/5 (' + e.respuestas + ' resp.)</p>';
+                            });
+                        } else {
+                            html += '<p>Sin encuestas activas</p>';
+                        }
+                        html += '</div>';
+
+                        html += '</div>';
+
+                        $('#analyticsContent').html(html);
+                        $('#analyticsModal').css('display', 'flex');
+                    } catch (error) {
+                        alert('Error cargando estadísticas: ' + error.message);
+                    }
+                }
+
+                // ============ ENCUESTAS & IA ============
+
+                async function openAiSurveyModal() {
+                    $('#aiSurveyModal').css('display', 'flex');
+                    $('#aiSurveyResult').hide();
+                    $('#aiSurveyPrompt').val('');
+                }
+
+                async function generateAiQuestions() {
+                    const prompt = $('#aiSurveyPrompt').val().trim();
+                    if (!prompt) return Swal.fire('Error', 'Describe el tema de la encuesta', 'warning');
+
+                    $('#btnGenerateAi').html('<i class="fas fa-spinner fa-spin"></i> Generando...').prop('disabled', true);
+
+                    try {
+                        const response = await fetch('/api/ai-generar-encuesta', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tema: prompt })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success && data.data && data.data.preguntas) {
+                            $('#aiSurveyResult').show();
+                            const list = $('#aiGeneratedList');
+                            list.empty();
+                            window.lastAiQuestions = data.data.preguntas;
+
+                            window.lastAiQuestions.forEach(q => {
+                                list.append(`<li>${q.pregunta || q}</li>`);
+                            });
+                        } else {
+                            Swal.fire('Error', data.error || 'No se pudieron generar preguntas', 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('Error', 'Error de conexión', 'error');
+                    } finally {
+                        $('#btnGenerateAi').html('✨ Generar Preguntas').prop('disabled', false);
+                    }
+                }
+
+                function useAiQuestions() {
+                    if (!window.lastAiQuestions) return;
+                    const desc = "Aspectos a evaluar (Sugeridos por IA):\n" + window.lastAiQuestions.map(q => "• " + (q.pregunta || q)).join("\n");
+                    closeDetailsModal('aiSurveyModal');
+                    createSurvey(desc);
+                }
+
+                async function createSurvey(initialDescription = "") {
+                    // Get list of docentes for dropdown
+                    try {
+                        const response = await fetch('/search', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ query: '', user_type: 'docente' })
+                        });
+                        const result = await response.json();
+
+                        // Handle different response formats
+                        let docentesList = [];
+                        if (Array.isArray(result)) {
+                            docentesList = result;
+                        } else if (result.users && Array.isArray(result.users)) {
+                            docentesList = result.users;
+                        } else if (result.docentes && Array.isArray(result.docentes)) {
+                            docentesList = result.docentes;
+                        }
+
+                        let options = '<option value="">Seleccionar docente...</option>';
+                        docentesList.forEach(d => {
+                            options += `<option value="${d.id}">${d.nombre}</option>`;
+                        });
+
+                        const { value: formValues } = await Swal.fire({
+                            title: 'Nueva Encuesta de Docente',
+                            width: 600,
+                            html: `
+                        <div style="text-align:left;">
+                            <label style="display:block;margin-bottom:5px;font-weight:600;">Docente a Evaluar</label>
+                            <select id="swal-docente" class="swal2-input" style="width:100%;margin:0 0 15px 0;">${options}</select>
+                            
+                            <label style="display:block;margin-bottom:5px;font-weight:600;">Título</label>
+                            <input id="swal-titulo" class="swal2-input" value="Evaluación Docente" style="width:100%;margin:0 0 15px 0;">
+
+                            <label style="display:block;margin-bottom:5px;font-weight:600;">Descripción / Instrucciones</label>
+                            <textarea id="swal-desc" class="swal2-textarea" style="width:100%;margin:0 0 15px 0;" rows="4">${initialDescription}</textarea>
+                            
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+                                <div>
+                                    <label style="display:block;margin-bottom:5px;font-weight:600;">Fecha Inicio</label>
+                                    <input id="swal-inicio" type="date" class="swal2-input" value="${new Date().toISOString().split('T')[0]}" style="width:100%;margin:0;">
+                                </div>
+                                <div>
+                                    <label style="display:block;margin-bottom:5px;font-weight:600;">Fecha Fin</label>
+                                    <input id="swal-fin" type="date" class="swal2-input" value="${new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}" style="width:100%;margin:0;">
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                            focusConfirm: false,
+                            showCancelButton: true,
+                            confirmButtonText: 'Crear Encuesta',
+                            cancelButtonText: 'Cancelar',
+                            preConfirm: () => {
+                                return {
+                                    docente_id: document.getElementById('swal-docente').value,
+                                    titulo: document.getElementById('swal-titulo').value,
+                                    descripcion: document.getElementById('swal-desc').value,
+                                    fecha_inicio: document.getElementById('swal-inicio').value,
+                                    fecha_fin: document.getElementById('swal-fin').value
+                                }
+                            }
+                        });
+
+                        if (formValues && formValues.docente_id) {
+                            const createRes = await fetch('/api/crear-encuesta-docente', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(formValues)
+                            });
+                            const result = await createRes.json();
+
+                            if (result.success) {
+                                Swal.fire('¡Creada!', result.success + ' (ID: ' + result.encuesta_id + ')', 'success');
+                            } else {
+                                Swal.fire('Error', result.error || 'No se pudo crear la encuesta', 'error');
+                            }
+                        }
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                    }
+                }
+
+                async function viewAllSurveys() {
+                    try {
+                        const response = await fetch('/api/stats_encuestas');
+                        const encuestas = await response.json();
+
+                        let html = '<h3>📋 Todas las Encuestas</h3>';
+                        html += '<table class="user-management-table"><thead><tr><th>Título</th><th>Promedio</th><th>Respuestas</th></tr></thead><tbody>';
+
+                        if (encuestas && encuestas.length > 0) {
+                            encuestas.forEach(e => {
+                                html += '<tr>';
+                                html += '<td>' + e.titulo + '</td>';
+                                html += '<td>' + (e.promedio || 0).toFixed(1) + '/5</td>';
+                                html += '<td>' + (e.respuestas || 0) + '</td>';
+                                html += '</tr>';
+                            });
+                        } else {
+                            html += '<tr><td colspan="3">No hay encuestas registradas</td></tr>';
+                        }
+
+                        html += '</tbody></table>';
+
+                        $('#surveysContent').html(html);
+                        $('#surveysModal').css('display', 'flex');
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                    }
+                }
+
+                async function exportSurveyData() {
+                    try {
+                        const response = await fetch('/api/stats_encuestas');
+                        const encuestas = await response.json();
+
+                        if (!encuestas || encuestas.length === 0) {
+                            alert('No hay datos de encuestas para exportar');
+                            return;
+                        }
+
+                        let csv = 'Titulo,Promedio,Respuestas\n';
+                        encuestas.forEach(e => {
+                            csv += '"' + e.titulo + '",' + (e.promedio || 0) + ',' + (e.respuestas || 0) + '\n';
+                        });
+
+                        const blob = new Blob([csv], { type: 'text/csv' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'encuestas_' + new Date().toISOString().slice(0, 10) + '.csv';
+                        a.click();
+
+                        alert('Datos exportados correctamente');
+                    } catch (error) {
+                        alert('Error al exportar: ' + error.message);
+                    }
+                }
+
+                // ============ DETALLES DOCENTE ============
+                async function openDetailsModal(teacherId) {
+                    try {
+                        const response = await fetch('/api/user-details/' + teacherId);
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            let html = '<h3>👨‍🏫 Detalles del Docente</h3>';
+                            html += '<div style="display:grid;gap:10px;margin-top:15px;">';
+                            html += '<p><strong>Nombre:</strong> ' + (data.nombre || 'N/A') + '</p>';
+                            html += '<p><strong>Email:</strong> ' + (data.email || 'N/A') + '</p>';
+                            html += '<p><strong>No. Control:</strong> ' + (data.numero_control || 'N/A') + '</p>';
+                            html += '<p><strong>CURP:</strong> ' + (data.curp || 'N/A') + '</p>';
+                            html += '<p><strong>Teléfono:</strong> ' + (data.telefono || 'N/A') + '</p>';
+                            html += '<p><strong>Rango:</strong> ' + (data.rango || 'N/A') + '</p>';
+                            html += '<p><strong>XP:</strong> ' + (data.xp || 0) + '</p>';
+                            html += '<p><strong>Último Acceso:</strong> ' + (data.ultimo_acceso ? new Date(data.ultimo_acceso).toLocaleString('es-MX') : 'N/A') + '</p>';
+                            html += '</div>';
+
+                            $('#teacherDetailsContent').html(html);
+                            $('#teacherDetailsModal').css('display', 'flex');
+                        } else {
+                            alert(data.error || 'Error al cargar detalles');
+                        }
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                    }
+                }
+
+                // ============ LOGS DE AUDITORÍA ============
+                async function searchLogs() {
+                    const query = prompt('Buscar en logs (acciones, descripciones, módulos):');
+                    if (!query) return;
+
+                    try {
+                        const response = await fetch('/api/search_logs', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ query })
+                        });
+                        const logs = await response.json();
+
+                        let html = '';
+                        if (logs && logs.length > 0) {
+                            logs.forEach(log => {
+                                html += `<div style="padding: 10px; border-bottom: 1px solid #E8E9EA; font-size: 13px;">
+                            <strong>${log.usuario || 'Sistema'}</strong> - ${log.accion}
+                            <br><span style="color: #666;">${(log.descripcion || '').substring(0, 100)}</span>
+                            <br><small style="color: #8A6BBE;">${log.fecha} | IP: ${log.ip || 'N/A'}</small>
+                        </div>`;
+                            });
+                        } else {
+                            html = '<p style="color:#666; text-align:center; padding:20px;">No se encontraron logs con ese criterio.</p>';
+                        }
+
+                        $('#logsContainer').html(html);
+                    } catch (error) {
+                        alert('Error buscando logs: ' + error.message);
+                    }
+                }
+
+                async function exportLogs() {
+                    try {
+                        const response = await fetch('/api/search_logs', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ query: '' })
+                        });
+                        const logs = await response.json();
+
+                        if (!logs || logs.length === 0) {
+                            alert('No hay logs para exportar');
+                            return;
+                        }
+
+                        let csv = 'ID,Usuario,Accion,Descripcion,Modulo,Fecha,IP\n';
+                        logs.forEach(log => {
+                            csv += `${log.id},"${log.usuario || ''}","${log.accion}","${(log.descripcion || '').replace(/"/g, "'")}","${log.modulo || ''}","${log.fecha}","${log.ip || ''}"\n`;
+                        });
+
+                        const blob = new Blob([csv], { type: 'text/csv' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'logs_auditoria_' + new Date().toISOString().slice(0, 10) + '.csv';
+                        a.click();
+
+                        alert('Logs exportados correctamente');
+                    } catch (error) {
+                        alert('Error exportando logs: ' + error.message);
+                    }
+                }
+
+                // ============ BACKUP Y RESTAURACIÓN ============
+                async function createBackup() {
+                    if (!confirm('¿Crear una copia de seguridad de la base de datos?')) return;
+
+                    $('#backupStatus').html('<div class="success-msg">Generando backup...</div>');
+
+                    try {
+                        const response = await fetch('/api/backup_bd', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        const data = await response.json();
+
+                        if (data.success) {
+                            $('#backupStatus').html(`<div class="success-msg">✅ ${data.success}<br><small>Archivo: ${data.path}</small></div>`);
+                        } else {
+                            $('#backupStatus').html(`<div class="error-msg">❌ ${data.error}</div>`);
+                        }
+                    } catch (error) {
+                        $('#backupStatus').html(`<div class="error-msg">Error: ${error.message}</div>`);
+                    }
+                }
+
+                async function restoreBackup() {
+                    if (!confirm('⚠️ ADVERTENCIA: Restaurar una copia de seguridad puede sobrescribir datos actuales.\n\n¿Está seguro de continuar?')) return;
+                    if (!confirm('SEGUNDA CONFIRMACIÓN: Esta acción es irreversible. ¿Desea continuar?')) return;
+
+                    $('#backupStatus').html('<div class="success-msg">Restaurando...</div>');
+
+                    try {
+                        const response = await fetch('/api/restore_bd', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        const data = await response.json();
+
+                        if (data.success) {
+                            $('#backupStatus').html(`<div class="success-msg">✅ ${data.success}</div>`);
+                        } else {
+                            $('#backupStatus').html(`<div class="error-msg">❌ ${data.error}</div>`);
+                        }
+                    } catch (error) {
+                        $('#backupStatus').html(`<div class="error-msg">Error: ${error.message}</div>`);
+                    }
+                }
+
+                function closeDetailsModal(id) { $(`#${id}`).css('display', 'none'); }
+
+
+                // Cerrar modales al clic fuera
+                $(window).on('click', function (e) {
+                    if (e.target.classList.contains('modal')) {
+                        $('.modal').css('display', 'none');
+                    }
+                });
+            </script>
+
+        </div> <!-- End main-content -->
+    </div> <!-- End admin-layout -->
+
+    <script>
+        // === SIDEBAR NAVIGATION ===
+        function showSection(sectionId) {
+            // Hide all sections
+            $('.content-section').removeClass('active');
+            $('.nav-link').removeClass('active');
+
+            // Show specific section
+            $(`#section-${sectionId}`).addClass('active');
+
+            // Highlight nav item - find link with onclick containing sectionId
+            $(`.nav-link[onclick*="${sectionId}"]`).addClass('active');
+
+            // Update title
+            const mapTitle = {
+                'dashboard': 'Dashboard Administrativo',
+                'usuarios': 'Gestión de Usuarios',
+                'horarios': 'Horarios Institucionales',
+                'encuestas': 'Encuestas de Desempeño',
+                'reportes': 'Generación de Reportes',
+                'rendimiento': 'Rendimiento Académico',
+                'notificaciones': 'Sistema de Notificaciones',
+                'logs': 'Auditoría del Sistema',
+                'backup': 'Backup y Restauración'
+            };
+            $('#pageTitle').text(mapTitle[sectionId] || 'Panel Administrativo');
+
+            // Close sidebar on mobile
+            if (window.innerWidth < 768) {
+                $('.sidebar').removeClass('open');
+            }
+        }
+
+        function toggleSidebar() {
+            $('.sidebar').toggleClass('open');
+        }
+
+        // ORIGINAL JALANDLER CODE
+        $(document).ready(function () {
+            gestion_usuario();
+            cargarHorariosAdmin();
+
+            // Move original content into new sections
+            // This is a migration trick to avoid rewriting 1000 lines at once.
+            // Identify original cards and move them.
+
+            // Dashboard uses the dashboard section directly.
+
+            // Move "Gestión de Usuarios" card to #section-usuarios
+            // Use jQuery to move elements based on their content/class
+            // NOTE: This requires careful DOM selection.
+
+        });
+
+    </script>
+</body>
+
+</html>

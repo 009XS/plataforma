@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Mis Insignias | EduPlatform{% endblock %}
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-4xl mx-auto px-6">
+        <h1 class="text-3xl font-bold mb-8">Mis Insignias</h1>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            {% for insignia in insignias %}
+            <div
+                class="bg-white rounded-xl shadow-sm p-6 text-center {% if not insignia.desbloqueada %}opacity-50{% endif %}">
+                <div
+                    class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+                    <i class="fas {{ insignia.icono or 'fa-medal' }} text-white text-3xl"></i>
+                </div>
+                <h3 class="font-semibold">{{ insignia.nombre }}</h3>
+                <p class="text-xs text-gray-500 mt-1">{{ insignia.descripcion }}</p>
+                {% if insignia.desbloqueada %}
+                <span class="inline-block mt-2 text-xs text-green-600"><i class="fas fa-check mr-1"></i>{{
+                    insignia.fecha_obtencion }}</span>
+                {% else %}
+                <span class="inline-block mt-2 text-xs text-gray-400"><i class="fas fa-lock mr-1"></i>Bloqueada</span>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="col-span-6 bg-white rounded-xl p-12 text-center">
+                <i class="fas fa-medal text-gray-300 text-5xl mb-4"></i>
+                <p class="text-gray-500">No hay insignias disponibles</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

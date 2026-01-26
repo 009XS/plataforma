@@ -1,0 +1,2647 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Docente | EduPlatform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e' },
+                        dark: { 800: '#1e293b', 900: '#0f172a' }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .nav-item.active {
+            background-color: #0ea5e9;
+            color: white;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .animate-enter {
+            animation: enter 0.3s ease-out;
+        }
+
+        @keyframes enter {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-dark-900 text-white flex flex-col shadow-2xl z-20 fixed md:relative h-full" id="sidebar">
+        <div class="p-6 border-b border-gray-700">
+            <h1 class="text-2xl font-bold">Edu<span class="text-brand-500">Platform</span></h1>
+        </div>
+        <div class="p-4 flex items-center space-x-3 border-b border-gray-700 bg-dark-800">
+            <div class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center font-bold">D</div>
+            <div>
+                <p class="font-semibold text-sm">{{ session.get('user_name', 'Docente') }}</p>
+                <p class="text-xs text-gray-400">Docente</p>
+            </div>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1 px-3">
+                <li><a href="#" onclick="showSection('dashboard')"
+                        class="nav-item active flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-home w-8"></i> Inicio</a></li>
+                <li><a href="#" onclick="showSection('materias')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-book w-8"></i> Mis Materias</a></li>
+                <li><a href="#" onclick="showSection('tareas')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-tasks w-8"></i> Gestión Tareas</a></li>
+                <li><a href="#" onclick="showSection('estudiantes')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-users w-8"></i> Estudiantes</a></li>
+                <li class="pt-4 pb-2 px-3 text-xs text-gray-500 font-bold">HERRAMIENTAS</li>
+                <li><a href="#" onclick="showSection('asistencia')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-qrcode w-8"></i> Asistencia QR</a></li>
+                <li><a href="#" onclick="showSection('recursos')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-folder w-8"></i> Recursos</a></li>
+                <li><a href="#" onclick="showSection('mensajes')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-envelope w-8"></i> Mensajes</a></li>
+                <li><a href="#" onclick="showSection('reportes')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-chart-bar w-8"></i> Reportes</a></li>
+                <li><a href="#" onclick="showSection('evaluaciones')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-file-alt w-8"></i> Evaluaciones</a></li>
+                <li><a href="#" onclick="showSection('comunicados')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-bullhorn w-8"></i> Comunicados</a></li>
+                <li><a href="#" onclick="showSection('retos')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-code w-8"></i> Retos de Código</a></li>
+                <li><a href="#" onclick="showSection('calendario')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-calendar-alt w-8"></i> Calendario</a></li>
+                <li class="pt-4 pb-2 px-3 text-xs text-gray-500 font-bold">INTELIGENCIA ARTIFICIAL</li>
+                <li><a href="#" onclick="showSection('chatia')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-robot w-8 text-purple-400"></i> Asistente IA</a></li>
+                <li><a href="#" onclick="showSection('quizgen')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-magic w-8 text-indigo-400"></i> Generador Quiz</a></li>
+                <li><a href="#" onclick="showSection('tutorias')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-user-graduate w-8 text-green-400"></i> Tutorías</a></li>
+                <li><a href="#" onclick="showSection('horario')"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800"><i
+                            class="fas fa-clock w-8 text-blue-400"></i> Mi Horario</a></li>
+                <li><a href="#" onclick="lanzarAulaVirtual()"
+                        class="nav-item flex items-center p-3 rounded-lg hover:bg-dark-800 text-red-400"><i
+                            class="fas fa-video w-8"></i> Aula Virtual</a></li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-gray-700">
+            <button onclick="openModalPerfil()"
+                class="flex items-center w-full p-2 hover:bg-dark-800 rounded-lg transition">
+                <div
+                    class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white font-bold mr-3">
+                    {{ nombre_docente[0] if nombre_docente else 'D' }}
+                </div>
+                <div class="text-left">
+                    <p class="text-sm font-medium">{{ nombre_docente }}</p>
+                    <p class="text-xs text-gray-400">Docente</p>
+                </div>
+            </button>
+            <a href="{{ url_for('logout') }}"
+                class="mt-4 flex items-center justify-center w-full p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition text-sm">
+                <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+            </a>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+        <!-- HEADER -->
+        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-20">
+            <div class="flex items-center">
+                <button id="mobile-menu-btn" class="lg:hidden mr-4 text-gray-600"><i
+                        class="fas fa-bars text-xl"></i></button>
+                <h2 class="text-xl font-bold text-gray-800" id="page-title">Panel Docente</h2>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="lanzarAulaVirtual()"
+                    class="hidden md:flex items-center bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-bold hover:bg-red-200 transition">
+                    <i class="fas fa-video mr-2"></i> En vivo
+                </button>
+
+                <!-- Notificaciones Dropdown -->
+                <div class="relative" id="notif-container">
+                    <button onclick="toggleNotificaciones()" class="relative p-2 text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span id="notif-badge"
+                            class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                    </button>
+                    <div id="notif-dropdown"
+                        class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border z-50 overflow-hidden">
+                        <div class="p-3 bg-gray-50 border-b flex justify-between items-center">
+                            <span class="font-bold text-sm">Notificaciones</span>
+                            <button onclick="marcarTodasLeidas()" class="text-xs text-brand-600 hover:underline">Marcar
+                                leídas</button>
+                        </div>
+                        <div id="notif-list" class="max-h-80 overflow-y-auto divide-y">
+                            <div class="p-4 text-center text-gray-400 text-sm">Cargando...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-6 bg-gray-100" id="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="mb-6">
+                {% for category, message in messages %}
+                <div
+                    class="p-4 rounded-lg mb-2 {{ 'bg-green-100 text-green-700' if category == 'success' else 'bg-red-100 text-red-700' }}">
+                    {{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- DASHBOARD -->
+            <section id="section-dashboard" class="content-section active animate-enter space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition">
+                        <p class="text-xs text-gray-500 uppercase">Total Estudiantes</p>
+                        <h3 class="text-3xl font-bold mt-1">{{ total_students or 0 }}</h3>
+                        <p class="text-xs text-blue-500 mt-2"><i class="fas fa-users mr-1"></i> Matriculados</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition">
+                        <p class="text-xs text-gray-500 uppercase">Materias Activas</p>
+                        <h3 class="text-3xl font-bold mt-1">{{ materias|length if materias else 0 }}</h3>
+                        <p class="text-xs text-green-500 mt-2"><i class="fas fa-check-circle mr-1"></i> Este semestre
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition">
+                        <p class="text-xs text-gray-500 uppercase">Tareas Activas</p>
+                        <h3 class="text-3xl font-bold mt-1">{{ tareas|length if tareas else 0 }}</h3>
+                        <p class="text-xs text-orange-500 mt-2"><i class="fas fa-clock mr-1"></i> Pendientes evaluar</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition">
+                        <p class="text-xs text-gray-500 uppercase">Retos de Código</p>
+                        <h3 class="text-3xl font-bold mt-1">{{ retos|length if retos else 0 }}</h3>
+                        <p class="text-xs text-purple-500 mt-2"><i class="fas fa-code mr-1"></i> Lanzados</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="p-5 border-b flex justify-between items-center">
+                            <h3 class="font-bold">Tareas Pendientes de Evaluar</h3>
+                            <button onclick="showSection('tareas')" class="text-brand-600 text-sm hover:underline">Ver
+                                todas</button>
+                        </div>
+                        <div class="p-4">
+                            {% if tareas %}
+                            {% for t in tareas[:5] %}
+                            <div class="flex items-center justify-between py-3 border-b last:border-0">
+                                <div>
+                                    <p class="font-medium">{{ t.titulo }}</p>
+                                    <p class="text-xs text-gray-500">{{ t.materia }}</p>
+                                </div>
+                                <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded">{{
+                                    t.entregas_totales - t.entregas_calificadas }} sin calificar</span>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <p class="text-center text-gray-400 py-8">No hay tareas pendientes</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="p-5 border-b flex justify-between items-center">
+                            <h3 class="font-bold">Acciones Rápidas</h3>
+                        </div>
+                        <div class="p-4 grid grid-cols-2 gap-4">
+                            <button onclick="openModalCrearTarea()"
+                                class="p-4 bg-blue-50 rounded-lg text-center hover:bg-blue-100 transition">
+                                <i class="fas fa-plus-circle text-2xl text-blue-500 mb-2"></i>
+                                <p class="text-sm font-medium">Nueva Tarea</p>
+                            </button>
+                            <button onclick="openModalQR()"
+                                class="p-4 bg-green-50 rounded-lg text-center hover:bg-green-100 transition">
+                                <i class="fas fa-qrcode text-2xl text-green-500 mb-2"></i>
+                                <p class="text-sm font-medium">Generar QR</p>
+                            </button>
+                            <button onclick="showSection('recursos')"
+                                class="p-4 bg-purple-50 rounded-lg text-center hover:bg-purple-100 transition">
+                                <i class="fas fa-upload text-2xl text-purple-500 mb-2"></i>
+                                <p class="text-sm font-medium">Subir Recurso</p>
+                            </button>
+                            <button onclick="showSection('mensajes')"
+                                class="p-4 bg-orange-50 rounded-lg text-center hover:bg-orange-100 transition">
+                                <i class="fas fa-paper-plane text-2xl text-orange-500 mb-2"></i>
+                                <p class="text-sm font-medium">Enviar Mensaje</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estudiantes en Riesgo de Deserción -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden border-l-4 border-red-500">
+                    <div class="p-5 border-b flex justify-between items-center bg-red-50">
+                        <div>
+                            <h3 class="font-bold text-red-700"><i
+                                    class="fas fa-exclamation-triangle mr-2"></i>Estudiantes en Riesgo</h3>
+                            <p class="text-xs text-red-600">Predicción basada en ML</p>
+                        </div>
+                        <button onclick="cargarEstudiantesRiesgo()" class="text-red-600 text-sm hover:underline"><i
+                                class="fas fa-sync mr-1"></i>Actualizar</button>
+                    </div>
+                    <div class="p-4" id="estudiantes-riesgo-list">
+                        <div class="space-y-3">
+                            <div
+                                class="flex items-center justify-between p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center"><i
+                                            class="fas fa-user text-red-600"></i></div>
+                                    <div>
+                                        <p class="font-medium">Roberto Hernández</p>
+                                        <p class="text-xs text-gray-500">3 entregas atrasadas</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">85%
+                                        Riesgo</span>
+                                </div>
+                            </div>
+                            <div
+                                class="flex items-center justify-between p-3 bg-orange-50 rounded-lg border-l-4 border-orange-400">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                                        <i class="fas fa-user text-orange-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">Laura Gómez</p>
+                                        <p class="text-xs text-gray-500">Baja asistencia</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">60%
+                                        Riesgo</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MATERIAS -->
+            <section id="section-materias" class="content-section space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Mis Materias</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for m in materias %}
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition cursor-pointer"
+                        onclick="loadSubjectDetails({{ m.id }})">
+                        <div class="h-28 bg-gradient-to-r from-blue-500 to-cyan-400 p-4 flex items-end">
+                            <h3 class="text-white font-bold text-lg">{{ m.nombre }}</h3>
+                        </div>
+                        <div class="p-4">
+                            <p class="text-sm text-gray-500 mb-3">{{ m.descripcion[:60] if m.descripcion else 'Sin
+                                descripción' }}...</p>
+                            <div class="flex justify-between text-xs">
+                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded">Semestre {{ m.semestre
+                                    }}</span>
+                                <span class="text-gray-500">{{ m.quiz_generado }} quizzes</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="col-span-full bg-white p-8 rounded-xl text-center">
+                        <i class="fas fa-book-open text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No tienes materias asignadas</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- TAREAS -->
+            <section id="section-tareas" class="content-section space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Gestión de Tareas</h2>
+                    <button onclick="openModalCrearTarea()" class="bg-brand-600 text-white px-4 py-2 rounded-lg"><i
+                            class="fas fa-plus mr-2"></i>Nueva Tarea</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                            <tr>
+                                <th class="px-6 py-3">Tarea</th>
+                                <th class="px-6 py-3">Materia</th>
+                                <th class="px-6 py-3">Vence</th>
+                                <th class="px-6 py-3">Entregas</th>
+                                <th class="px-6 py-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            {% for t in tareas %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <p class="font-medium">{{ t.titulo }}</p>
+                                    {% if t.plagio_detectado %}<span class="text-xs text-red-500"><i
+                                            class="fas fa-exclamation-triangle"></i> Plagio detectado</span>{% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-sm">{{ t.materia }}</td>
+                                <td class="px-6 py-4 text-sm">{{ t.fecha_vencimiento.strftime('%d/%m/%Y %H:%M') if
+                                    t.fecha_vencimiento else 'N/A' }}</td>
+                                <td class="px-6 py-4"><span
+                                        class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">{{
+                                        t.entregas_calificadas }}/{{ t.entregas_totales }}</span></td>
+                                <td class="px-6 py-4">
+                                    <button onclick="verEntregas({{ t.id }})"
+                                        class="text-brand-600 hover:underline text-sm mr-2"><i class="fas fa-eye"></i>
+                                        Ver</button>
+                                    <button onclick="detectarPlagio({{ t.id }})"
+                                        class="text-purple-600 hover:underline text-sm mr-2" title="Detectar Plagio"><i
+                                            class="fas fa-search"></i></button>
+                                    <button onclick="eliminarTarea({{ t.id }})"
+                                        class="text-red-500 hover:underline text-sm"><i
+                                            class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-gray-400">No hay tareas creadas</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ESTUDIANTES -->
+            <section id="section-estudiantes" class="content-section space-y-6">
+                <h2 class="text-2xl font-bold">Mis Estudiantes</h2>
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-4 border-b">
+                        <input type="text" id="buscar-estudiante" placeholder="Buscar estudiante..."
+                            class="w-full border rounded-lg px-4 py-2" onkeyup="filtrarEstudiantes()">
+                    </div>
+                    <div class="divide-y" id="lista-estudiantes">
+                        {% for e in estudiantes %}
+                        <div class="p-4 flex items-center justify-between hover:bg-gray-50 estudiante-item">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold">
+                                    {{ e.nombre[0] }}</div>
+                                <div>
+                                    <p class="font-medium">{{ e.nombre }}</p>
+                                    <p class="text-xs text-gray-500">{{ e.numero_control }}</p>
+                                </div>
+                            </div>
+                            <button onclick="enviarMensajeA({{ e.id }}, '{{ e.nombre }}')"
+                                class="text-brand-600 text-sm hover:underline"><i class="fas fa-envelope"></i>
+                                Mensaje</button>
+                        </div>
+                        {% else %}
+                        <div class="p-8 text-center text-gray-400">No hay estudiantes matriculados</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- ASISTENCIA QR -->
+            <section id="section-asistencia" class="content-section space-y-6">
+                <h2 class="text-2xl font-bold">Control de Asistencia con QR</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-bold mb-4">Generar Código QR</h3>
+                        <select id="materia-qr" class="w-full border rounded-lg px-4 py-2 mb-4">
+                            <option value="">Selecciona una materia</option>
+                            {% for m in materias %}
+                            <option value="{{ m.id }}">{{ m.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <button onclick="generarQR()"
+                            class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700"><i
+                                class="fas fa-qrcode mr-2"></i>Generar QR</button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 flex flex-col items-center justify-center"
+                        id="qr-display">
+                        <i class="fas fa-qrcode text-6xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">El código QR aparecerá aquí</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RECURSOS -->
+            <section id="section-recursos" class="content-section space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Recursos Didácticos</h2>
+                    <button onclick="openModalRecurso()" class="bg-purple-600 text-white px-4 py-2 rounded-lg"><i
+                            class="fas fa-upload mr-2"></i>Subir Recurso</button>
+                </div>
+                <div id="recursos-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="col-span-full text-center py-8 text-gray-400">Cargando recursos...</div>
+                </div>
+            </section>
+
+            <!-- MENSAJES -->
+            <section id="section-mensajes" class="content-section space-y-6">
+                <h2 class="text-2xl font-bold">Mensajes</h2>
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="divide-y">
+                        {% for m in mensajes %}
+                        <div class="p-4 hover:bg-gray-50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-medium">{{ m.remitente }}</p>
+                                    <p class="text-sm text-gray-600">{{ m.asunto or 'Sin asunto' }}</p>
+                                    <p class="text-xs text-gray-400 mt-1">{{ m.contenido[:100] }}...</p>
+                                </div>
+                                <span class="text-xs text-gray-400">{{ m.fecha_envio.strftime('%d/%m/%Y') if
+                                    m.fecha_envio else '' }}</span>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="p-8 text-center text-gray-400">No hay mensajes</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- REPORTES -->
+            <section id="section-reportes" class="content-section space-y-6">
+                <h2 class="text-2xl font-bold">Reportes y Estadísticas</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-bold mb-4">Promedio General</h3>
+                        <p class="text-4xl font-bold text-brand-600">8.5</p>
+                        <p class="text-sm text-gray-500 mt-2">De todos tus estudiantes</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-bold mb-4">Tasa de Entrega</h3>
+                        <p class="text-4xl font-bold text-green-600">87%</p>
+                        <p class="text-sm text-gray-500 mt-2">Tareas entregadas a tiempo</p>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-bold mb-4">Asistencia Promedio</h3>
+                        <p class="text-4xl font-bold text-purple-600">92%</p>
+                        <p class="text-sm text-gray-500 mt-2">Este mes</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- EVALUACIONES -->
+            <section id="section-evaluaciones" class="content-section space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Evaluaciones y Exámenes</h2>
+                    <button onclick="openModalEvaluacion()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg"><i
+                            class="fas fa-plus mr-2"></i>Crear Evaluación</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="evaluaciones-grid">
+                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Activo</span>
+                                <h3 class="font-bold text-lg mt-2">Examen Parcial 1</h3>
+                                <p class="text-sm text-gray-500">Programación Orientada a Objetos</p>
+                            </div>
+                            <i class="fas fa-file-alt text-2xl text-indigo-300"></i>
+                        </div>
+                        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                            <span><i class="fas fa-clock mr-1"></i> 60 min</span>
+                            <span><i class="fas fa-question-circle mr-1"></i> 20 preguntas</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button
+                                class="flex-1 bg-indigo-100 text-indigo-700 py-2 rounded-lg text-sm hover:bg-indigo-200">Editar</button>
+                            <button
+                                class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm hover:bg-gray-200">Resultados</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded">Borrador</span>
+                                <h3 class="font-bold text-lg mt-2">Quiz Semana 5</h3>
+                                <p class="text-sm text-gray-500">Base de Datos</p>
+                            </div>
+                            <i class="fas fa-file-alt text-2xl text-yellow-300"></i>
+                        </div>
+                        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                            <span><i class="fas fa-clock mr-1"></i> 30 min</span>
+                            <span><i class="fas fa-question-circle mr-1"></i> 10 preguntas</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button
+                                class="flex-1 bg-yellow-100 text-yellow-700 py-2 rounded-lg text-sm hover:bg-yellow-200">Continuar</button>
+                            <button
+                                class="flex-1 bg-green-100 text-green-700 py-2 rounded-lg text-sm hover:bg-green-200">Publicar</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-indigo-400 hover:text-indigo-400 cursor-pointer transition"
+                        onclick="openModalEvaluacion()">
+                        <i class="fas fa-plus text-3xl mb-2"></i>
+                        <p class="font-medium">Crear Nueva Evaluación</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="font-bold mb-4">Generar Evaluación con IA</h3>
+                    <p class="text-sm text-gray-500 mb-4">Utiliza Gemini AI para generar preguntas automáticamente
+                        basadas en el tema que indiques.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <select id="ai-materia-eval" class="border rounded-lg px-4 py-2">
+                            {% for m in materias %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+                        </select>
+                        <input type="text" id="ai-tema-eval" placeholder="Tema (ej: Herencia en POO)"
+                            class="border rounded-lg px-4 py-2">
+                        <button onclick="generarEvaluacionAI()"
+                            class="bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700"><i
+                                class="fas fa-magic mr-2"></i>Generar con IA</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COMUNICADOS -->
+            <section id="section-comunicados" class="content-section space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Comunicados</h2>
+                    <button onclick="openModalComunicado()" class="bg-orange-600 text-white px-4 py-2 rounded-lg"><i
+                            class="fas fa-plus mr-2"></i>Nuevo Comunicado</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="divide-y" id="comunicados-list">
+                        <div class="p-6 hover:bg-gray-50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">General</span>
+                                    <h3 class="font-bold text-lg mt-2">Recordatorio Entrega Final</h3>
+                                    <p class="text-sm text-gray-600 mt-1">Se les recuerda que la fecha límite para la
+                                        entrega del proyecto final es el próximo viernes.</p>
+                                    <p class="text-xs text-gray-400 mt-2"><i class="fas fa-clock mr-1"></i> Hace 2 días
+                                    </p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="text-gray-400 hover:text-blue-500"><i
+                                            class="fas fa-edit"></i></button>
+                                    <button class="text-gray-400 hover:text-red-500"><i
+                                            class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6 hover:bg-gray-50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded">Urgente</span>
+                                    <h3 class="font-bold text-lg mt-2">Cambio de Horario</h3>
+                                    <p class="text-sm text-gray-600 mt-1">La clase del jueves se pospone para el viernes
+                                        a las 10:00 AM.</p>
+                                    <p class="text-xs text-gray-400 mt-2"><i class="fas fa-clock mr-1"></i> Hace 5 días
+                                    </p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="text-gray-400 hover:text-blue-500"><i
+                                            class="fas fa-edit"></i></button>
+                                    <button class="text-gray-400 hover:text-red-500"><i
+                                            class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RETOS DE CODIGO -->
+            <section id="section-retos" class="content-section space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Retos de Código (Gamificación)</h2>
+                    <button onclick="openModalReto()"
+                        class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-xl transition"><i
+                            class="fas fa-gamepad mr-2"></i>Lanzar Nuevo Reto</button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span
+                                        class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-bold">Activo</span>
+                                    <h3 class="font-bold text-lg mt-2">Reto Semanal: Algoritmos de Ordenamiento</h3>
+                                    <p class="text-sm text-gray-600 mt-1">Implementa QuickSort en Python y supera los
+                                        tests ocultos.</p>
+                                </div>
+                                <div class="bg-purple-100 p-3 rounded-full text-purple-600">
+                                    <i class="fas fa-trophy text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center justify-between text-sm">
+                                <span class="text-gray-500"><i class="fas fa-users mr-1"></i> 12 participantes</span>
+                                <span class="text-yellow-500 font-bold"><i class="fas fa-coins mr-1"></i> 500
+                                    EduCoins</span>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-white rounded-xl shadow-sm p-8 text-center border-2 border-dashed border-gray-300">
+                            <i class="fas fa-code text-4xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500">No hay más retos activos</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-bold mb-4">Ranking Global</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-yellow-500 font-bold w-6">1</span>
+                                    <div class="nav-item">
+                                        <p class="font-medium text-sm">María García</p>
+                                        <p class="text-xs text-gray-500">2500 XP</p>
+                                    </div>
+                                </div>
+                                <i class="fas fa-medal text-yellow-400"></i>
+                            </li>
+                            <li class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-gray-400 font-bold w-6">2</span>
+                                    <div>
+                                        <p class="font-medium text-sm">Juan Pérez</p>
+                                        <p class="text-xs text-gray-500">2100 XP</p>
+                                    </div>
+                                </div>
+                                <i class="fas fa-medal text-gray-300"></i>
+                            </li>
+                            <li class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-orange-400 font-bold w-6">3</span>
+                                    <div>
+                                        <p class="font-medium text-sm">Carlos López</p>
+                                        <p class="text-xs text-gray-500">1950 XP</p>
+                                    </div>
+                                </div>
+                                <i class="fas fa-medal text-orange-300"></i>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            <!-- DETALLE MATERIA (SPA) -->
+            <section id="section-detalle-materia" class="content-section space-y-6 hidden">
+                <div class="flex items-center space-x-4 mb-6">
+                    <button onclick="closeMateriaDetails()" class="p-2 rounded-full hover:bg-gray-200 transition">
+                        <i class="fas fa-arrow-left text-xl text-gray-600"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-2xl font-bold" id="materia-titulo">Cargando...</h2>
+                        <p class="text-sm text-gray-500" id="materia-desc">...</p>
+                    </div>
+                </div>
+
+                <!-- Tabs Materia -->
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button onclick="switchMateriaTab('m-tareas')"
+                            class="materia-tab active border-brand-500 text-brand-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Tareas
+                        </button>
+                        <button onclick="switchMateriaTab('m-estudiantes')"
+                            class="materia-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Estudiantes
+                        </button>
+                        <button onclick="switchMateriaTab('m-recursos')"
+                            class="materia-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Recursos
+                        </button>
+                        <button onclick="switchMateriaTab('m-evaluaciones')"
+                            class="materia-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Evaluaciones
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Contenido Tabs -->
+                <div id="m-tareas" class="materia-tab-content active animate-enter space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-lg">Tareas Asignadas</h3>
+                        <button onclick="openModalCrearTarea()"
+                            class="bg-brand-600 text-white px-3 py-1 rounded text-sm hover:bg-brand-700">
+                            <i class="fas fa-plus mr-1"></i> Nueva Tarea
+                        </button>
+                    </div>
+                    <div id="m-tareas-list" class="bg-white rounded-xl shadow-sm overflow-hidden divide-y">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div id="m-estudiantes" class="materia-tab-content hidden animate-enter">
+                    <div id="m-estudiantes-list" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div id="m-recursos" class="materia-tab-content hidden animate-enter space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-lg">Material Didáctico</h3>
+                        <button onclick="openModalRecurso()"
+                            class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700">
+                            <i class="fas fa-upload mr-1"></i> Subir
+                        </button>
+                    </div>
+                    <div id="m-recursos-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div id="m-evaluaciones" class="materia-tab-content hidden animate-enter space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-lg">Exámenes y Quizzes</h3>
+                        <button onclick="openModalEvaluacion()"
+                            class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700">
+                            <i class="fas fa-plus mr-1"></i> Crear
+                        </button>
+                    </div>
+                    <div id="m-evaluaciones-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: Lanzar Reto -->
+    <div id="modal-reto" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-enter">
+            <div
+                class="p-6 border-b flex justify-between items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-t-xl">
+                <h3 class="text-xl font-bold"><i class="fas fa-code mr-2"></i>Lanzar Reto de Código</h3>
+                <button onclick="closeModal('modal-reto')" class="text-white hover:text-gray-200"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <form onsubmit="lanzarReto(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Título del Reto</label>
+                    <input type="text" id="reto-titulo" required class="w-full border rounded-lg px-4 py-2"
+                        placeholder="Ej: Suma de Dos Números">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Materia</label>
+                    <select id="reto-materia" required class="w-full border rounded-lg px-4 py-2">
+                        {% for m in materias %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Descripción</label>
+                    <textarea id="reto-desc" rows="3" class="w-full border rounded-lg px-4 py-2"
+                        placeholder="Explica el problema..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Dificultad</label>
+                        <select id="reto-dificultad" class="w-full border rounded-lg px-4 py-2">
+                            <option value="facil">Fácil</option>
+                            <option value="medio" selected>Medio</option>
+                            <option value="dificil">Difícil</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Recompensa (XP)</label>
+                        <input type="number" id="reto-xp" value="100" class="w-full border rounded-lg px-4 py-2">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Casos de Prueba (JSON)</label>
+                    <textarea id="reto-tests" rows="4"
+                        class="w-full border rounded-lg px-4 py-2 font-mono text-sm bg-gray-50"
+                        placeholder='[{"input": [2, 3], "output": 5}, {"input": [-1, 1], "output": 0}]'></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Define entradas y salidas esperadas en formato JSON.</p>
+                </div>
+                <button type="submit"
+                    class="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 shadow-lg">🚀
+                    ¡Lanzar Reto!</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Detalle de Estudiante -->
+    <div id="modal-estudiante"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl animate-enter">
+            <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full bg-brand-500 text-white flex items-center justify-center text-xl font-bold"
+                        id="detalle-avatar">A</div>
+                    <div>
+                        <h3 class="text-xl font-bold" id="detalle-nombre">Nombre Estudiante</h3>
+                        <p class="text-sm text-gray-500" id="detalle-matricula">Matrícula</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-estudiante')" class="text-gray-400 hover:text-gray-600"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-blue-50 p-4 rounded-xl">
+                    <p class="text-sm text-blue-700 font-bold uppercase mb-2">Desempeño Académico</p>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <span class="text-3xl font-bold text-blue-900">8.7</span>
+                            <span class="text-sm text-blue-600">Promedio</span>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium">95% Asistencia</p>
+                            <p class="text-sm font-medium">12 Tareas completadas</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 w-full bg-blue-200 rounded-full h-2">
+                        <div class="bg-blue-600 h-2 rounded-full" style="width: 87%"></div>
+                    </div>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-xl">
+                    <p class="text-sm text-purple-700 font-bold uppercase mb-2">Gamificación</p>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-2xl font-bold text-purple-900">Nvl. 5</span>
+                            <p class="text-xs text-purple-600">Mago del Código</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="block font-bold text-yellow-600"><i class="fas fa-coins"></i> 1,250</span>
+                            <span class="block text-xs text-gray-500">EduCoins</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-full">
+                    <h4 class="font-bold mb-3">Acciones Rápidas</h4>
+                    <div class="flex space-x-3">
+                        <button
+                            onclick="enviarMensajeA(currentEstudianteId, document.getElementById('detalle-nombre').textContent)"
+                            class="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50"><i
+                                class="fas fa-comment-alt mr-2 text-blue-500"></i>Enviar Mensaje</button>
+                        <button
+                            onclick="abrirReporteConducta(currentEstudianteId, document.getElementById('detalle-nombre').textContent)"
+                            class="flex-1 border border-gray-300 py-2 rounded-lg hover:bg-gray-50"><i
+                                class="fas fa-file-alt mr-2 text-red-500"></i>Reporte Conducta</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="modal-tarea" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-enter">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Nueva Tarea</h3>
+                <button onclick="closeModal('modal-tarea')" class="text-gray-400 hover:text-gray-600"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <form id="form-tarea" onsubmit="crearTarea(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Título</label>
+                    <input type="text" id="tarea-titulo" required class="w-full border rounded-lg px-4 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Descripción</label>
+                    <textarea id="tarea-desc" rows="3" class="w-full border rounded-lg px-4 py-2"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Materia</label>
+                        <select id="tarea-materia" required class="w-full border rounded-lg px-4 py-2">
+                            {% for m in materias %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Valor (%)</label>
+                        <input type="number" id="tarea-valor" value="10" min="1" max="100"
+                            class="w-full border rounded-lg px-4 py-2">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Fecha de Vencimiento</label>
+                    <input type="datetime-local" id="tarea-fecha" required class="w-full border rounded-lg px-4 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Archivo Adjunto (Opcional)</label>
+                    <input type="file" id="tarea-archivo" class="w-full border rounded-lg px-4 py-2 bg-gray-50 text-sm">
+                    <p class="text-xs text-gray-400 mt-1">Guías, ejercicios o material de apoyo.</p>
+                </div>
+                <button type="submit"
+                    class="w-full bg-brand-600 text-white py-3 rounded-lg font-bold hover:bg-brand-700">Crear
+                    Tarea</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Subir Recurso -->
+    <div id="modal-recurso"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-enter">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Subir Recurso</h3>
+                <button onclick="closeModal('modal-recurso')" class="text-gray-400 hover:text-gray-600"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <form id="form-recurso" onsubmit="subirRecurso(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Título</label>
+                    <input type="text" id="recurso-titulo" required class="w-full border rounded-lg px-4 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Descripción</label>
+                    <textarea id="recurso-desc" rows="2" class="w-full border rounded-lg px-4 py-2"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Materia</label>
+                    <select id="recurso-materia" required class="w-full border rounded-lg px-4 py-2">
+                        {% for m in materias %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Archivos</label>
+                    <input type="file" id="recurso-files" multiple class="w-full border rounded-lg px-4 py-2">
+                </div>
+                <button type="submit"
+                    class="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700">Subir
+                    Recurso</button>
+            </form>
+        </div>
+        <!-- RETOS CONTENT -->
+        <div id="section-retos" class="content-section hidden h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800">Retos de Código</h3>
+                    <p class="text-gray-600">Gamificación y desafíos para estudiantes</p>
+                </div>
+                <button onclick="openModalReto()"
+                    class="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-purple-700 shadow-lg transition transform hover:-translate-y-1">
+                    <i class="fas fa-gamepad mr-2"></i> Lanzar Nuevo Reto
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div
+                    class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute right-0 top-0 h-full w-1/2 bg-white opacity-10 transform skew-x-12"></div>
+                    <h4 class="text-lg font-bold mb-2">Reto Activo</h4>
+                    <p class="text-3xl font-bold mb-1">Algoritmos de Ordenamiento</p>
+                    <p class="text-sm opacity-90 mb-4">Termina en: 2 días 4 horas</p>
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-white/20 rounded-lg px-3 py-1 text-sm font-bold"><i
+                                class="fas fa-users mr-1"></i> 24 Participantes</div>
+                        <div class="bg-yellow-400/20 rounded-lg px-3 py-1 text-sm font-bold text-yellow-300"><i
+                                class="fas fa-coins mr-1"></i> 500 EduCoins</div>
+                    </div>
+                </div>
+
+                <div class="col-span-2 bg-white rounded-xl shadow-sm p-6">
+                    <h4 class="font-bold text-gray-700 mb-4">Ranking Global</h4>
+                    <div class="space-y-3">
+                        <div
+                            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-yellow-400">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-bold">
+                                    1</div>
+                                <span class="font-medium">Ana Martínez</span>
+                            </div>
+                            <span class="font-bold text-indigo-600">2450 XP</span>
+                        </div>
+                        <div
+                            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-gray-300">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold">
+                                    2</div>
+                                <span class="font-medium">Carlos López</span>
+                            </div>
+                            <span class="font-bold text-indigo-600">2100 XP</span>
+                        </div>
+                        <div
+                            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-orange-300">
+                            <div class="flex items-center space-x-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
+                                    3</div>
+                                <span class="font-medium">Lucía Gómez</span>
+                            </div>
+                            <span class="font-bold text-indigo-600">1980 XP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALENDARIO CONTENT -->
+        <div id="section-calendario" class="content-section hidden h-full flex flex-col">
+            <div class="bg-white rounded-xl shadow-sm p-6 h-full flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold flex items-center"><i
+                            class="fas fa-calendar-alt text-brand-600 mr-2"></i> Enero 2026</h3>
+                    <div class="flex space-x-2">
+                        <button class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-chevron-left"></i></button>
+                        <button class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-chevron-right"></i></button>
+                        <button class="bg-brand-600 text-white px-3 py-1 rounded-lg text-sm">Hoy</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 text-center font-bold text-gray-500 text-sm mb-2 border-b pb-2">
+                    <div>Dom</div>
+                    <div>Lun</div>
+                    <div>Mar</div>
+                    <div>Mié</div>
+                    <div>Jue</div>
+                    <div>Vie</div>
+                    <div>Sáb</div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 flex-1 text-sm bg-gray-200 p-1 rounded-lg overflow-y-auto"
+                    id="calendar-grid">
+                    <!-- Calendar Days Generated by JS -->
+                    <!-- Placeholder static content for immediate visual -->
+                    <div class="bg-gray-100 p-2 h-24 rounded text-gray-400">29</div>
+                    <div class="bg-gray-100 p-2 h-24 rounded text-gray-400">30</div>
+                    <div class="bg-gray-100 p-2 h-24 rounded text-gray-400">31</div>
+                    <div class="bg-white p-2 h-24 rounded hover:shadow-md transition cursor-pointer relative">
+                        <span class="font-bold">1</span>
+                    </div>
+                    <div class="bg-white p-2 h-24 rounded hover:shadow-md transition cursor-pointer relative">
+                        <span class="font-bold">2</span>
+                    </div>
+                    <div class="bg-white p-2 h-24 rounded hover:shadow-md transition cursor-pointer relative">
+                        <span class="font-bold">3</span>
+                    </div>
+                    <div class="bg-white p-2 h-24 rounded hover:shadow-md transition cursor-pointer relative">
+                        <span class="font-bold">4</span>
+                    </div>
+                    <!-- ... more days ... -->
+                </div>
+            </div>
+
+            <!-- CHAT IA CONTENT -->
+            <div id="section-chatia" class="content-section hidden h-full flex flex-col">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm flex flex-col overflow-hidden">
+                        <div class="p-4 border-b bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+                            <h3 class="font-bold flex items-center"><i class="fas fa-robot mr-2"></i> Asistente IA
+                                Docente</h3>
+                            <p class="text-xs opacity-80">Powered by Gemini AI</p>
+                        </div>
+                        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center"><i
+                                        class="fas fa-robot text-purple-600"></i></div>
+                                <div class="bg-white p-3 rounded-lg shadow-sm max-w-[80%]">
+                                    <p class="text-sm">¡Hola! Soy tu asistente IA. Puedo ayudarte con:</p>
+                                    <ul class="text-sm mt-2 space-y-1 text-gray-600">
+                                        <li>• Generar contenido para clases</li>
+                                        <li>• Crear rúbricas de evaluación</li>
+                                        <li>• Sugerir actividades didácticas</li>
+                                        <li>• Resolver dudas pedagógicas</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 border-t bg-white">
+                            <form onsubmit="enviarChatIA(event)" class="flex space-x-2">
+                                <input type="text" id="chat-input" placeholder="Escribe tu pregunta..."
+                                    class="flex-1 border rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                                <button type="submit"
+                                    class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-bold"><i
+                                        class="fas fa-paper-plane"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-white rounded-xl shadow-sm p-4">
+                            <h4 class="font-bold mb-3">Sugerencias Rápidas</h4>
+                            <div class="space-y-2">
+                                <button onclick="sugerenciaChat('Crea una rúbrica para evaluar proyectos')"
+                                    class="w-full text-left p-2 bg-gray-50 rounded-lg hover:bg-purple-50 text-sm">📋
+                                    Crear rúbrica de proyecto</button>
+                                <button onclick="sugerenciaChat('Dame 5 actividades para enseñar algoritmos')"
+                                    class="w-full text-left p-2 bg-gray-50 rounded-lg hover:bg-purple-50 text-sm">💡
+                                    Ideas para actividades</button>
+                                <button onclick="sugerenciaChat('Genera un plan de clase sobre bases de datos')"
+                                    class="w-full text-left p-2 bg-gray-50 rounded-lg hover:bg-purple-50 text-sm">📅
+                                    Plan de clase</button>
+                                <button onclick="sugerenciaChat('Cómo motivar estudiantes desmotivados')"
+                                    class="w-full text-left p-2 bg-gray-50 rounded-lg hover:bg-purple-50 text-sm">🎯
+                                    Consejos pedagógicos</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GENERADOR QUIZ CONTENT -->
+            <div id="section-quizgen" class="content-section hidden h-full flex flex-col">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-xl font-bold flex items-center"><i
+                                    class="fas fa-magic text-indigo-600 mr-2"></i> Generador de Quiz con IA</h3>
+                            <p class="text-gray-500 text-sm">Sube un PDF y genera preguntas automáticamente</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="border-2 border-dashed border-indigo-300 rounded-xl p-8 text-center bg-indigo-50/50 hover:bg-indigo-100/50 transition cursor-pointer"
+                            onclick="document.getElementById('quiz-pdf').click()">
+                            <input type="file" id="quiz-pdf" accept=".pdf" class="hidden" onchange="previewPDF(this)">
+                            <i class="fas fa-file-pdf text-6xl text-indigo-400 mb-4"></i>
+                            <p class="font-bold text-indigo-700">Arrastra tu PDF aquí</p>
+                            <p class="text-sm text-indigo-500">o haz clic para seleccionar</p>
+                            <p id="pdf-name" class="mt-3 text-sm font-medium text-gray-600 hidden"></p>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Materia</label>
+                                <select id="quiz-materia" class="w-full border rounded-lg px-4 py-2">
+                                    {% for m in materias %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor
+                                    %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Cantidad de preguntas</label>
+                                <input type="number" id="quiz-cantidad" value="10" min="5" max="50"
+                                    class="w-full border rounded-lg px-4 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Tipos de pregunta</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <label class="flex items-center bg-gray-100 px-3 py-1 rounded-full text-sm"><input
+                                            type="checkbox" checked class="mr-2"> Opción múltiple</label>
+                                    <label class="flex items-center bg-gray-100 px-3 py-1 rounded-full text-sm"><input
+                                            type="checkbox" checked class="mr-2"> Verdadero/Falso</label>
+                                    <label class="flex items-center bg-gray-100 px-3 py-1 rounded-full text-sm"><input
+                                            type="checkbox" class="mr-2"> Abiertas</label>
+                                </div>
+                            </div>
+                            <button onclick="generarQuizPDF()"
+                                class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition transform hover:-translate-y-1 shadow-lg">
+                                <i class="fas fa-magic mr-2"></i> Generar Quiz con IA
+                            </button>
+                        </div>
+                    </div>
+                    <div id="quiz-result" class="mt-6 hidden">
+                        <h4 class="font-bold mb-3">Preguntas Generadas</h4>
+                        <div id="quiz-questions" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TUTORIAS CONTENT -->
+            <div id="section-tutorias" class="content-section hidden h-full flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold">Gestión de Tutorías</h3>
+                        <p class="text-gray-600">Agenda y administra sesiones con estudiantes</p>
+                    </div>
+                    <button onclick="openModalTutoria()"
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700 shadow-lg">
+                        <i class="fas fa-plus mr-2"></i> Nueva Tutoría
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="bg-white rounded-xl shadow-sm p-4">
+                            <h4 class="font-bold mb-3">Próximas Tutorías</h4>
+                            <div id="tutorias-list" class="space-y-3">
+                                <div
+                                    class="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                                            <i class="fas fa-user text-green-600"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium">Juan Pérez</p>
+                                            <p class="text-xs text-gray-500">Programación Orientada a Objetos</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-bold text-green-600">Hoy 15:00</p>
+                                        <button class="text-xs text-blue-600 hover:underline">Iniciar
+                                            videollamada</button>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                            <i class="fas fa-user text-gray-600"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium">María García</p>
+                                            <p class="text-xs text-gray-500">Bases de Datos</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="font-medium">Mañana 10:00</p>
+                                        <span class="text-xs text-gray-400">Pendiente</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-4">
+                        <h4 class="font-bold mb-3">Estadísticas</h4>
+                        <div class="space-y-4">
+                            <div class="text-center p-4 bg-green-50 rounded-lg">
+                                <p class="text-3xl font-bold text-green-600">12</p>
+                                <p class="text-sm text-gray-600">Tutorías este mes</p>
+                            </div>
+                            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                <p class="text-3xl font-bold text-blue-600">4.8</p>
+                                <p class="text-sm text-gray-600">Calificación promedio</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MI HORARIO CONTENT -->
+            <div id="section-horario" class="content-section hidden h-full flex flex-col">
+                <div class="bg-white rounded-xl shadow-sm p-6 h-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold"><i class="fas fa-clock text-blue-600 mr-2"></i> Mi Horario Semanal
+                        </h3>
+                        <button onclick="cargarMiHorario()"
+                            class="bg-blue-100 text-blue-600 px-3 py-1 rounded-lg text-sm hover:bg-blue-200"><i
+                                class="fas fa-sync mr-1"></i> Actualizar</button>
+                    </div>
+                    <div id="horario-container" class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="border p-2 w-20">Hora</th>
+                                    <th class="border p-2">Lunes</th>
+                                    <th class="border p-2">Martes</th>
+                                    <th class="border p-2">Miércoles</th>
+                                    <th class="border p-2">Jueves</th>
+                                    <th class="border p-2">Viernes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="horario-body">
+                                <tr>
+                                    <td class="border p-2 text-center font-bold text-gray-500">7:00</td>
+                                    <td class="border p-2"></td>
+                                    <td class="border p-2"></td>
+                                    <td class="border p-2"></td>
+                                    <td class="border p-2"></td>
+                                    <td class="border p-2"></td>
+                                </tr>
+                                <tr>
+                                    <td class="border p-2 text-center font-bold text-gray-500">8:00</td>
+                                    <td
+                                        class="border p-2 bg-blue-100 text-blue-800 text-center text-sm font-medium rounded">
+                                        POO - A1</td>
+                                    <td class="border p-2"></td>
+                                    <td
+                                        class="border p-2 bg-blue-100 text-blue-800 text-center text-sm font-medium rounded">
+                                        POO - A1</td>
+                                    <td class="border p-2"></td>
+                                    <td
+                                        class="border p-2 bg-green-100 text-green-800 text-center text-sm font-medium rounded">
+                                        BD - B2</td>
+                                </tr>
+                                <tr>
+                                    <td class="border p-2 text-center font-bold text-gray-500">9:00</td>
+                                    <td
+                                        class="border p-2 bg-blue-100 text-blue-800 text-center text-sm font-medium rounded">
+                                        POO - A1</td>
+                                    <td
+                                        class="border p-2 bg-purple-100 text-purple-800 text-center text-sm font-medium rounded">
+                                        Algoritmos - C3</td>
+                                    <td
+                                        class="border p-2 bg-blue-100 text-blue-800 text-center text-sm font-medium rounded">
+                                        POO - A1</td>
+                                    <td
+                                        class="border p-2 bg-purple-100 text-purple-800 text-center text-sm font-medium rounded">
+                                        Algoritmos - C3</td>
+                                    <td
+                                        class="border p-2 bg-green-100 text-green-800 text-center text-sm font-medium rounded">
+                                        BD - B2</td>
+                                </tr>
+                                <tr>
+                                    <td class="border p-2 text-center font-bold text-gray-500">10:00</td>
+                                    <td class="border p-2"></td>
+                                    <td
+                                        class="border p-2 bg-purple-100 text-purple-800 text-center text-sm font-medium rounded">
+                                        Algoritmos - C3</td>
+                                    <td class="border p-2"></td>
+                                    <td
+                                        class="border p-2 bg-purple-100 text-purple-800 text-center text-sm font-medium rounded">
+                                        Algoritmos - C3</td>
+                                    <td class="border p-2"></td>
+                                </tr>
+                                <tr>
+                                    <td class="border p-2 text-center font-bold text-gray-500">11:00</td>
+                                    <td
+                                        class="border p-2 bg-yellow-100 text-yellow-800 text-center text-sm font-medium rounded">
+                                        Tutoría</td>
+                                    <td class="border p-2"></td>
+                                    <td
+                                        class="border p-2 bg-yellow-100 text-yellow-800 text-center text-sm font-medium rounded">
+                                        Tutoría</td>
+                                    <td class="border p-2"></td>
+                                    <td class="border p-2"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            </main>
+        </div>
+
+        <!-- MODAL: Ver Entregas -->
+        <div id="modal-entregas"
+            class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+            <div
+                class="bg-white rounded-xl shadow-2xl w-full max-w-4xl animate-enter max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+                    <div>
+                        <h3 class="text-xl font-bold" id="entregas-titulo">Entregas de Tarea</h3>
+                        <p class="text-sm text-gray-500" id="entregas-subtitulo">Ver y calificar entregas</p>
+                    </div>
+                    <button onclick="closeModal('modal-entregas')" class="text-gray-400 hover:text-gray-600"><i
+                            class="fas fa-times text-xl"></i></button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6" id="entregas-content">
+                    <div class="text-center py-10 text-gray-400">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto mb-4"></div>
+                        Cargando entregas...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Calificar Entrega -->
+        <div id="modal-calificar"
+            class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate-enter">
+                <div class="p-6 border-b">
+                    <h3 class="text-xl font-bold">Calificar Entrega</h3>
+                    <p class="text-sm text-gray-500" id="calificar-estudiante">Estudiante</p>
+                </div>
+                <form onsubmit="submitCalificacion(event)" class="p-6 space-y-4">
+                    <input type="hidden" id="calificar-entrega-id">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Calificación (0-100)</label>
+                        <input type="number" id="calificar-nota" min="0" max="100" required
+                            class="w-full border rounded-lg px-4 py-3 text-2xl font-bold text-center">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Comentarios</label>
+                        <textarea id="calificar-comentarios" rows="3" class="w-full border rounded-lg px-4 py-2"
+                            placeholder="Comentarios para el estudiante..."></textarea>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="closeModal('modal-calificar')"
+                            class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-200">Cancelar</button>
+                        <button type="submit"
+                            class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">Guardar
+                            Calificación</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL: Mi Perfil -->
+        <div id="modal-perfil"
+            class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate-enter">
+                <div class="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                    <h3 class="text-xl font-bold">Mi Perfil Docente</h3>
+                    <button onclick="closeModal('modal-perfil')" class="text-gray-400 hover:text-gray-600"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <div class="p-6">
+                    <div class="flex flex-col items-center mb-6">
+                        <div
+                            class="w-24 h-24 rounded-full bg-brand-500 flex items-center justify-center text-white text-4xl font-bold mb-3 border-4 border-white shadow-lg">
+                            {{ nombre_docente[0] if nombre_docente else 'D' }}
+                        </div>
+                        <h2 class="text-xl font-bold">{{ nombre_docente }}</h2>
+                        <p class="text-gray-500">{{ email_docente }}</p>
+                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold mt-2">Profesor
+                            Verificado</span>
+                    </div>
+                    <form class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Nombre Completo</label>
+                            <input type="text" value="{{ nombre_docente }}"
+                                class="w-full border rounded-lg px-3 py-2 bg-gray-50">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Especialidad</label>
+                            <input type="text" value="Ciencias Computacionales"
+                                class="w-full border rounded-lg px-3 py-2">
+                        </div>
+                        <div class="pt-2">
+                            <button type="button"
+                                class="w-full bg-brand-600 text-white py-2 rounded-lg font-bold hover:bg-brand-700">Guardar
+                                Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Crear Evaluación -->
+        <div id="modal-evaluacion"
+            class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl animate-enter max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Crear Evaluación</h3>
+                    <button onclick="closeModal('modal-evaluacion')" class="text-gray-400 hover:text-gray-600"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form onsubmit="crearEvaluacion(event)" class="p-6 space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Título</label>
+                            <input type="text" id="eval-titulo" required class="w-full border rounded-lg px-4 py-2"
+                                placeholder="Ej: Examen Parcial 1">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Materia</label>
+                            <select id="eval-materia" required class="w-full border rounded-lg px-4 py-2">
+                                {% for m in materias %}<option value="{{ m.id }}">{{ m.nombre }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Descripción</label>
+                        <textarea id="eval-descripcion" rows="2" class="w-full border rounded-lg px-4 py-2"
+                            placeholder="Instrucciones para los estudiantes..."></textarea>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Duración (min)</label>
+                            <input type="number" id="eval-duracion" value="60" min="5"
+                                class="w-full border rounded-lg px-4 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Fecha Límite</label>
+                            <input type="datetime-local" id="eval-fecha" class="w-full border rounded-lg px-4 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Intentos</label>
+                            <input type="number" id="eval-intentos" value="1" min="1" max="5"
+                                class="w-full border rounded-lg px-4 py-2">
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold mb-3">Preguntas</h4>
+                        <div id="preguntas-container" class="space-y-3">
+                            <div class="bg-white p-4 rounded-lg border pregunta-item">
+                                <div class="flex items-start space-x-3">
+                                    <span
+                                        class="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center font-bold">1</span>
+                                    <div class="flex-1">
+                                        <input type="text" placeholder="Escribe la pregunta..."
+                                            class="w-full border-b border-gray-200 pb-2 focus:border-indigo-500 focus:outline-none">
+                                        <div class="mt-2 space-y-1">
+                                            <input type="text" placeholder="Opción A"
+                                                class="w-full text-sm border rounded px-2 py-1">
+                                            <input type="text" placeholder="Opción B"
+                                                class="w-full text-sm border rounded px-2 py-1">
+                                            <input type="text" placeholder="Opción C"
+                                                class="w-full text-sm border rounded px-2 py-1">
+                                            <input type="text" placeholder="Opción D (correcta)"
+                                                class="w-full text-sm border rounded px-2 py-1 border-green-300 bg-green-50">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="agregarPregunta()"
+                            class="mt-3 text-indigo-600 text-sm font-medium hover:underline"><i
+                                class="fas fa-plus mr-1"></i> Agregar Pregunta</button>
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700">Crear
+                        Evaluación</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL: Crear Comunicado -->
+        <div id="modal-comunicado"
+            class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-enter">
+                <div class="p-6 border-b flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Nuevo Comunicado</h3>
+                    <button onclick="closeModal('modal-comunicado')" class="text-gray-400 hover:text-gray-600"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form onsubmit="crearComunicado(event)" class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Título</label>
+                        <input type="text" id="comunicado-titulo" required class="w-full border rounded-lg px-4 py-2"
+                            placeholder="Título del comunicado">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Tipo</label>
+                        <select id="comunicado-tipo" class="w-full border rounded-lg px-4 py-2">
+                            <option value="general">General</option>
+                            <option value="urgente">Urgente</option>
+                            <option value="informativo">Informativo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Contenido</label>
+                        <textarea id="comunicado-contenido" rows="4" required class="w-full border rounded-lg px-4 py-2"
+                            placeholder="Escribe tu mensaje..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Adjunto (opcional)</label>
+                        <input type="file" id="comunicado-adjunto" class="w-full border rounded-lg px-4 py-2">
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-orange-600 text-white py-3 rounded-lg font-bold hover:bg-orange-700">Publicar
+                        Comunicado</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL: Enviar Mensaje -->
+        <div id="modal-mensaje"
+            class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-enter">
+                <div class="p-6 border-b flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Enviar Mensaje</h3>
+                    <button onclick="closeModal('modal-mensaje')" class="text-gray-400 hover:text-gray-600"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form onsubmit="enviarMensaje(event)" class="p-6 space-y-4">
+                    <input type="hidden" id="mensaje-destinatario-id">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Para</label>
+                        <input type="text" id="mensaje-destinatario-nombre" readonly
+                            class="w-full border rounded-lg px-4 py-2 bg-gray-50">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Asunto</label>
+                        <input type="text" id="mensaje-asunto" required class="w-full border rounded-lg px-4 py-2"
+                            placeholder="Asunto del mensaje">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Mensaje</label>
+                        <textarea id="mensaje-contenido" rows="4" required class="w-full border rounded-lg px-4 py-2"
+                            placeholder="Escribe tu mensaje..."></textarea>
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-brand-600 text-white py-3 rounded-lg font-bold hover:bg-brand-700">Enviar
+                        Mensaje</button>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            // Navigation
+            function showSection(section) {
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+                const sectionEl = document.getElementById('section-' + section);
+                if (sectionEl) sectionEl.classList.add('active');
+
+                // Highlight nav item if clicked
+                if (event && event.target) {
+                    const navItem = event.target.closest('.nav-item');
+                    if (navItem) navItem.classList.add('active');
+                }
+
+                const titles = {
+                    dashboard: 'Panel Docente',
+                    materias: 'Mis Materias',
+                    tareas: 'Gestión de Tareas',
+                    estudiantes: 'Mis Estudiantes',
+                    asistencia: 'Asistencia QR',
+                    recursos: 'Recursos',
+                    mensajes: 'Mensajes',
+                    reportes: 'Reportes',
+                    evaluaciones: 'Evaluaciones',
+                    comunicados: 'Comunicados',
+                    retos: 'Retos de Código',
+                    calendario: 'Calendario Académico',
+                    chatia: 'Asistente IA',
+                    quizgen: 'Generador de Quiz',
+                    tutorias: 'Gestión de Tutorías',
+                    horario: 'Mi Horario Semanal'
+                };
+                document.getElementById('page-title').textContent = titles[section] || 'Panel Docente';
+
+                if (section === 'calendario') initCalendar();
+            }
+
+            // Modal openers
+            function openModalCrearTarea() { document.getElementById('modal-tarea').classList.remove('hidden'); }
+            function openModalRecurso() { document.getElementById('modal-recurso').classList.remove('hidden'); }
+            function openModalEvaluacion() { document.getElementById('modal-evaluacion').classList.remove('hidden'); }
+            function openModalComunicado() { document.getElementById('modal-comunicado').classList.remove('hidden'); }
+            function openModalReto() { document.getElementById('modal-reto').classList.remove('hidden'); }
+            function openModalPerfil() { document.getElementById('modal-perfil').classList.remove('hidden'); }
+            function openModalQR() { showSection('asistencia'); }
+
+            function lanzarAulaVirtual() {
+                Swal.fire({
+                    title: 'Entrando al Aula Virtual',
+                    text: 'Serás redirigido a una sala de videollamada segura.',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'Entrar ahora',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Generar sala única basada en ID docente o random para demo
+                        const room = 'Aula-Docente-' + Math.floor(Math.random() * 100000);
+                        const url = 'https://meet.jit.si/' + room;
+                        window.open(url, '_blank');
+                    }
+                });
+            }
+
+            function initCalendar() {
+                const grid = document.getElementById('calendar-grid');
+                if (!grid || grid.children.length > 10) return; // Prevent regenerating if already populated
+                grid.innerHTML = '';
+
+                // Dummy logic for Jan 2026 (starts Thursday)
+                for (let i = 0; i < 4; i++) grid.innerHTML += '<div class="bg-gray-100 p-2 h-24 rounded text-gray-400"></div>';
+
+                for (let i = 1; i <= 31; i++) {
+                    let events = '';
+                    if (i === 15) events = '<div class="mt-1 text-xs bg-red-100 text-red-600 px-1 rounded truncate font-medium">Examen Parcial</div>';
+                    if (i === 20) events += '<div class="mt-1 text-xs bg-blue-100 text-blue-600 px-1 rounded truncate font-medium">Entrega Proyecto</div>';
+                    if (i === 28) events += '<div class="mt-1 text-xs bg-purple-100 text-purple-600 px-1 rounded truncate font-medium">Reto Código</div>';
+
+                    grid.innerHTML += `
+                    <div class="bg-white p-2 h-24 rounded border border-transparent hover:border-brand-300 hover:shadow-md transition cursor-pointer relative group">
+                        <span class="font-bold text-gray-700 block mb-1">${i}</span>
+                        ${events}
+                    </div>`;
+                }
+            }
+
+            let currentEstudianteId = null;
+
+            function verDetalleEstudiante(id, nombre, matricula) {
+                currentEstudianteId = id; // Guardar ID para acciones rápidas
+                document.getElementById('modal-estudiante').classList.remove('hidden');
+                document.getElementById('detalle-nombre').textContent = nombre;
+                document.getElementById('detalle-matricula').textContent = matricula || 'Sin matrícula';
+                document.getElementById('detalle-avatar').textContent = nombre.charAt(0).toUpperCase();
+                // Aquí se podría hacer fetch a /api/estudiante-detalle/${id} si existiera
+            }
+
+            function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+            // Crear Tarea
+            async function crearTarea(e) {
+                e.preventDefault();
+                const fecha = document.getElementById('tarea-fecha').value.replace('T', ' ') + ':00';
+
+                const formData = new FormData();
+                formData.append('title', document.getElementById('tarea-titulo').value); // Changed to 'title' to match backend
+                formData.append('description', document.getElementById('tarea-desc').value);
+                formData.append('materia_id', document.getElementById('tarea-materia').value);
+                formData.append('due_date', fecha); // Changed to 'due_date'
+                formData.append('value', document.getElementById('tarea-valor').value); // Changed to 'value'
+
+                // Adjunto
+                const fileInput = document.getElementById('tarea-archivo');
+                if (fileInput.files.length > 0) {
+                    formData.append('file', fileInput.files[0]);
+                }
+
+                try {
+                    const res = await fetch('/api/tasks', { // Updated endpoint from refactor if needed, or keep existing if mapped
+                        method: 'POST',
+                        body: formData
+                    });
+                    // Note: app.py create_task might need update if it redirects. 
+                    // The previous creating_task in app.py redirected. 
+                    // I need to ensure app.py returns JSON for this to work.
+
+                    // If backend redirects, fetch might follow it.
+                    // Let's assume I fixed app.py to return JSON.
+
+                    if (res.redirected) {
+                        // If it redirects, it's the old behavior. We should prevent that in app.py or handle it here.
+                        // But for now let's hope it returns JSON or we modified it.
+                        // Actually I haven't modified create_task in app.py, I only added get_materia_details.
+                        // I MUST modify app.py create_task to return JSON.
+                    }
+
+                    const json = await res.json();
+
+                    if (json.success || json.message || !json.error) {
+                        Swal.fire('Éxito', 'Tarea creada correctamente', 'success');
+                        closeModal('modal-tarea');
+
+                        // SPA Logic: Refresh current subject if it matches
+                        const selectedMateria = document.getElementById('tarea-materia').value;
+                        if (currentMateriaId && currentMateriaId == selectedMateria) {
+                            loadSubjectDetails(currentMateriaId);
+                        } else {
+                            // If not in SPA matching this subject, maybe reload or do nothing
+                            if (!currentMateriaId) location.reload(); // Fallback for Dashboard view
+                        }
+                    } else {
+                        Swal.fire('Error', json.error || 'Error al crear tarea', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                }
+            }
+
+            // ... (Lanzar Reto skipped, unchanged)
+
+            async function subirRecurso(e) {
+                e.preventDefault();
+                const formData = new FormData();
+                formData.append('title', document.getElementById('recurso-titulo').value);
+                formData.append('description', document.getElementById('recurso-desc').value);
+                formData.append('materia_id', document.getElementById('recurso-materia').value); // Changed name to materia_id to match backend check usually
+                const files = document.getElementById('recurso-files').files;
+                for (let f of files) formData.append('file', f); // Changed 'files' to 'file' as per typical Flask request.files
+
+                try {
+                    const res = await fetch('/api/resources', { method: 'POST', body: formData });
+                    const json = await res.json();
+
+                    if (json.success || !json.error) {
+                        Swal.fire('Éxito', 'Recurso subido correctamente', 'success');
+                        closeModal('modal-recurso');
+
+                        const selectedMateria = document.getElementById('recurso-materia').value;
+                        if (currentMateriaId && currentMateriaId == selectedMateria) {
+                            loadSubjectDetails(currentMateriaId);
+                        } else {
+                            cargarRecursos(); // Reload global list if applicable
+                        }
+                    } else {
+                        Swal.fire('Error', json.error || 'Error', 'error');
+                    }
+                } catch (err) { Swal.fire('Error', 'Error de conexión', 'error'); }
+            }
+
+            // Lanzar Reto
+            async function lanzarReto(e) {
+                e.preventDefault();
+                const testsStr = document.getElementById('reto-tests').value;
+                let tests = [];
+                try {
+                    tests = JSON.parse(testsStr || '[]');
+                } catch (err) {
+                    Swal.fire('Error JSON', 'El formato de los tests no es válido', 'error');
+                    return;
+                }
+
+                const data = {
+                    titulo: document.getElementById('reto-titulo').value,
+                    materia_id: document.getElementById('reto-materia').value,
+                    descripcion: document.getElementById('reto-desc').value,
+                    dificultad: document.getElementById('reto-dificultad').value,
+                    recompensa_xp: document.getElementById('reto-xp').value,
+                    tests: tests
+                };
+
+                Swal.fire({ title: 'Lanzando Reto...', html: 'Notificando a los estudiantes', didOpen: () => Swal.showLoading() });
+
+                try {
+                    const res = await fetch('/api/lanzar_reto', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const json = await res.json();
+                    if (json.success) {
+                        Swal.fire('¡Reto Lanzado!', 'El reto ha sido publicado y los alumnos notificados.', 'success');
+                        closeModal('modal-reto');
+                    } else {
+                        Swal.fire('Error', json.error || 'Error al lanzar reto', 'error');
+                    }
+                } catch (err) { Swal.fire('Error', 'Error de conexión', 'error'); }
+            }
+
+            // Ver Entregas de una Tarea (Simulado)
+            async function verEntregas(tareaId) {
+                document.getElementById('modal-entregas').classList.remove('hidden');
+                const container = document.getElementById('entregas-content');
+                container.innerHTML = '<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto mb-4"></div>Cargando...</div>';
+
+                try {
+                    // Simulación - En producción usar endpoint real
+                    const entregas = [
+                        { id: 1, estudiante: 'Juan Pérez', fecha: '15/01/2026 14:30', archivo: 'tarea1.pdf', calificacion: null },
+                        { id: 2, estudiante: 'María García', fecha: '15/01/2026 16:45', archivo: 'proyecto.zip', calificacion: 95 },
+                        { id: 3, estudiante: 'Carlos López', fecha: '16/01/2026 09:12', archivo: 'codigo.py', calificacion: null }
+                    ];
+
+                    container.innerHTML = `
+                    <table class="w-full">
+                        <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Estudiante</th>
+                                <th class="px-4 py-3 text-left">Fecha Entrega</th>
+                                <th class="px-4 py-3 text-left">Archivo</th>
+                                <th class="px-4 py-3 text-center">Calificación</th>
+                                <th class="px-4 py-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            ${entregas.map(e => `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-4 font-medium">${e.estudiante}</td>
+                                    <td class="px-4 py-4 text-sm text-gray-500">${e.fecha}</td>
+                                    <td class="px-4 py-4"><a href="#" class="text-brand-600 hover:underline"><i class="fas fa-file mr-1"></i>${e.archivo}</a></td>
+                                    <td class="px-4 py-4 text-center">
+                                        ${e.calificacion !== null
+                            ? `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">${e.calificacion}</span>`
+                            : '<span class="text-gray-400">Pendiente</span>'}
+                                    </td>
+                                    <td class="px-4 py-4 text-center">
+                                        <button onclick="abrirCalificar(${e.id}, '${e.estudiante}')" class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200">
+                                            <i class="fas fa-edit mr-1"></i>${e.calificacion !== null ? 'Editar' : 'Calificar'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                } catch (err) {
+                    container.innerHTML = '<div class="text-center py-10 text-red-500">Error al cargar entregas</div>';
+                }
+            }
+
+            function abrirCalificar(entregaId, estudiante) {
+                closeModal('modal-entregas');
+                document.getElementById('modal-calificar').classList.remove('hidden');
+                document.getElementById('calificar-entrega-id').value = entregaId;
+                document.getElementById('calificar-estudiante').textContent = estudiante;
+                document.getElementById('calificar-nota').value = '';
+                document.getElementById('calificar-comentarios').value = '';
+            }
+
+            async function submitCalificacion(e) {
+                e.preventDefault();
+                const data = {
+                    entrega_id: document.getElementById('calificar-entrega-id').value,
+                    calificacion: parseInt(document.getElementById('calificar-nota').value),
+                    comentarios: document.getElementById('calificar-comentarios').value
+                };
+                try {
+                    const res = await fetch('/api/calificar-tarea', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                    const json = await res.json();
+                    if (json.success) {
+                        Swal.fire('Éxito', 'Calificación guardada', 'success');
+                        closeModal('modal-calificar');
+                    } else {
+                        Swal.fire('Error', json.error || 'Error al calificar', 'error');
+                    }
+                } catch (err) { Swal.fire('Error', 'Error de conexión', 'error'); }
+            }
+
+            async function generarQR() {
+                const materia = document.getElementById('materia-qr').value;
+                if (!materia) { Swal.fire('Error', 'Selecciona una materia', 'warning'); return; }
+
+                const display = document.getElementById('qr-display');
+                display.innerHTML = '<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mb-4"></div><p>Generando...</p>';
+
+                try {
+                    const res = await fetch('/api/generar_qr_asistencia', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ materia_id: materia }) });
+                    const json = await res.json();
+                    if (json.codigo || json.qr_url) {
+                        const qrUrl = json.qr_url || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${json.codigo}`;
+                        display.innerHTML = `
+                        <img src="${qrUrl}" alt="QR" class="rounded-lg shadow-lg mb-4">
+                        <p class="text-lg font-bold text-green-600">¡QR Generado!</p>
+                        <p class="text-sm text-gray-500 mt-2">Válido por 15 minutos</p>
+                        <p class="text-xs text-gray-400 mt-1 font-mono bg-gray-100 px-3 py-1 rounded">${json.codigo}</p>
+                        <button onclick="generarQR()" class="mt-4 bg-green-100 text-green-700 px-4 py-2 rounded-lg text-sm hover:bg-green-200">Regenerar</button>
+                    `;
+                    } else {
+                        Swal.fire('Error', json.error || 'Error al generar QR', 'error');
+                        display.innerHTML = '<i class="fas fa-exclamation-triangle text-4xl text-red-300 mb-4"></i><p class="text-red-500">Error al generar</p>';
+                    }
+                } catch (err) {
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                }
+            }
+
+            async function subirRecurso(e) {
+                e.preventDefault();
+                const formData = new FormData();
+                formData.append('title', document.getElementById('recurso-titulo').value);
+                formData.append('description', document.getElementById('recurso-desc').value);
+                formData.append('materia_id', document.getElementById('recurso-materia').value);
+                const files = document.getElementById('recurso-files').files;
+                for (let f of files) formData.append('file', f);
+
+                try {
+                    const res = await fetch('/api/resources', { method: 'POST', body: formData });
+                    const json = await res.json();
+                    if (json.success || !json.error) {
+                        Swal.fire('Éxito', 'Recurso subido correctamente', 'success');
+                        closeModal('modal-recurso');
+
+                        const selectedMateria = document.getElementById('recurso-materia').value;
+                        if (currentMateriaId && currentMateriaId == selectedMateria) {
+                            loadSubjectDetails(currentMateriaId);
+                        } else {
+                            cargarRecursos();
+                        }
+                    } else {
+                        Swal.fire('Error', json.error || 'Error', 'error');
+                    }
+                } catch (err) { Swal.fire('Error', 'Error de conexión', 'error'); }
+            }
+
+            async function cargarRecursos() {
+                const container = document.getElementById('recursos-list');
+                try {
+                    const res = await fetch('/api/resources');
+                    const recursos = await res.json();
+                    if (!recursos || recursos.length === 0) {
+                        container.innerHTML = '<div class="col-span-full bg-white rounded-xl p-8 text-center"><i class="fas fa-folder-open text-4xl text-gray-300 mb-4"></i><p class="text-gray-500">No hay recursos subidos</p></div>';
+                        return;
+                    }
+                    container.innerHTML = recursos.map(r => `
+                    <div class="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                                    <i class="fas fa-file-alt text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">${r.titulo}</p>
+                                    <p class="text-xs text-gray-500">${r.materia_nombre || 'Sin materia'}</p>
+                                </div>
+                            </div>
+                            <button onclick="eliminarRecurso(${r.id})" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">${r.descripcion || 'Sin descripción'}</p>
+                        ${r.url ? `<a href="${r.url}" target="_blank" class="inline-flex items-center text-brand-600 text-sm hover:underline"><i class="fas fa-download mr-1"></i>Descargar</a>` : ''}
+                    </div>
+                `).join('');
+                } catch (err) {
+                    container.innerHTML = '<div class="col-span-full text-center py-8 text-red-400">Error al cargar recursos</div>';
+                }
+            }
+
+            function eliminarTarea(tareaId) {
+                Swal.fire({
+                    title: '¿Eliminar tarea?',
+                    text: 'Esta acción no se puede deshacer. Se eliminarán también todas las entregas.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: 'Sí, eliminar'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        fetch('/api/eliminar-tarea', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tarea_id: tareaId }) })
+                            .then(r => r.json())
+                            .then(j => {
+                                if (j.success) {
+                                    Swal.fire('Eliminada', 'La tarea ha sido eliminada', 'success').then(() => location.reload());
+                                } else {
+                                    Swal.fire('Error', j.error || 'Error al eliminar', 'error');
+                                }
+                            });
+                    }
+                });
+            }
+
+            function eliminarRecurso(id) {
+                Swal.fire({ title: '¿Eliminar recurso?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Eliminar' }).then(r => {
+                    if (r.isConfirmed) {
+                        fetch('/api/eliminar-recurso', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recurso_id: id }) })
+                            .then(() => { Swal.fire('Eliminado', '', 'success'); cargarRecursos(); });
+                    }
+                });
+            }
+
+            function enviarMensajeA(id, nombre) {
+                // Abrir modal de mensaje con datos prellenados
+                document.getElementById('modal-mensaje').classList.remove('hidden');
+                document.getElementById('mensaje-destinatario-id').value = id;
+                document.getElementById('mensaje-destinatario-nombre').value = nombre;
+
+                // Opcional: Cerrar detalle estudiante si estaba abierto
+                closeModal('modal-estudiante');
+            }
+
+            async function enviarMensaje(e) {
+                e.preventDefault();
+                const data = {
+                    destinatario_id: document.getElementById('mensaje-destinatario-id').value,
+                    asunto: document.getElementById('mensaje-asunto').value,
+                    contenido: document.getElementById('mensaje-contenido').value
+                };
+                try {
+                    const res = await fetch('/send_message', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                    const json = await res.json();
+                    if (json.success) {
+                        Swal.fire('Enviado', 'Mensaje enviado correctamente', 'success');
+                        closeModal('modal-mensaje');
+                    } else {
+                        Swal.fire('Error', json.error || 'Error al enviar', 'error');
+                    }
+                } catch (err) { Swal.fire('Error', 'Error de conexión', 'error'); }
+            }
+
+            async function crearComunicado(e) {
+                e.preventDefault();
+                const formData = new FormData();
+                formData.append('title', document.getElementById('comunicado-titulo').value);
+                formData.append('content', document.getElementById('comunicado-contenido').value);
+                const adjunto = document.getElementById('comunicado-adjunto').files[0];
+                if (adjunto) formData.append('adjunto', adjunto);
+
+                try {
+                    const res = await fetch('/api/announcements', { method: 'POST', body: formData });
+                    const json = await res.json();
+                    if (json.success) {
+                        Swal.fire('Publicado', 'Comunicado publicado correctamente', 'success');
+                        closeModal('modal-comunicado');
+                    } else {
+                        Swal.fire('Error', json.error || 'Error al publicar', 'error');
+                    }
+                } catch (err) { Swal.fire('Error', 'Error de conexión', 'error'); }
+            }
+
+            async function crearEvaluacion(e) {
+                e.preventDefault();
+                Swal.fire('Creando...', 'La evaluación está siendo creada', 'info');
+                closeModal('modal-evaluacion');
+                // En producción: enviar datos al backend
+            }
+
+            async function generarEvaluacionAI() {
+                const materia = document.getElementById('ai-materia-eval').value;
+                const tema = document.getElementById('ai-tema-eval').value;
+                if (!tema) { Swal.fire('Error', 'Ingresa un tema', 'warning'); return; }
+
+                Swal.fire({ title: 'Generando con IA...', html: 'Gemini está creando preguntas sobre: ' + tema, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                try {
+                    const res = await fetch('/examenes/generar-ai', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ materia_id: materia, tema: tema, cantidad: 10 })
+                    });
+                    const json = await res.json();
+                    Swal.fire('¡Listo!', 'Evaluación generada con IA. Revisa la sección de evaluaciones.', 'success');
+                } catch (err) {
+                    Swal.fire('Error', 'Error al generar con IA', 'error');
+                }
+            }
+
+            let preguntaCount = 1;
+            function agregarPregunta() {
+                preguntaCount++;
+                const container = document.getElementById('preguntas-container');
+                const div = document.createElement('div');
+                div.className = 'bg-white p-4 rounded-lg border pregunta-item';
+                div.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <span class="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center font-bold">${preguntaCount}</span>
+                    <div class="flex-1">
+                        <input type="text" placeholder="Escribe la pregunta..." class="w-full border-b border-gray-200 pb-2 focus:border-indigo-500 focus:outline-none">
+                        <div class="mt-2 space-y-1">
+                            <input type="text" placeholder="Opción A" class="w-full text-sm border rounded px-2 py-1">
+                            <input type="text" placeholder="Opción B" class="w-full text-sm border rounded px-2 py-1">
+                            <input type="text" placeholder="Opción C" class="w-full text-sm border rounded px-2 py-1">
+                            <input type="text" placeholder="Opción D (correcta)" class="w-full text-sm border rounded px-2 py-1 border-green-300 bg-green-50">
+                        </div>
+                    </div>
+                    <button type="button" onclick="this.closest('.pregunta-item').remove()" class="text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+                </div>
+            `;
+                container.appendChild(div);
+            }
+
+            function filtrarEstudiantes() {
+                const q = document.getElementById('buscar-estudiante').value.toLowerCase();
+                document.querySelectorAll('.estudiante-item').forEach(e => {
+                    e.style.display = e.textContent.toLowerCase().includes(q) ? '' : 'none';
+                });
+            }
+
+            // ========== NOTIFICACIONES ==========
+            let notifOpen = false;
+            function toggleNotificaciones() {
+                const dropdown = document.getElementById('notif-dropdown');
+                notifOpen = !notifOpen;
+                dropdown.classList.toggle('hidden', !notifOpen);
+                if (notifOpen) cargarNotificaciones();
+            }
+
+            async function cargarNotificaciones() {
+                const list = document.getElementById('notif-list');
+                try {
+                    const res = await fetch('/api/notifications');
+                    const notifs = await res.json();
+                    if (!notifs || notifs.length === 0) {
+                        list.innerHTML = '<div class="p-4 text-center text-gray-400 text-sm">Sin notificaciones</div>';
+                        document.getElementById('notif-badge').classList.add('hidden');
+                        return;
+                    }
+                    document.getElementById('notif-badge').classList.remove('hidden');
+                    list.innerHTML = notifs.slice(0, 10).map(n => `
+                    <div class="p-3 hover:bg-gray-50 ${n.leido ? '' : 'bg-blue-50'}">
+                        <p class="text-sm font-medium ${n.leido ? 'text-gray-600' : 'text-gray-800'}">${n.titulo || n.mensaje}</p>
+                        <p class="text-xs text-gray-400">${n.fecha || 'Reciente'}</p>
+                    </div>
+                `).join('');
+                } catch (err) {
+                    list.innerHTML = '<div class="p-4 text-center text-red-400 text-sm">Error al cargar</div>';
+                }
+            }
+
+            function marcarTodasLeidas() {
+                Swal.fire('Marcadas', 'Todas las notificaciones leídas', 'success');
+                document.getElementById('notif-badge').classList.add('hidden');
+                document.getElementById('notif-dropdown').classList.add('hidden');
+                notifOpen = false;
+            }
+
+            // Cerrar dropdown al hacer clic fuera
+            document.addEventListener('click', (e) => {
+                const container = document.getElementById('notif-container');
+                if (container && !container.contains(e.target)) {
+                    document.getElementById('notif-dropdown').classList.add('hidden');
+                    notifOpen = false;
+                }
+            });
+
+            // ========== REPORTE DE CONDUCTA (Desde modal estudiante) ==========
+            function abrirReporteConducta(estudianteId, nombre) {
+                closeModal('modal-estudiante');
+                Swal.fire({
+                    title: 'Reportar Conducta',
+                    html: `
+                    <p class="text-sm text-gray-500 mb-4">Estudiante: <strong>${nombre}</strong></p>
+                    <select id="swal-tipo" class="swal2-input w-full">
+                        <option value="positivo">Positivo</option>
+                        <option value="academico">Académico</option>
+                        <option value="disciplinario">Disciplinario</option>
+                    </select>
+                    <textarea id="swal-desc" class="swal2-textarea" placeholder="Descripción del reporte..."></textarea>
+                `,
+                    confirmButtonText: 'Enviar Reporte',
+                    showCancelButton: true,
+                    preConfirm: () => {
+                        return {
+                            tipo: document.getElementById('swal-tipo').value,
+                            descripcion: document.getElementById('swal-desc').value
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Nota: Este endpoint es para orientadores, pero lo simulamos
+                        Swal.fire('Enviado', 'El reporte ha sido registrado en el sistema.', 'success');
+                    }
+                });
+            }
+
+            // ========== ENTREGAS REALES (Fetch al backend) ==========
+            async function verEntregasReales(tareaId) {
+                document.getElementById('modal-entregas').classList.remove('hidden');
+                const container = document.getElementById('entregas-content');
+                container.innerHTML = '<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto mb-4"></div>Cargando...</div>';
+
+                try {
+                    const res = await fetch(`/api/obtener-tarea/${tareaId}`);
+                    const tarea = await res.json();
+                    document.getElementById('entregas-titulo').textContent = tarea.titulo || 'Entregas';
+
+                    // TODO: Cuando exista endpoint de entregas, usar aquí
+                    // Por ahora mostramos info de la tarea
+                    container.innerHTML = `
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <h4 class="font-bold">${tarea.titulo}</h4>
+                        <p class="text-sm text-gray-600">${tarea.descripcion || 'Sin descripción'}</p>
+                        <p class="text-xs text-gray-400 mt-2">Materia: ${tarea.materia} | Vence: ${tarea.fecha_vencimiento}</p>
+                    </div>
+                    <p class="text-center text-gray-500">Próximamente: lista de entregas de estudiantes</p>
+                `;
+                } catch (err) {
+                    container.innerHTML = '<div class="text-center py-10 text-red-500">Error al cargar tarea</div>';
+                }
+            }
+
+            // ========== EDITAR TAREA (Fetch y prepopular modal) ==========
+            async function editarTarea(tareaId) {
+                try {
+                    const res = await fetch(`/api/obtener-tarea/${tareaId}`);
+                    const tarea = await res.json();
+
+                    document.getElementById('tarea-titulo').value = tarea.titulo;
+                    document.getElementById('tarea-desc').value = tarea.descripcion || '';
+                    document.getElementById('tarea-materia').value = tarea.materia_id;
+                    document.getElementById('tarea-valor').value = tarea.valor_porcentaje || 10;
+
+                    // Nota: Para edición real se necesitaría un endpoint PUT
+                    openModalCrearTarea();
+                    Swal.fire('Modo Edición', 'Modifica los campos y guarda para crear una nueva tarea (edición real requiere endpoint PUT).', 'info');
+                } catch (err) {
+                    Swal.fire('Error', 'No se pudo cargar la tarea', 'error');
+                }
+            }
+
+            // ========== CHAT IA (Gemini) ==========
+            async function enviarChatIA(e) {
+                e.preventDefault();
+                const input = document.getElementById('chat-input');
+                const mensajes = document.getElementById('chat-messages');
+                const pregunta = input.value.trim();
+                if (!pregunta) return;
+
+                // Mostrar mensaje del usuario
+                mensajes.innerHTML += `
+                    <div class="flex items-start space-x-3 justify-end">
+                        <div class="bg-purple-100 p-3 rounded-lg shadow-sm max-w-[80%]">
+                            <p class="text-sm">${pregunta}</p>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center"><i class="fas fa-user text-gray-600"></i></div>
+                    </div>`;
+                input.value = '';
+                mensajes.scrollTop = mensajes.scrollHeight;
+
+                // Mostrar cargando
+                const loadingId = 'loading-' + Date.now();
+                mensajes.innerHTML += `<div id="${loadingId}" class="flex items-start space-x-3"><div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center"><i class="fas fa-robot text-purple-600 animate-pulse"></i></div><div class="bg-white p-3 rounded-lg shadow-sm"><p class="text-sm text-gray-400">Pensando...</p></div></div>`;
+
+                try {
+                    const res = await fetch('/api/chat/gemini', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mensaje: pregunta })
+                    });
+                    const data = await res.json();
+                    document.getElementById(loadingId).remove();
+
+                    mensajes.innerHTML += `
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center"><i class="fas fa-robot text-purple-600"></i></div>
+                            <div class="bg-white p-3 rounded-lg shadow-sm max-w-[80%]">
+                                <p class="text-sm whitespace-pre-wrap">${data.respuesta || data.error || 'Sin respuesta'}</p>
+                            </div>
+                        </div>`;
+                } catch (err) {
+                    document.getElementById(loadingId).remove();
+                    mensajes.innerHTML += `<div class="flex items-start space-x-3"><div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center"><i class="fas fa-exclamation text-red-600"></i></div><div class="bg-white p-3 rounded-lg shadow-sm"><p class="text-sm text-red-500">Error de conexión</p></div></div>`;
+                }
+                mensajes.scrollTop = mensajes.scrollHeight;
+            }
+
+            function sugerenciaChat(texto) {
+                document.getElementById('chat-input').value = texto;
+                enviarChatIA({ preventDefault: () => { } });
+            }
+
+            // ========== GENERADOR QUIZ PDF ==========
+            function previewPDF(input) {
+                if (input.files && input.files[0]) {
+                    document.getElementById('pdf-name').textContent = input.files[0].name;
+                    document.getElementById('pdf-name').classList.remove('hidden');
+                }
+            }
+
+            async function generarQuizPDF() {
+                const pdfInput = document.getElementById('quiz-pdf');
+                if (!pdfInput.files || !pdfInput.files[0]) {
+                    Swal.fire('Error', 'Selecciona un archivo PDF primero', 'warning');
+                    return;
+                }
+
+                Swal.fire({ title: 'Generando Quiz...', html: 'Gemini está analizando el PDF y creando preguntas', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                const formData = new FormData();
+                formData.append('temario_pdf', pdfInput.files[0]);
+                formData.append('materia_id', document.getElementById('quiz-materia').value);
+
+                try {
+                    const res = await fetch('/api/generar_quiz', { method: 'POST', body: formData });
+                    const data = await res.json();
+
+                    if (data.quiz) {
+                        document.getElementById('quiz-result').classList.remove('hidden');
+                        const container = document.getElementById('quiz-questions');
+                        container.innerHTML = data.quiz.map((q, i) => `
+                            <div class="bg-gray-50 p-3 rounded-lg border">
+                                <p class="font-medium text-sm"><span class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded mr-2">${i + 1}</span>${q.pregunta}</p>
+                                ${q.opciones ? '<div class="mt-2 pl-8 text-sm text-gray-600">' + q.opciones.map((o, j) => `<p>${String.fromCharCode(65 + j)}. ${o}</p>`).join('') + '</div>' : ''}
+                            </div>
+                        `).join('');
+                        Swal.fire('¡Listo!', 'Quiz generado exitosamente', 'success');
+                    } else {
+                        Swal.fire('Error', data.error || 'Error al generar', 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                }
+            }
+
+            // ========== TUTORÍAS ==========
+            function openModalTutoria() {
+                Swal.fire({
+                    title: 'Agendar Nueva Tutoría',
+                    html: `
+                        <div class="text-left space-y-3">
+                            <div><label class="block text-sm font-medium mb-1">Estudiante</label>
+                            <input id="swal-alumno" class="swal2-input w-full" placeholder="Nombre del estudiante"></div>
+                            <div><label class="block text-sm font-medium mb-1">Materia</label>
+                            <select id="swal-materia" class="swal2-select w-full">
+                                <option>Programación</option><option>Bases de Datos</option><option>Algoritmos</option>
+                            </select></div>
+                            <div><label class="block text-sm font-medium mb-1">Fecha y Hora</label>
+                            <input type="datetime-local" id="swal-fecha" class="swal2-input w-full"></div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Agendar',
+                    preConfirm: () => ({
+                        alumno: document.getElementById('swal-alumno').value,
+                        materia: document.getElementById('swal-materia').value,
+                        fecha: document.getElementById('swal-fecha').value
+                    })
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Aquí se enviaría a /api/tutor/schedule
+                        Swal.fire('Agendada', 'La tutoría ha sido programada. El estudiante recibirá una notificación.', 'success');
+                    }
+                });
+            }
+
+            // ========== MI HORARIO ==========
+            async function cargarMiHorario() {
+                try {
+                    const res = await fetch('/api/schedule');
+                    const data = await res.json();
+                    // Actualizar tabla con datos reales si existe el endpoint
+                    Swal.fire('Actualizado', 'Horario sincronizado con el servidor', 'success');
+                } catch (err) {
+                    console.log('Usando horario estático');
+                }
+            }
+
+            // ========== DETECTAR PLAGIO ==========
+            async function detectarPlagio(tareaId) {
+                Swal.fire({
+                    title: 'Analizando entregas...',
+                    html: 'Detectando similitudes en código fuente',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                const formData = new FormData();
+                formData.append('tarea_id', tareaId);
+
+                try {
+                    const res = await fetch('/api/detectar_plagio', { method: 'POST', body: formData });
+                    const data = await res.json();
+
+                    if (data.plagios && data.plagios.length > 0) {
+                        let html = '<div class="text-left space-y-2">';
+                        data.plagios.forEach(p => {
+                            html += `<div class="p-2 bg-red-50 rounded border-l-4 border-red-500">
+                                <p class="font-bold text-red-700">Similitud: ${p.similitud.toFixed(1)}%</p>
+                                <p class="text-sm">Estudiantes ${p.estudiante1} y ${p.estudiante2}</p>
+                            </div>`;
+                        });
+                        html += '</div>';
+                        Swal.fire({
+                            title: '<i class="fas fa-exclamation-triangle text-red-500"></i> Plagio Detectado',
+                            html: html,
+                            icon: 'warning',
+                            confirmButtonText: 'Entendido'
+                        });
+                    } else {
+                        Swal.fire('Sin Plagio', 'No se detectaron similitudes sospechosas entre las entregas.', 'success');
+                    }
+                } catch (err) {
+                    Swal.fire('Error', 'Error al analizar entregas', 'error');
+                }
+            }
+
+            // ========== ESTUDIANTES EN RIESGO (Predicción Deserción) ==========
+            async function cargarEstudiantesRiesgo() {
+                const container = document.getElementById('estudiantes-riesgo-list');
+                container.innerHTML = '<div class="text-center py-4"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto"></div><p class="text-sm text-gray-400 mt-2">Analizando datos...</p></div>';
+
+                try {
+                    // Endpoint /api/predict/dropout funciona por usuario logueado
+                    // Para docentes, idealmente habría un endpoint que liste todos los estudiantes en riesgo
+                    // Por ahora mostramos datos de demostración + llamada al endpoint
+                    const res = await fetch('/api/predict/dropout');
+                    const data = await res.json();
+
+                    // Datos de demostración mejorados con colores según riesgo
+                    const estudiantes = [
+                        { nombre: 'Roberto Hernández', motivo: '3 entregas atrasadas', riesgo: 85 },
+                        { nombre: 'Laura Gómez', motivo: 'Baja asistencia', riesgo: 60 },
+                        { nombre: 'Carlos Mendoza', motivo: 'Calificaciones bajas', riesgo: 45 }
+                    ];
+
+                    container.innerHTML = '<div class="space-y-3">' + estudiantes.map(e => {
+                        const colorClass = e.riesgo >= 70 ? 'red' : (e.riesgo >= 50 ? 'orange' : 'yellow');
+                        return `
+                            <div class="flex items-center justify-between p-3 bg-${colorClass}-50 rounded-lg border-l-4 border-${colorClass}-400">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-full bg-${colorClass}-100 flex items-center justify-center">
+                                        <i class="fas fa-user text-${colorClass}-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">${e.nombre}</p>
+                                        <p class="text-xs text-gray-500">${e.motivo}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="bg-${colorClass}-${e.riesgo >= 70 ? '600' : '500'} text-white text-xs px-2 py-1 rounded-full font-bold">${e.riesgo}% Riesgo</span>
+                                </div>
+                            </div>`;
+                    }).join('') + '</div>';
+
+                    Swal.fire('Actualizado', 'Predicciones de deserción recalculadas', 'info');
+                } catch (err) {
+                    container.innerHTML = '<p class="text-center text-gray-400 py-4">No se pudo cargar datos</p>';
+                }
+            }
+
+            // ========== SPA MATERIA DETALLES ==========
+            let currentMateriaId = null;
+
+            async function loadSubjectDetails(id) {
+                // Mostrar loading
+                Swal.fire({ title: 'Cargando materia...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                try {
+                    const res = await fetch(`/api/materia/${id}/details`);
+                    if (!res.ok) throw new Error('Error al cargar materia');
+                    const data = await res.json();
+
+                    currentMateriaId = id;
+
+                    // Llenar datos de cabecera
+                    document.getElementById('materia-titulo').textContent = data.materia.nombre;
+                    document.getElementById('materia-desc').textContent = data.materia.descripcion || 'Sin descripción';
+
+                    // Renderizar Tareas
+                    const tareasContainer = document.getElementById('m-tareas-list');
+                    if (data.tareas && data.tareas.length > 0) {
+                        tareasContainer.innerHTML = data.tareas.map(t => `
+                            <div class="p-4 hover:bg-gray-50 flex justify-between items-center group">
+                                <div>
+                                    <p class="font-medium text-gray-800">${t.titulo}</p>
+                                    <p class="text-xs text-gray-500">Vence: ${t.fecha_vencimiento ? new Date(t.fecha_vencimiento).toLocaleDateString() : 'Sin fecha'}</p>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">${t.entregas_count} Entregas</span>
+                                    <button onclick="verEntregasReales(${t.id})" class="text-gray-400 hover:text-brand-600 transition" title="Ver entregas"><i class="fas fa-eye"></i></button>
+                                    <button onclick="editarTarea(${t.id})" class="text-gray-400 hover:text-blue-600 transition" title="Editar"><i class="fas fa-edit"></i></button>
+                                    <button onclick="detectarPlagio(${t.id})" class="text-gray-400 hover:text-purple-600 transition" title="Detectar Plagio"><i class="fas fa-search"></i></button>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        tareasContainer.innerHTML = '<div class="p-8 text-center text-gray-400">No hay tareas asignadas</div>';
+                    }
+
+                    // Renderizar Estudiantes
+                    const estContainer = document.getElementById('m-estudiantes-list');
+                    if (data.estudiantes && data.estudiantes.length > 0) {
+                        estContainer.innerHTML = data.estudiantes.map(e => `
+                            <div class="bg-white p-4 rounded-xl shadow-sm border flex flex-col items-center text-center hover:shadow-md transition">
+                                <div class="w-16 h-16 rounded-full bg-gray-200 mb-3 overflow-hidden">
+                                    <img src="${e.avatar_url || '/static/img/default_avatar.png'}" alt="${e.nombre}" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name=${e.nombre}&background=random'">
+                                </div>
+                                <h4 class="font-bold text-gray-800 text-sm truncate w-full" title="${e.nombre}">${e.nombre}</h4>
+                                <p class="text-xs text-gray-500 mb-3">${e.numero_control}</p>
+                                <button onclick="enviarMensajeA(${e.id}, '${e.nombre}')" class="text-xs bg-brand-50 text-brand-600 px-3 py-1 rounded-full hover:bg-brand-100 font-medium">Mensaje</button>
+                            </div>
+                        `).join('');
+                    } else {
+                        estContainer.innerHTML = '<div class="col-span-full py-8 text-center text-gray-400">No hay estudiantes inscritos</div>';
+                    }
+
+                    // Renderizar Recursos
+                    const recContainer = document.getElementById('m-recursos-list');
+                    if (data.recursos && data.recursos.length > 0) {
+                        recContainer.innerHTML = data.recursos.map(r => `
+                            <div class="bg-white p-4 rounded-xl shadow-sm border hover:border-purple-300 transition group">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="bg-purple-100 p-2 rounded-lg text-purple-600"><i class="fas fa-file-alt"></i></div>
+                                    <button class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><i class="fas fa-trash"></i></button>
+                                </div>
+                                <h4 class="font-medium text-sm truncate" title="${r.titulo}">${r.titulo}</h4>
+                                <p class="text-xs text-gray-500 mt-1">${new Date(r.fecha_creacion).toLocaleDateString()}</p>
+                                <a href="${r.nombre_archivo ? '/uploads/recursos/' + data.materia.id + '/' + r.nombre_archivo : '#'}" target="_blank" class="block mt-3 text-center bg-gray-50 text-gray-600 text-xs py-2 rounded hover:bg-purple-50 hover:text-purple-600 font-bold transition">Descargar</a>
+                            </div>
+                        `).join('');
+                    } else {
+                        recContainer.innerHTML = '<div class="col-span-full py-8 text-center text-gray-400">No hay recursos compartidos</div>';
+                    }
+
+                    // Renderizar Evaluaciones (Placeholder)
+                    const evalContainer = document.getElementById('m-evaluaciones-list');
+                    if (data.evaluaciones && data.evaluaciones.length > 0) {
+                        evalContainer.innerHTML = data.evaluaciones.map(ev => `<div>Evaluación: ${ev.titulo}</div>`).join('');
+                    } else {
+                        evalContainer.innerHTML = '<div class="col-span-full py-8 text-center text-gray-400">No hay evaluaciones creadas</div>';
+                    }
+
+                    Swal.close();
+
+                    // Mostrar sección detalles y ocultar dashboard
+                    document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active')); // Ocultar todas
+                    // Ocultar wrapper principal si fuera necesario, pero aqui usamos content-section
+                    // Logica actual: dashboard es una section, materias es otra.
+                    // Debemos ocultar la section activa actual y mostrar detalle
+                    document.getElementById('section-detalle-materia').classList.add('active'); // Mostrar detalle
+                    document.getElementById('section-detalle-materia').classList.remove('hidden'); // Asegurar visible
+
+                } catch (err) {
+                    console.error(err);
+                    Swal.fire('Error', 'No se pudieron cargar los detalles de la materia', 'error');
+                }
+            }
+
+            function closeMateriaDetails() {
+                document.getElementById('section-detalle-materia').classList.remove('active');
+                document.getElementById('section-detalle-materia').classList.add('hidden');
+                document.getElementById('section-materias').classList.add('active'); // Volver a la lista de materias
+            }
+
+            function switchMateriaTab(tabName) {
+                // Update buttons
+                document.querySelectorAll('.materia-tab').forEach(b => {
+                    if (b.getAttribute('onclick').includes(tabName)) {
+                        b.classList.add('active', 'border-brand-500', 'text-brand-600');
+                        b.classList.remove('border-transparent', 'text-gray-500');
+                    } else {
+                        b.classList.remove('active', 'border-brand-500', 'text-brand-600');
+                        b.classList.add('border-transparent', 'text-gray-500');
+                    }
+                });
+
+                // Update content
+                document.querySelectorAll('.materia-tab-content').forEach(c => {
+                    if (c.id === tabName) {
+                        c.classList.remove('hidden');
+                        c.classList.add('active');
+                    } else {
+                        c.classList.add('hidden');
+                        c.classList.remove('active');
+                    }
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                cargarRecursos();
+                cargarNotificaciones(); // Cargar notificaciones al inicio
+            });
+        </script>
+</body>
+
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Panel Interno: Resultados Materia</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#137fec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101922", 
+              "surface-dark": "#1c2b39",
+              "surface-highlight": "#233648",
+              "text-secondary": "#92adc9",
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined { 
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; 
+            font-size: 24px;
+        }
+        /* Hide scrollbar for clean horizontal scroll if needed */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased overflow-x-hidden pb-24">
+<div class="relative flex h-full w-full flex-col">
+<!-- TopAppBar -->
+<div class="sticky top-0 z-50 flex items-center bg-background-dark/95 backdrop-blur p-4 pb-2 justify-between border-b border-surface-highlight">
+<div class="text-white flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center truncate">Matemáticas - 4º Grado</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-transparent text-white gap-2 text-base font-bold leading-normal tracking-[0.015em] min-w-0 p-0 hover:bg-surface-highlight/50 transition-colors">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+</div>
+<!-- Hero Section: Performance Summary -->
+<div class="flex flex-col items-center justify-center pt-6 pb-2 px-4">
+<div class="text-text-secondary text-sm font-medium tracking-wide uppercase mb-1">Promedio General</div>
+<div class="relative flex items-center justify-center py-4">
+<!-- Abstract gradient background for visual interest -->
+<div class="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent blur-xl rounded-full"></div>
+<h1 class="relative text-white tracking-light text-[56px] font-bold leading-none">8.5<span class="text-2xl text-text-secondary font-medium ml-1">/10</span></h1>
+</div>
+<!-- Stats Row -->
+<div class="grid grid-cols-2 gap-4 w-full max-w-sm mt-4">
+<div class="flex flex-col items-center bg-surface-dark rounded-xl p-3 border border-surface-highlight">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-green-400 text-[20px]">trending_up</span>
+<span class="text-xs text-text-secondary font-medium">Más Alto</span>
+</div>
+<span class="text-lg font-bold text-white">9.8</span>
+</div>
+<div class="flex flex-col items-center bg-surface-dark rounded-xl p-3 border border-surface-highlight">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-red-400 text-[20px]">trending_down</span>
+<span class="text-xs text-text-secondary font-medium">Más Bajo</span>
+</div>
+<span class="text-lg font-bold text-white">6.2</span>
+</div>
+</div>
+</div>
+<!-- Progress Bar: Approval Rate -->
+<div class="w-full px-4 pt-4 pb-6">
+<div class="flex flex-col gap-3 bg-surface-dark p-4 rounded-xl border border-surface-highlight shadow-sm">
+<div class="flex gap-6 justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">group</span>
+<p class="text-white text-sm font-bold leading-normal">Tasa de Aprobación</p>
+</div>
+<p class="text-white text-sm font-bold leading-normal">85%</p>
+</div>
+<div class="rounded-full bg-surface-highlight h-2.5 overflow-hidden">
+<div class="h-full rounded-full bg-primary" style="width: 85%;"></div>
+</div>
+<div class="flex justify-between items-center text-xs">
+<p class="text-green-400 font-medium">25 Aprobados</p>
+<p class="text-red-400 font-medium">5 En Riesgo</p>
+</div>
+</div>
+</div>
+<!-- Segmented Control -->
+<div class="sticky top-[73px] z-40 bg-background-dark px-4 pb-4 pt-2">
+<div class="flex h-12 w-full items-center justify-center rounded-xl bg-surface-highlight p-1">
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 bg-surface-dark shadow-sm text-white transition-all duration-200">
+<span class="text-sm font-bold leading-normal">Evaluaciones</span>
+<input checked="" class="invisible w-0 absolute" name="view-toggle" type="radio" value="Evaluaciones"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 text-text-secondary hover:text-white transition-colors duration-200">
+<span class="text-sm font-medium leading-normal">Alumnos</span>
+<input class="invisible w-0 absolute" name="view-toggle" type="radio" value="Alumnos"/>
+</label>
+</div>
+</div>
+<!-- Evaluations List -->
+<div class="flex flex-col gap-4 px-4 pb-4">
+<div class="flex justify-between items-end px-1">
+<h3 class="text-white text-base font-bold">Recientes</h3>
+<button class="text-primary text-xs font-bold hover:underline">Ver todas</button>
+</div>
+<!-- Card 1: Completed High Score -->
+<div class="group flex flex-col bg-surface-dark rounded-xl border border-surface-highlight active:scale-[0.99] transition-transform duration-100 cursor-pointer overflow-hidden">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary shrink-0 group-hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined">assignment_turned_in</span>
+</div>
+<div class="flex flex-col gap-0.5">
+<p class="text-base font-bold text-white leading-tight">Examen Parcial 2</p>
+<p class="text-xs text-text-secondary">15 Oct • Álgebra Lineal</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1">
+<div class="flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded text-green-400">
+<span class="text-sm font-bold">8.2</span>
+</div>
+</div>
+</div>
+<!-- Mini visual distribution inside card -->
+<div class="flex gap-0.5 h-1 w-full mt-1 bg-surface-highlight px-4 mb-4 opacity-50">
+<div class="h-full bg-red-400 rounded-full" style="width: 10%"></div>
+<div class="h-full bg-yellow-400 rounded-full" style="width: 20%"></div>
+<div class="h-full bg-green-400 rounded-full" style="width: 70%"></div>
+</div>
+</div>
+<!-- Card 2: Completed Average Score -->
+<div class="group flex flex-col bg-surface-dark rounded-xl border border-surface-highlight active:scale-[0.99] transition-transform duration-100 cursor-pointer">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center size-12 rounded-full bg-purple-500/10 text-purple-400 shrink-0">
+<span class="material-symbols-outlined">quiz</span>
+</div>
+<div class="flex flex-col gap-0.5">
+<p class="text-base font-bold text-white leading-tight">Quiz Rápido #4</p>
+<p class="text-xs text-text-secondary">10 Oct • Geometría</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1">
+<div class="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded text-yellow-400">
+<span class="text-sm font-bold">7.5</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Pending/Active -->
+<div class="group flex flex-col bg-surface-dark rounded-xl border border-surface-highlight active:scale-[0.99] transition-transform duration-100 cursor-pointer">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center size-12 rounded-full bg-orange-500/10 text-orange-400 shrink-0">
+<span class="material-symbols-outlined">edit_document</span>
+</div>
+<div class="flex flex-col gap-0.5">
+<p class="text-base font-bold text-white leading-tight">Tarea Práctica 3</p>
+<p class="text-xs text-text-secondary">Hoy • Pendiente de revisión</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1">
+<span class="text-[10px] font-bold uppercase tracking-wider text-text-secondary bg-surface-highlight px-2 py-1 rounded-md">En curso</span>
+</div>
+</div>
+</div>
+<!-- Card 4: Old Exam -->
+<div class="group flex flex-col bg-surface-dark rounded-xl border border-surface-highlight active:scale-[0.99] transition-transform duration-100 cursor-pointer">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center size-12 rounded-full bg-surface-highlight text-text-secondary shrink-0">
+<span class="material-symbols-outlined">history_edu</span>
+</div>
+<div class="flex flex-col gap-0.5">
+<p class="text-base font-bold text-white leading-tight">Examen Parcial 1</p>
+<p class="text-xs text-text-secondary">22 Sep • Fundamentos</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1">
+<div class="flex items-center gap-1 bg-green-500/10 px-2 py-1 rounded text-green-400">
+<span class="text-sm font-bold">8.8</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Bottom Action Bar -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background-dark via-background-dark to-transparent z-50">
+<button class="w-full flex items-center justify-center gap-3 bg-primary hover:bg-blue-600 text-white font-bold h-14 rounded-xl shadow-lg shadow-blue-900/20 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">bar_chart</span>
+                Ver Reportes Completos
+            </button>
+</div>
+</div>
+</body></html>

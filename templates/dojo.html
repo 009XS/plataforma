@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Dojo de Código | EduPlatform{% endblock %}
+{% block content %}
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <div class="w-64 bg-dark-900 text-white p-4 flex-shrink-0">
+        <div class="text-2xl font-bold mb-8">Edu<span class="text-brand-500">Platform</span></div>
+        <nav class="space-y-2">
+            <a href="/panel-alumno" class="block py-2 px-4 rounded hover:bg-dark-800"><i
+                    class="fas fa-arrow-left mr-2"></i>Volver</a>
+            <div class="py-4 text-xs text-gray-500 uppercase">Dificultad</div>
+            <a href="?dificultad=facil" class="block py-2 px-4 rounded hover:bg-dark-800 text-green-400"><i
+                    class="fas fa-star mr-2"></i>Fácil</a>
+            <a href="?dificultad=medio" class="block py-2 px-4 rounded hover:bg-dark-800 text-yellow-400"><i
+                    class="fas fa-star mr-2"></i><i class="fas fa-star"></i> Medio</a>
+            <a href="?dificultad=dificil" class="block py-2 px-4 rounded hover:bg-dark-800 text-red-400"><i
+                    class="fas fa-star mr-2"></i><i class="fas fa-star"></i><i class="fas fa-star"></i> Difícil</a>
+        </nav>
+    </div>
+
+    <!-- Main -->
+    <div class="flex-1 p-8">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold">Dojo de Código</h1>
+                <p class="text-gray-500">Mejora tus habilidades con retos de programación</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="bg-orange-100 text-orange-700 px-4 py-2 rounded-lg">
+                    <i class="fas fa-fire mr-2"></i>Racha: {{ racha or 0 }} días
+                </div>
+                <div class="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg">
+                    <i class="fas fa-trophy mr-2"></i>Resueltos: {{ resueltos or 0 }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Retos Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for reto in retos %}
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="px-3 py-1 rounded-full text-xs font-medium
+                            {% if reto.dificultad == 'facil' %}bg-green-100 text-green-700
+                            {% elif reto.dificultad == 'medio' %}bg-yellow-100 text-yellow-700
+                            {% else %}bg-red-100 text-red-700{% endif %}">
+                            {{ reto.dificultad|capitalize }}
+                        </span>
+                        <span class="text-sm text-gray-500">+{{ reto.xp }} XP</span>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">{{ reto.titulo }}</h3>
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ reto.descripcion }}</p>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2 text-sm text-gray-500">
+                            <i class="fas fa-code"></i>
+                            <span>{{ reto.lenguaje or 'Python' }}</span>
+                        </div>
+                        {% if reto.completado %}
+                        <span class="text-green-600"><i class="fas fa-check-circle mr-1"></i>Completado</span>
+                        {% else %}
+                        <a href="/enviar-reto/{{ reto.id }}"
+                            class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-brand-700">
+                            Resolver
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-span-3 bg-white rounded-xl p-12 text-center">
+                <i class="fas fa-code text-gray-300 text-5xl mb-4"></i>
+                <p class="text-gray-500">No hay retos disponibles</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

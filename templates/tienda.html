@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda EduCoins | EduPlatform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white/10 backdrop-blur-lg border-b border-white/10 sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="/panel-alumno" class="text-white/80 hover:text-white flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Volver al Panel
+            </a>
+            <h1 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-store mr-2 text-yellow-400"></i> Tienda EduCoins
+            </h1>
+            <div class="flex items-center bg-yellow-400/20 px-4 py-2 rounded-full border border-yellow-400/30">
+                <i class="fas fa-coins text-yellow-400 mr-2"></i>
+                <span class="font-bold text-yellow-400" id="user-coins">{{ educoins }}</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Categories -->
+        <div class="flex gap-3 overflow-x-auto pb-4 mb-8">
+            <button class="px-6 py-2 bg-white text-gray-800 rounded-full font-semibold whitespace-nowrap">
+                <i class="fas fa-th-large mr-2"></i> Todos
+            </button>
+            <button
+                class="px-6 py-2 bg-white/10 text-white/80 rounded-full font-medium whitespace-nowrap hover:bg-white/20 transition">
+                <i class="fas fa-user-circle mr-2"></i> Avatares
+            </button>
+            <button
+                class="px-6 py-2 bg-white/10 text-white/80 rounded-full font-medium whitespace-nowrap hover:bg-white/20 transition">
+                <i class="fas fa-palette mr-2"></i> Temas
+            </button>
+            <button
+                class="px-6 py-2 bg-white/10 text-white/80 rounded-full font-medium whitespace-nowrap hover:bg-white/20 transition">
+                <i class="fas fa-border-style mr-2"></i> Marcos
+            </button>
+            <button
+                class="px-6 py-2 bg-white/10 text-white/80 rounded-full font-medium whitespace-nowrap hover:bg-white/20 transition">
+                <i class="fas fa-award mr-2"></i> Insignias
+            </button>
+        </div>
+
+        <!-- Featured Item -->
+        <div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-6 mb-8 relative overflow-hidden">
+            <div class="absolute right-0 top-0 bottom-0 w-1/3 opacity-20">
+                <i class="fas fa-crown text-9xl text-white transform rotate-12"></i>
+            </div>
+            <div class="relative z-10">
+                <span
+                    class="bg-white text-orange-600 px-3 py-1 rounded-full text-xs font-bold uppercase">¡Destacado!</span>
+                <h2 class="text-2xl font-bold text-white mt-2">Pack Premium Diamante</h2>
+                <p class="text-white/80 mt-1">Avatar exclusivo + Marco dorado + Tema nocturno</p>
+                <div class="mt-4 flex items-center gap-4">
+                    <span class="text-3xl font-bold text-white flex items-center">
+                        <i class="fas fa-coins mr-2"></i> 500
+                    </span>
+                    <button
+                        class="px-6 py-2 bg-white text-orange-600 rounded-lg font-bold hover:bg-gray-100 transition">
+                        Comprar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for item in items %}
+            <div
+                class="bg-white/10 backdrop-blur-lg rounded-xl overflow-hidden border border-white/10 hover:border-white/30 transition group">
+                <!-- Image/Preview -->
+                <div
+                    class="h-40 bg-gradient-to-br from-{{ item.tipo }}-400 to-{{ item.tipo }}-600 flex items-center justify-center">
+                    {% if item.tipo == 'avatar' %}
+                    <i class="fas fa-user-circle text-6xl text-white/80"></i>
+                    {% elif item.tipo == 'tema' %}
+                    <i class="fas fa-palette text-6xl text-white/80"></i>
+                    {% elif item.tipo == 'marco' %}
+                    <i class="fas fa-border-all text-6xl text-white/80"></i>
+                    {% else %}
+                    <i class="fas fa-medal text-6xl text-white/80"></i>
+                    {% endif %}
+                </div>
+
+                <div class="p-4">
+                    <span class="text-xs uppercase tracking-wide text-white/50">{{ item.tipo }}</span>
+                    <h3 class="font-bold text-white mt-1">{{ item.nombre }}</h3>
+                    <p class="text-sm text-white/60 mt-1 line-clamp-2">{{ item.descripcion or 'Sin descripción' }}</p>
+
+                    <div class="mt-4 flex items-center justify-between">
+                        <span class="text-lg font-bold text-yellow-400 flex items-center">
+                            <i class="fas fa-coins mr-1 text-sm"></i> {{ item.precio_educoins }}
+                        </span>
+                        <button onclick="comprarItem({{ item.id }}, '{{ item.nombre }}', {{ item.precio_educoins }})"
+                            class="px-4 py-2 bg-brand-600 text-white rounded-lg font-semibold text-sm hover:bg-brand-700 transition opacity-0 group-hover:opacity-100">
+                            <i class="fas fa-shopping-cart mr-1"></i> Comprar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-store-slash text-6xl text-white/20 mb-4"></i>
+                <h3 class="text-xl font-bold text-white">Tienda vacía</h3>
+                <p class="text-white/60">No hay items disponibles en este momento.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- How to earn -->
+        <div class="mt-12 bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
+            <h2 class="text-lg font-bold text-white mb-4 flex items-center">
+                <i class="fas fa-question-circle mr-2 text-brand-400"></i> ¿Cómo ganar EduCoins?
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-check text-green-400"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-white">Completa tareas</p>
+                        <p class="text-sm text-white/60">+10 coins por tarea</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-fire text-orange-400"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-white">Mantén tu racha</p>
+                        <p class="text-sm text-white/60">+5 coins diarios</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-poll text-purple-400"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-white">Responde encuestas</p>
+                        <p class="text-sm text-white/60">+25 coins cada una</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function comprarItem(itemId, nombre, precio) {
+            const userCoins = parseInt(document.getElementById('user-coins').textContent);
+
+            if (userCoins < precio) {
+                Swal.fire({
+                    title: 'EduCoins insuficientes',
+                    text: `Necesitas ${precio} EduCoins pero solo tienes ${userCoins}.`,
+                    icon: 'warning',
+                    confirmButtonColor: '#0284c7'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: `¿Comprar ${nombre}?`,
+                html: `<p>Esto costará <strong>${precio} EduCoins</strong></p>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, comprar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#0284c7'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/api/tienda/comprar/${itemId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: '¡Compra exitosa!',
+                                    text: `Has adquirido ${nombre}`,
+                                    icon: 'success',
+                                    confirmButtonColor: '#0284c7'
+                                }).then(() => location.reload());
+                            } else {
+                                Swal.fire('Error', data.error || 'No se pudo completar la compra', 'error');
+                            }
+                        });
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

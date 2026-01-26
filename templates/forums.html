@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foros | EduPlatform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-white shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="/panel-alumno" class="text-blue-600 hover:text-blue-700 mr-4"><i
+                        class="fas fa-arrow-left"></i></a>
+                <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-comments text-purple-500 mr-2"></i> Foros
+                    de Discusión</h1>
+            </div>
+            <button onclick="createTopic()"
+                class="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700">
+                <i class="fas fa-plus mr-2"></i> Nuevo Tema
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Main Content -->
+            <div class="lg:col-span-3 space-y-4">
+                <!-- Forum Topics -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                        <h2 class="font-bold text-gray-800">Temas Recientes</h2>
+                        <select class="text-sm border border-gray-200 rounded-lg px-3 py-1.5">
+                            <option>Todas las materias</option>
+                            <option>Matemáticas</option>
+                            <option>Español</option>
+                            <option>Ciencias</option>
+                        </select>
+                    </div>
+
+                    <div class="divide-y divide-gray-100">
+                        <!-- Topic Item -->
+                        <a href="/forums/1" class="block p-4 hover:bg-gray-50 transition">
+                            <div class="flex items-start gap-4">
+                                <img src="https://ui-avatars.com/api/?name=Juan" alt="" class="w-10 h-10 rounded-full">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-semibold text-gray-800 hover:text-purple-600">¿Alguien puede
+                                            explicar las derivadas parciales?</h3>
+                                        <span
+                                            class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">Matemáticas</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Estoy confundido con el proceso de
+                                        diferenciación...</p>
+                                    <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                                        <span><i class="fas fa-user mr-1"></i> Juan Pérez</span>
+                                        <span><i class="fas fa-clock mr-1"></i> hace 2 horas</span>
+                                        <span><i class="fas fa-comment mr-1"></i> 5 respuestas</span>
+                                        <span><i class="fas fa-eye mr-1"></i> 23 vistas</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="/forums/2" class="block p-4 hover:bg-gray-50 transition">
+                            <div class="flex items-start gap-4">
+                                <img src="https://ui-avatars.com/api/?name=Maria" alt="" class="w-10 h-10 rounded-full">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-semibold text-gray-800 hover:text-purple-600">Recursos para el
+                                            examen de historia</h3>
+                                        <span
+                                            class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Historia</span>
+                                        <span
+                                            class="px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-full">Fijado</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Comparto algunos recursos que me ayudaron...
+                                    </p>
+                                    <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                                        <span><i class="fas fa-user mr-1"></i> María López</span>
+                                        <span><i class="fas fa-clock mr-1"></i> hace 1 día</span>
+                                        <span><i class="fas fa-comment mr-1"></i> 12 respuestas</span>
+                                        <span><i class="fas fa-eye mr-1"></i> 89 vistas</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <a href="/forums/3" class="block p-4 hover:bg-gray-50 transition">
+                            <div class="flex items-start gap-4">
+                                <img src="https://ui-avatars.com/api/?name=Carlos" alt=""
+                                    class="w-10 h-10 rounded-full">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-semibold text-gray-800 hover:text-purple-600">Grupo de estudio
+                                            para química</h3>
+                                        <span
+                                            class="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">Química</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">¿Alguien quiere formar un grupo de estudio?
+                                    </p>
+                                    <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
+                                        <span><i class="fas fa-user mr-1"></i> Carlos Ruiz</span>
+                                        <span><i class="fas fa-clock mr-1"></i> hace 3 días</span>
+                                        <span><i class="fas fa-comment mr-1"></i> 8 respuestas</span>
+                                        <span><i class="fas fa-eye mr-1"></i> 45 vistas</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-4">
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <h3 class="font-bold text-gray-800 mb-3">Estadísticas</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Temas totales</span>
+                            <span class="font-bold text-gray-800">156</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Respuestas</span>
+                            <span class="font-bold text-gray-800">1,234</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Usuarios activos</span>
+                            <span class="font-bold text-gray-800">89</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <h3 class="font-bold text-gray-800 mb-3">Top Contribuidores</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <img src="https://ui-avatars.com/api/?name=Ana" alt="" class="w-8 h-8 rounded-full">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-800">Ana García</p>
+                                <p class="text-xs text-gray-500">45 respuestas</p>
+                            </div>
+                            <span class="text-yellow-500"><i class="fas fa-crown"></i></span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <img src="https://ui-avatars.com/api/?name=Luis" alt="" class="w-8 h-8 rounded-full">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-800">Luis Hernández</p>
+                                <p class="text-xs text-gray-500">38 respuestas</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <img src="https://ui-avatars.com/api/?name=Sofia" alt="" class="w-8 h-8 rounded-full">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-800">Sofía Martínez</p>
+                                <p class="text-xs text-gray-500">32 respuestas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function createTopic() {
+            // Trigger modal or redirect to create topic page
+            alert('Funcionalidad próximamente');
+        }
+    </script>
+</body>
+
+</html>

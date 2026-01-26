@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Padres | EduPlatform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e' },
+                        dark: { 800: '#1e293b', 900: '#0f172a' }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-green-600 to-teal-600 text-white">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold flex items-center">
+                        <i class="fas fa-users mr-3"></i> Portal de Padres
+                    </h1>
+                    <p class="text-white/80 mt-1">Seguimiento académico de tus hijos</p>
+                </div>
+                <a href="/logout" class="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Salir
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        {% if hijos %}
+        <!-- Selector de hijos -->
+        <div class="flex gap-4 mb-8 overflow-x-auto pb-2">
+            {% for hijo in hijos %}
+            <button onclick="selectHijo({{ hijo.id }})"
+                class="hijo-btn flex items-center gap-3 px-6 py-4 bg-white rounded-xl shadow-sm border-2 border-transparent hover:border-brand-500 transition whitespace-nowrap"
+                data-hijo-id="{{ hijo.id }}">
+                <img src="https://ui-avatars.com/api/?name={{ hijo.nombre|urlencode }}" alt="{{ hijo.nombre }}"
+                    class="w-12 h-12 rounded-full">
+                <div class="text-left">
+                    <p class="font-bold text-gray-800">{{ hijo.nombre }}</p>
+                    <p class="text-sm text-gray-500">{{ hijo.semestre or 'Sin semestre' }}</p>
+                </div>
+            </button>
+            {% endfor %}
+        </div>
+
+        <!-- Dashboard del hijo seleccionado -->
+        <div id="dashboard-content">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Promedio General</p>
+                            <p class="text-3xl font-bold text-gray-800 mt-1">8.5</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Asistencia</p>
+                            <p class="text-3xl font-bold text-gray-800 mt-1">95%</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-calendar-check text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Tareas Pendientes</p>
+                            <p class="text-3xl font-bold text-yellow-600 mt-1">3</p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-clipboard-list text-yellow-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase">Reportes</p>
+                            <p class="text-3xl font-bold text-gray-800 mt-1">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-gray-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materias y Calificaciones -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-100">
+                        <h3 class="font-bold text-lg text-gray-800">
+                            <i class="fas fa-book text-brand-500 mr-2"></i> Materias
+                        </h3>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                            <div>
+                                <p class="font-medium text-gray-800">Matemáticas</p>
+                                <p class="text-sm text-gray-500">Prof. García</p>
+                            </div>
+                            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold">9.0</span>
+                        </div>
+                        <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                            <div>
+                                <p class="font-medium text-gray-800">Español</p>
+                                <p class="text-sm text-gray-500">Prof. López</p>
+                            </div>
+                            <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full font-bold">8.5</span>
+                        </div>
+                        <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                            <div>
+                                <p class="font-medium text-gray-800">Historia</p>
+                                <p class="text-sm text-gray-500">Prof. Ramírez</p>
+                            </div>
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full font-bold">7.5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Próximas entregas -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-100">
+                        <h3 class="font-bold text-lg text-gray-800">
+                            <i class="fas fa-clock text-red-500 mr-2"></i> Próximas Entregas
+                        </h3>
+                    </div>
+                    <div class="divide-y divide-gray-100">
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-medium text-gray-800">Ejercicios Cap. 5</p>
+                                    <p class="text-sm text-gray-500">Matemáticas</p>
+                                </div>
+                                <span class="text-sm text-red-500 font-medium">Mañana</span>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-medium text-gray-800">Ensayo Literario</p>
+                                    <p class="text-sm text-gray-500">Español</p>
+                                </div>
+                                <span class="text-sm text-yellow-600 font-medium">En 3 días</span>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-medium text-gray-800">Línea del tiempo</p>
+                                    <p class="text-sm text-gray-500">Historia</p>
+                                </div>
+                                <span class="text-sm text-gray-500 font-medium">En 1 semana</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comunicados -->
+            <div class="mt-6 bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-gray-100">
+                    <h3 class="font-bold text-lg text-gray-800">
+                        <i class="fas fa-bullhorn text-purple-500 mr-2"></i> Comunicados Recientes
+                    </h3>
+                </div>
+                <div class="p-6 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl text-gray-200 mb-2"></i>
+                    <p>No hay comunicados recientes</p>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Sin hijos registrados -->
+        <div class="bg-white rounded-xl shadow-sm p-12 text-center">
+            <i class="fas fa-user-plus text-6xl text-gray-200 mb-4"></i>
+            <h3 class="text-xl font-bold text-gray-700">Sin estudiantes vinculados</h3>
+            <p class="text-gray-500 mt-2">No tienes estudiantes asociados a tu cuenta. Contacta a la administración para
+                vincular a tus hijos.</p>
+        </div>
+        {% endif %}
+    </main>
+
+    <script>
+        function selectHijo(hijoId) {
+            document.querySelectorAll('.hijo-btn').forEach(btn => {
+                btn.classList.remove('border-brand-500', 'bg-brand-50');
+                btn.classList.add('border-transparent');
+            });
+            const selected = document.querySelector(`[data-hijo-id="${hijoId}"]`);
+            selected.classList.add('border-brand-500', 'bg-brand-50');
+            selected.classList.remove('border-transparent');
+            // Aquí se cargarían los datos del hijo seleccionado via AJAX
+        }
+
+        // Seleccionar el primer hijo por defecto
+        document.addEventListener('DOMContentLoaded', () => {
+            const firstBtn = document.querySelector('.hijo-btn');
+            if (firstBtn) {
+                firstBtn.click();
+            }
+        });
+    </script>
+</body>
+
+</html>

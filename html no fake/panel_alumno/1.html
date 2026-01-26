@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Calendar View</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1A2633", // Calculated slightly lighter than background-dark
+                        "text-main": "#111418",
+                        "text-sub": "#617589",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main dark:text-gray-100 transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full max-w-md mx-auto flex-col overflow-x-hidden bg-background-light dark:bg-background-dark pb-20 shadow-xl ring-1 ring-black/5">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-20 bg-surface-light/95 dark:bg-surface-dark/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors">
+<div class="flex items-center p-4 justify-between h-16">
+<button class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-text-main dark:text-white">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center text-text-main dark:text-white">My Schedule</h2>
+<button class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-2xl">add</span>
+</button>
+</div>
+<!-- Segmented Buttons (View Toggle) -->
+<div class="px-4 pb-3">
+<div class="flex h-10 w-full items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 p-1">
+<label class="group flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-surface-dark has-[:checked]:shadow-sm has-[:checked]:text-primary transition-all">
+<span class="truncate text-sm font-medium leading-normal text-gray-500 dark:text-gray-400 group-has-[:checked]:text-primary dark:group-has-[:checked]:text-primary">Month</span>
+<input checked="" class="hidden" name="view-toggle" type="radio" value="Month"/>
+</label>
+<label class="group flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-surface-dark has-[:checked]:shadow-sm has-[:checked]:text-primary transition-all">
+<span class="truncate text-sm font-medium leading-normal text-gray-500 dark:text-gray-400 group-has-[:checked]:text-primary dark:group-has-[:checked]:text-primary">Week</span>
+<input class="hidden" name="view-toggle" type="radio" value="Week"/>
+</label>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col">
+<!-- Calendar Picker -->
+<section class="bg-surface-light dark:bg-surface-dark pt-2 pb-4 border-b border-gray-200 dark:border-gray-800 rounded-b-xl shadow-sm z-10">
+<div class="flex flex-col px-4 gap-2">
+<div class="flex items-center justify-between mb-2">
+<button class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+<span class="material-symbols-outlined text-text-main dark:text-white">chevron_left</span>
+</button>
+<p class="text-text-main dark:text-white text-base font-bold leading-tight">October 2023</p>
+<button class="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+<span class="material-symbols-outlined text-text-main dark:text-white">chevron_right</span>
+</button>
+</div>
+<div class="grid grid-cols-7 gap-y-1">
+<!-- Days of Week -->
+<div class="text-gray-400 dark:text-gray-500 text-[11px] font-bold uppercase tracking-wider flex h-8 w-full items-center justify-center">S</div>
+<div class="text-gray-400 dark:text-gray-500 text-[11px] font-bold uppercase tracking-wider flex h-8 w-full items-center justify-center">M</div>
+<div class="text-gray-400 dark:text-gray-500 text-[11px] font-bold uppercase tracking-wider flex h-8 w-full items-center justify-center">T</div>
+<div class="text-gray-400 dark:text-gray-500 text-[11px] font-bold uppercase tracking-wider flex h-8 w-full items-center justify-center">W</div>
+<div class="text-gray-400 dark:text-gray-500 text-[11px] font-bold uppercase tracking-wider flex h-8 w-full items-center justify-center">T</div>
+<div class="text-gray-400 dark:text-gray-500 text-[11px] font-bold uppercase tracking-wider flex h-8 w-full items-center justify-center">F</div>
+<div class="text-gray-400 dark:text-gray-500 text-[11px] font-bold uppercase tracking-wider flex h-8 w-full items-center justify-center">S</div>
+<!-- Dates -->
+<!-- Previous Month -->
+<button class="h-10 w-full text-gray-300 dark:text-gray-700 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full">28</div></button>
+<button class="h-10 w-full text-gray-300 dark:text-gray-700 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full">29</div></button>
+<button class="h-10 w-full text-gray-300 dark:text-gray-700 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full">30</div></button>
+<!-- Current Month -->
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">1</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">2</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">3</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">4</div></button>
+<!-- Selected Date -->
+<button class="h-10 w-full text-white text-sm font-bold">
+<div class="flex size-8 mx-auto items-center justify-center rounded-full bg-primary shadow-md shadow-primary/30">5</div>
+</button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">6</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">7</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">8</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium relative">
+<div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">9</div>
+<span class="absolute bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-gray-400"></span>
+</button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">10</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">11</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">12</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium relative">
+<div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">13</div>
+<span class="absolute bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary"></span>
+</button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">14</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">15</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">16</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">17</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">18</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">19</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">20</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium relative">
+<div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">21</div>
+<span class="absolute bottom-1.5 left-1/2 -translate-x-1/2 size-1 rounded-full bg-primary"></span>
+</button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">22</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">23</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">24</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">25</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">26</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">27</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">28</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">29</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">30</div></button>
+<button class="h-10 w-full text-text-main dark:text-gray-200 text-sm font-medium"><div class="flex size-8 mx-auto items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">31</div></button>
+</div>
+</div>
+</section>
+<!-- Filter Chips -->
+<div class="flex w-full overflow-x-auto no-scrollbar py-4 px-4 gap-3 bg-transparent">
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-primary text-white px-5 shadow-sm shadow-primary/20">
+<span class="text-sm font-medium">All</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 px-5 text-text-main dark:text-gray-300 transition-colors">
+<span class="text-sm font-medium">Homework</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 px-5 text-text-main dark:text-gray-300 transition-colors">
+<span class="text-sm font-medium">Exams</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 px-5 text-text-main dark:text-gray-300 transition-colors">
+<span class="text-sm font-medium">Clubs</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 px-5 text-text-main dark:text-gray-300 transition-colors">
+<span class="text-sm font-medium">Events</span>
+</button>
+</div>
+<!-- Timeline / Events List -->
+<div class="flex-1 px-4 pb-4">
+<div class="flex items-center gap-2 mb-4 mt-2">
+<h3 class="font-bold text-lg text-text-main dark:text-white">Thursday, Oct 5</h3>
+<div class="h-px bg-gray-200 dark:bg-gray-700 flex-1"></div>
+</div>
+<div class="grid grid-cols-[40px_1fr] gap-x-3">
+<!-- Event 1 -->
+<div class="flex flex-col items-center gap-1 pt-1">
+<div class="flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40 text-primary">
+<span class="material-symbols-outlined text-[20px]">function</span>
+</div>
+<div class="w-[2px] bg-gray-200 dark:bg-gray-700 h-full grow rounded-full"></div>
+</div>
+<div class="flex flex-col pb-6">
+<div class="flex flex-col rounded-xl bg-white dark:bg-surface-dark p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none border border-transparent dark:border-gray-800">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-text-main dark:text-white text-base font-bold leading-tight">Calculus II</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Lecture Hall B</p>
+</div>
+<span class="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-xs font-semibold px-2 py-1 rounded-md">Math</span>
+</div>
+<div class="flex items-center gap-1 mt-3 text-text-sub dark:text-gray-400">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="text-sm font-medium">09:00 AM - 10:30 AM</span>
+</div>
+</div>
+</div>
+<!-- Event 2 -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-[2px] bg-gray-200 dark:bg-gray-700 h-4 rounded-full"></div>
+<div class="flex size-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300">
+<span class="material-symbols-outlined text-[20px]">groups</span>
+</div>
+<div class="w-[2px] bg-gray-200 dark:bg-gray-700 h-full grow rounded-full"></div>
+</div>
+<div class="flex flex-col pb-6">
+<div class="flex flex-col rounded-xl bg-white dark:bg-surface-dark p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none border border-transparent dark:border-gray-800">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-text-main dark:text-white text-base font-bold leading-tight">Study Group</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Library, 2nd Floor</p>
+</div>
+<span class="bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 text-xs font-semibold px-2 py-1 rounded-md">Social</span>
+</div>
+<div class="flex items-center gap-1 mt-3 text-text-sub dark:text-gray-400">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="text-sm font-medium">12:00 PM - 01:00 PM</span>
+</div>
+</div>
+</div>
+<!-- Event 3 -->
+<div class="flex flex-col items-center gap-1">
+<div class="w-[2px] bg-gray-200 dark:bg-gray-700 h-4 rounded-full"></div>
+<div class="flex size-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-300">
+<span class="material-symbols-outlined text-[20px]">science</span>
+</div>
+<!-- Last item connector logic can vary, fading out here -->
+<div class="w-[2px] bg-gradient-to-b from-gray-200 dark:from-gray-700 to-transparent h-full grow rounded-full"></div>
+</div>
+<div class="flex flex-col pb-4">
+<div class="flex flex-col rounded-xl bg-white dark:bg-surface-dark p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none border border-transparent dark:border-gray-800">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-text-main dark:text-white text-base font-bold leading-tight">Physics Lab</p>
+<p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Room 304</p>
+</div>
+<span class="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300 text-xs font-semibold px-2 py-1 rounded-md">Science</span>
+</div>
+<div class="flex items-center gap-1 mt-3 text-text-sub dark:text-gray-400">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="text-sm font-medium">03:00 PM - 04:00 PM</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 z-30 flex h-20 w-full max-w-md mx-auto items-start justify-around border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-surface-dark pt-3 pb-safe">
+<button class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-2xl fill-1">calendar_month</span>
+<span class="text-[10px] font-medium">Calendar</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">school</span>
+<span class="text-[10px] font-medium">Grades</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</button>
+</nav>
+</div>
+</body></html>

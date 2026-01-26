@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Tutor - EduPlatform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: #FFFFFF;
+            padding: 15px 0;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #000000;
+        }
+
+        .logo span {
+            color: #8A6BBE;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8A6BBE, #5A9BD5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-details h3 {
+            font-size: 14px;
+            color: #000000;
+            font-weight: 600;
+        }
+
+        .user-details p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .logout-btn {
+            background: none;
+            border: 2px solid #8A6BBE;
+            color: #8A6BBE;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #8A6BBE;
+            color: white;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .welcome-section {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #8A6BBE, #5A9BD5);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .welcome-section h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .welcome-section p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            font-size: 24px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #000000;
+        }
+
+        .student-card {
+            border: 2px solid #E8E9EA;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .student-card:hover {
+            border-color: #8A6BBE;
+            background: rgba(138, 107, 190, 0.02);
+        }
+
+        .student-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .student-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #5A9BD5, #8A6BBE);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .student-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 2px;
+        }
+
+        .student-info p {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .student-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px;
+            background: rgba(138, 107, 190, 0.05);
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 18px;
+            font-weight: 600;
+            color: #8A6BBE;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .student-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary-small {
+            background: #5A9BD5;
+            color: white;
+        }
+
+        .btn-primary-small:hover {
+            background: #4a8bc2;
+        }
+
+        .btn-secondary-small {
+            background: #8A6BBE;
+            color: white;
+        }
+
+        .btn-secondary-small:hover {
+            background: #7a5ba8;
+        }
+
+        .announcement-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            border-left: 4px solid #8A6BBE;
+            background: rgba(138, 107, 190, 0.05);
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .announcement-icon {
+            font-size: 20px;
+            margin-top: 2px;
+        }
+
+        .announcement-content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 5px;
+        }
+
+        .announcement-content p {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
+
+        .announcement-date {
+            font-size: 11px;
+            color: #8A6BBE;
+            font-weight: 500;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: #5A9BD5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4a8bc2;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #8A6BBE;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7a5ba8;
+            transform: translateY(-1px);
+        }
+
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #E8E9EA;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .payment-item:hover {
+            background: rgba(138, 107, 190, 0.02);
+            border-color: #8A6BBE;
+        }
+
+        .payment-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000000;
+            margin-bottom: 5px;
+        }
+
+        .payment-info p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .payment-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .status-paid {
+            background: rgba(34, 197, 94, 0.1);
+            color: #059669;
+        }
+
+        .status-pending {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 20px 15px;
+                gap: 20px;
+            }
+
+            .welcome-section {
+                grid-column: span 1;
+                padding: 25px 20px;
+            }
+
+            .welcome-section h1 {
+                font-size: 24px;
+            }
+
+            .student-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .student-actions {
+                flex-direction: column;
+            }
+
+            .nav-container {
+                padding: 0 15px;
+            }
+
+            .user-info {
+                gap: 10px;
+            }
+
+            .user-details {
+                display: none;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #FFFFFF;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: rgba(0, 0, 0, 0.2) 0px 8px 24px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .meeting-form {
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #000000;
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #E8E9EA;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #5A9BD5;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                Edu<span>Platform</span>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">{{ iniciales }}</div>
+                <div class="user-details">
+                    <h3>{{ nombre }}</h3>
+                    <p>Tutor</p>
+                </div>
+            </div><a href="{{ url_for('logout') }}" class="btn">Cerrar Sesión</a>
+        </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="welcome-section">
+            <h1>¡Hola {{ nombre.split()[0] if nombre else 'Tutor' }}! 👋</h1>
+            <p>Monitorea el progreso académico de tus estudiantes y mantente al día con las comunicaciones
+                institucionales.</p>
+        </div>
+
+        <div class="card full-width">
+            <div class="card-header">
+                <span class="card-icon">👨‍🎓</span>
+                <h2 class="card-title">Rendimiento Académico de mis Estudiantes</h2>
+            </div>
+
+            {% if estudiantes %}
+            {% for estudiante in estudiantes %}
+            <div class="student-card" id="student-{{ estudiante.id }}">
+                <div class="student-header">
+                    <div class="student-avatar">{{ estudiante.nombre[:2].upper() }}</div>
+                    <div class="student-info">
+                        <h3>{{ estudiante.nombre }}</h3>
+                        <p>Número de Control: {{ estudiante.numero_control }}</p>
+                    </div>
+                </div>
+
+                <div class="student-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ "%.1f"|format(estudiante.promedio or 0) }}</div>
+                        <div class="stat-label">Promedio</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ "%.0f"|format(estudiante.asistencia or 0) }}%</div>
+                        <div class="stat-label">Asistencia</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ estudiante.rango or 'N/A' }}</div>
+                        <div class="stat-label">Rango</div>
+                    </div>
+                </div>
+
+                <div class="student-actions">
+                    <button class="btn-small btn-primary-small"
+                        onclick="viewDetailedReport({{ estudiante.id }}, '{{ estudiante.nombre }}')">
+                        📊 Ver Detalles
+                    </button>
+                    <button class="btn-small btn-secondary-small"
+                        onclick="openMeetingModal('{{ estudiante.nombre }}', {{ estudiante.id }})">
+                        📅 Agendar Reunión
+                    </button>
+                    <button class="btn-small btn-primary-small"
+                        onclick="openMessageModal({{ estudiante.id }}, '{{ estudiante.nombre }}')">
+                        💬 Enviar Mensaje
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p style="text-align: center; padding: 20px; color: #666;">No hay estudiantes asignados.</p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">📢</span>
+                <h2 class="card-title">Comunicados Oficiales</h2>
+            </div>
+
+            <!-- Comunicados -->
+            <div id="announcements-container">
+                <p style="text-align: center; padding: 20px;">Cargando comunicados...</p>
+            </div>
+            <button class="action-btn btn-primary" onclick="loadAnnouncements()" style="margin-top: 15px;">
+                🔄 Actualizar Comunicados
+            </button>
+        </div>
+
+        <!-- NUEVA: Card Justificantes Médicos -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">🏥</span>
+                <h2 class="card-title">Justificantes Médicos</h2>
+            </div>
+
+            <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">
+                ¿Tu hijo faltó a clases por motivos médicos? Sube la evidencia para justificar sus inasistencias.
+            </p>
+
+            <a href="{{ url_for('tutor_justificar_falta_page') }}" class="action-btn btn-primary"
+                style="text-decoration: none;">
+                📋 Subir Justificante
+            </a>
+        </div>
+
+        <!-- NUEVA: Card Autorizaciones -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">✍️</span>
+                <h2 class="card-title">Autorizaciones Pendientes</h2>
+            </div>
+
+            <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">
+                Revisa y firma digitalmente los permisos para excursiones y eventos escolares de tus hijos.
+            </p>
+
+            <a href="{{ url_for('tutor_autorizaciones_page') }}" class="action-btn btn-secondary"
+                style="text-decoration: none;">
+                ✍️ Ver Autorizaciones
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">💰</span>
+                <h2 class="card-title">Trámites y Pagos</h2>
+            </div>
+
+            <div class="payment-item">
+                <div class="payment-info">
+                    <h4>Colegiatura Septiembre</h4>
+                    <p>Vencimiento: 30 Sep 2024</p>
+                </div>
+                <span class="payment-status status-paid">Pagado</span>
+            </div>
+
+            <div class="payment-item">
+                <div class="payment-info">
+                    <h4>Colegiatura Octubre</h4>
+                    <p>Vencimiento: 31 Oct 2024</p>
+                </div>
+                <span class="payment-status status-pending">Pendiente</span>
+            </div>
+
+            <div class="payment-item">
+                <div class="payment-info">
+                    <h4>Seguro Escolar</h4>
+                    <p>Renovación anual</p>
+                </div>
+                <span class="payment-status status-paid">Pagado</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                <a href="{{ url_for('tutor_pagos_page') }}" class="action-btn btn-primary"
+                    style="text-decoration: none;">
+                    📊 Ver Historial Completo
+                </a>
+                <button class="action-btn btn-secondary" onclick="viewInbox()">
+                    📨 Ver Bandeja de Entrada
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">📞</span>
+                <h2 class="card-title">Solicitar Reunión</h2>
+            </div>
+
+            <p style="color: #666; margin-bottom: 20px; line-height: 1.5;">
+                ¿Necesitas hablar con algún docente o directivo sobre el desempeño de tu estudiante? Agenda una reunión
+                de manera rápida y sencilla.
+            </p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="action-btn btn-primary" onclick="openMeetingModal('Docente')">
+                    👩‍🏫 Con Docente
+                </button>
+                <button class="action-btn btn-secondary" onclick="openMeetingModal('Directivo')">
+                    👨‍💼 Con Directivo
+                </button>
+            </div>
+
+            <button class="action-btn btn-primary" onclick="viewScheduledMeetings()" style="margin-top: 10px;">
+                📅 Ver Reuniones Agendadas
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal para agendar reunión -->
+    <div id="meetingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeMeetingModal()">&times;</span>
+            <h2 style="color: #000000; margin-bottom: 20px;">📅 Agendar Reunión</h2>
+
+            <form class="meeting-form" onsubmit="submitMeetingRequest(event)">
+                <div class="form-group">
+                    <label class="form-label">Tipo de reunión:</label>
+                    <select id="meetingType" class="form-select" required>
+                        <option value="">Seleccionar...</option>
+                        <option value="docente">Con Docente</option>
+                        <option value="directivo">Con Directivo</option>
+                        <option value="orientador">Con Orientador Educativo</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Estudiante:</label>
+                    <select id="studentSelect" class="form-select" required>
+                        <option value="">Seleccionar estudiante...</option>
+                        {% for est in estudiantes %}
+                        <option value="{{ est.id }}">{{ est.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Asunto:</label>
+                    <input type="text" id="meetingSubject" class="form-input"
+                        placeholder="Ej: Revisión de calificaciones" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Fecha preferida:</label>
+                    <input type="date" id="meetingDate" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Hora preferida:</label>
+                    <select id="meetingTime" class="form-select" required>
+                        <option value="">Seleccionar hora...</option>
+                        <option value="08:00">08:00 AM</option>
+                        <option value="09:00">09:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:00">01:00 PM</option>
+                        <option value="14:00">02:00 PM</option>
+                        <option value="15:00">03:00 PM</option>
+                        <option value="16:00">04:00 PM</option>
+                        <option value="17:00">05:00 PM</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Descripción del motivo:</label>
+                    <textarea id="meetingDescription" class="form-textarea"
+                        placeholder="Describe brevemente el motivo de la reunión..." required></textarea>
+                </div>
+
+                <button type="submit" class="action-btn btn-primary">
+                    ✅ Enviar Solicitud
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para reporte detallado -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeReportModal()">&times;</span>
+            <div id="reportContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal para enviar mensaje -->
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeMessageModal()">&times;</span>
+            <h2 style="color: #000000; margin-bottom: 20px;">💬 Enviar Mensaje</h2>
+
+            <form class="meeting-form" onsubmit="submitMessage(event)">
+                <input type="hidden" id="msgStudentId">
+                <div class="form-group">
+                    <label class="form-label">Estudiante:</label>
+                    <input type="text" id="msgStudentName" class="form-input" readonly style="background: #f8f9fa;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Asunto:</label>
+                    <input type="text" id="msgSubject" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Mensaje:</label>
+                    <textarea id="msgContent" class="form-textarea" required></textarea>
+                </div>
+
+                <button type="submit" class="action-btn btn-primary">
+                    🚀 Enviar Mensaje
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Bandeja de Entrada -->
+    <div id="inboxModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeInboxModal()">&times;</span>
+            <h2 style="color: #000000; margin-bottom: 20px;">📨 Bandeja de Entrada</h2>
+            <div id="inboxContent" style="max-height: 400px; overflow-y: auto;">
+                <p>Cargando mensajes...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animación de carga inicial
+        document.addEventListener('DOMContentLoaded', function () {
+            loadAnnouncements(); // Cargar comunicados al inicio
+
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('meetingDate');
+            if (dateInput) dateInput.min = today;
+        });
+
+        // --- Comunicados ---
+        function loadAnnouncements() {
+            const container = document.getElementById('announcements-container');
+            fetch('/api/tutor/comunicados')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        container.innerHTML = `<p style="color:red;">Error al cargar: ${data.error}</p>`;
+                        return;
+                    }
+                    if (data.length === 0) {
+                        container.innerHTML = '<p>No hay comunicados recientes.</p>';
+                        return;
+                    }
+
+                    let html = '';
+                    data.forEach(c => {
+                        html += `
+                        <div class="announcement-item">
+                            <span class="announcement-icon">${c.tipo === 'urgente' ? '🚨' : '📢'}</span>
+                            <div class="announcement-content">
+                                <h4>${c.titulo}</h4>
+                                <p>${c.contenido}</p>
+                                <div class="announcement-date">${c.fecha_publicacion}</div>
+                            </div>
+                        </div>
+                    `;
+                    });
+                    container.innerHTML = html;
+                })
+                .catch(e => container.innerHTML = '<p>Error de conexión.</p>');
+        }
+
+        // --- Bandeja de Entrada ---
+        function viewInbox() {
+            document.getElementById('inboxModal').style.display = 'block';
+            const container = document.getElementById('inboxContent');
+
+            fetch('/api/tutor/mensajes')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        container.innerHTML = '<p style="text-align:center; padding:20px;">No tienes mensajes nuevos.</p>';
+                        return;
+                    }
+
+                    let html = '';
+                    data.forEach(m => {
+                        html += `
+                        <div style="border-bottom:1px solid #eee; padding: 10px; margin-bottom: 10px;">
+                            <div style="font-weight:bold; color:#8A6BBE;">${m.emisor}</div>
+                            <div style="font-size:12px; color:#666; margin-bottom:5px;">${m.fecha_envio}</div>
+                            <div style="font-weight:600;">${m.asunto}</div>
+                            <p>${m.contenido}</p>
+                        </div>
+                    `;
+                    });
+                    container.innerHTML = html;
+                });
+        }
+
+        function closeInboxModal() {
+            document.getElementById('inboxModal').style.display = 'none';
+        }
+
+        // --- Pagos ---
+        function processPayment(pagoId) {
+            if (!confirm('¿Confirmar simulación de pago?')) return;
+
+            // En un caso real, pagoId vendría dinámicamente. 
+            // Como MVP usamos un ID fijo o un endpoint de prueba si no hay pagos reales en la vista.
+            // Aquí asumimos que el usuario hace clic en un botón asociado a un pago real en el listado
+            // Pero como el loop de pagos es estático en este template base (ver líneas 612-634 que no edité a loop), 
+            // alertaremos que es una demo si no hay ID.
+
+            alert('Simulando proceso de pago seguro... (Conectando a Stripe)');
+            setTimeout(() => {
+                alert('✅ Pago realizado con éxito (Simulación)');
+                location.reload();
+            }, 1500);
+        }
+
+        // --- Citas / Reuniones ---
+        function openMeetingModal(studentName, studentId) {
+            document.getElementById('meetingModal').style.display = 'block';
+            if (studentId) {
+                document.getElementById('studentSelect').value = studentId;
+            }
+        }
+
+        function closeMeetingModal() {
+            document.getElementById('meetingModal').style.display = 'none';
+            document.querySelector('.meeting-form').reset();
+        }
+
+        function submitMeetingRequest(event) {
+            event.preventDefault();
+
+            const data = {
+                type: document.getElementById('meetingType').value,
+                student_id: document.getElementById('studentSelect').value,
+                subject: document.getElementById('meetingSubject').value,
+                date: document.getElementById('meetingDate').value,
+                time: document.getElementById('meetingTime').value,
+                description: document.getElementById('meetingDescription').value
+            };
+
+            fetch('/api/tutor/citas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status === 'ok') {
+                        alert('Solicitud enviada correctamente');
+                        closeMeetingModal();
+                    } else {
+                        alert('Error: ' + (res.error || 'No se pudo agendar'));
+                    }
+                })
+                .catch(e => alert('Error de conexión: ' + e));
+        }
+
+        // --- Mensajes ---
+        function openMessageModal(studentId, studentName) {
+            document.getElementById('messageModal').style.display = 'block';
+            document.getElementById('msgStudentId').value = studentId;
+            document.getElementById('msgStudentName').value = studentName;
+        }
+
+        function closeMessageModal() {
+            document.getElementById('messageModal').style.display = 'none';
+            document.getElementById('msgSubject').value = '';
+            document.getElementById('msgContent').value = '';
+        }
+
+        function submitMessage(event) {
+            event.preventDefault();
+            const data = {
+                student_id: document.getElementById('msgStudentId').value,
+                student_name: document.getElementById('msgStudentName').value,
+                subject: document.getElementById('msgSubject').value,
+                content: document.getElementById('msgContent').value
+            };
+
+            fetch('/api/tutor/mensajes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status === 'ok') {
+                        alert('Mensaje enviado correctamente');
+                        closeMessageModal();
+                    } else {
+                        alert('Error: ' + (res.error || 'No se pudo enviar'));
+                    }
+                });
+        }
+
+        // --- Reporte Detallado ---
+        function viewDetailedReport(studentId, studentName) {
+            const modal = document.getElementById('reportModal');
+            const content = document.getElementById('reportContent');
+            content.innerHTML = '<p style="text-align:center;">Cargando...</p>';
+            modal.style.display = 'block';
+
+            fetch(`/api/tutor/estudiante/${studentId}/detalle`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) {
+                        content.innerHTML = `<p style="color:red; text-align:center;">Error: ${data.error}</p>`;
+                        return;
+                    }
+
+                    const reportHTML = `
+                    <h2 style="color: #000000; margin-bottom: 20px;">📊 Reporte Detallado - ${studentName}</h2>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px;">
+                        <div style="text-align: center; padding: 20px; background: rgba(90, 155, 213, 0.1); border-radius: 12px;">
+                            <div style="font-size: 28px; font-weight: 700; color: #5A9BD5;">${data.promedio}</div>
+                            <div style="font-size: 14px; color: #666;">Promedio General</div>
+                        </div>
+                        <div style="text-align: center; padding: 20px; background: rgba(138, 107, 190, 0.1); border-radius: 12px;">
+                            <div style="font-size: 28px; font-weight: 700; color: #8A6BBE;">${data.asistencia}%</div>
+                            <div style="font-size: 14px; color: #666;">Asistencia</div>
+                        </div>
+                    </div>
+
+                    <h3 style="color: #000000; margin-bottom: 15px;">Desempeño por Materia</h3>
+                    <div style="border: 1px solid #E8E9EA; border-radius: 12px; overflow: hidden;">
+                        <div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #E8E9EA; font-weight: 600; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
+                            <div>Materia</div>
+                            <div style="text-align: center;">Calificación</div>
+                            <div style="text-align: center;">Faltas</div>
+                        </div>
+                        ${data.materias.length > 0 ? data.materias.map(m => `
+                            <div style="padding: 15px; border-bottom: 1px solid #f0f0f0; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; align-items: center;">
+                                <div style="font-weight: 500;">${m.nombre}</div>
+                                <div style="text-align: center; font-weight: 600; color: ${m.calificacion >= 9 ? '#059669' : m.calificacion >= 8 ? '#8A6BBE' : '#dc2626'};">
+                                    ${m.calificacion}
+                                </div>
+                                <div style="text-align: center; color: ${m.faltas === 0 ? '#059669' : m.faltas <= 2 ? '#8A6BBE' : '#dc2626'};">
+                                    ${m.faltas}
+                                </div>
+                            </div>
+                        `).join('') : '<p style="padding:15px; text-align:center;">No hay materias registradas.</p>'}
+                    </div>
+
+                     <div style="margin-top: 25px; display: flex; gap: 10px;">
+                        <button class="action-btn btn-primary" onclick="alert('Descarga de PDF pendiente de implementar')" style="flex: 1;">
+                            📄 Descargar PDF
+                        </button>
+                    </div>
+                `;
+                    content.innerHTML = reportHTML;
+                })
+                .catch(e => {
+                    content.innerHTML = `<p style="color:red; text-align:center;">Error de conexión: ${e}</p>`;
+                });
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').style.display = 'none';
+        }
+
+        // --- Citas / Reuniones ---
+        function viewScheduledMeetings() {
+            fetch('/api/tutor/citas')
+                .then(r => r.json())
+                .then(data => {
+                    let msg = 'Reuniones Agendadas:\n\n';
+
+                    // Crear un modal simple o usar alert para MVP.
+                    // Mejor usamos alert detallado con opción de cancelar (instrucción textual)
+                    // O idealmente un modal. Por brevedad, mostraremos lista y si quiere cancelar, llamamos API.
+
+                    if (data.length === 0) {
+                        alert('No hay reuniones agendadas.');
+                        return;
+                    }
+
+                    // Simple text list
+                    let list = data.map(c => `ID: ${c.id} | ${c.fecha} ${c.hora} | ${c.motivo} (${c.estado})`).join('\n');
+                    let idToCancel = prompt(list + '\n\nEscribe el ID de la cita para CANCELAR, o deja vacío para salir:');
+
+                    if (idToCancel && !isNaN(idToCancel)) {
+                        cancelMeeting(idToCancel);
+                    }
+                });
+        }
+
+        function cancelMeeting(id) {
+            fetch(`/api/tutor/citas/${id}/cancelar`, { method: 'POST' })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status === 'ok') {
+                        alert('Cita cancelada correctamente.');
+                    } else {
+                        alert('Error: ' + (res.error || 'No se pudo cancelar'));
+                    }
+                })
+                .catch(e => alert('Error de conexión: ' + e));
+        }
+
+        // Mock functions removed/replaced
+        function viewAllAnnouncements() { loadAnnouncements(); }
+        function makePayment() { processPayment(); }
+        function downloadReceipts() { alert('Función de recibos pendiente'); }
+        function logout() {
+            if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                window.location.href = "{{ url_for('logout') }}";
+            }
+        }
+
+        // Close outside click
+        window.addEventListener('click', function (event) {
+            const meetingModal = document.getElementById('meetingModal');
+            const reportModal = document.getElementById('reportModal');
+            const messageModal = document.getElementById('messageModal');
+
+            if (event.target == meetingModal) closeMeetingModal();
+            if (event.target == reportModal) closeReportModal();
+            if (event.target == messageModal) closeMessageModal();
+        });
+    </script>
+</body>
+
+</html>

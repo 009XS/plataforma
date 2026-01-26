@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto - EduPlatform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos similares */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: rgba(0,0,0,0.1) 0px 4px 12px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #000000;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo span {
+            color: #8A6BBE;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #000000;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        p.subtitle {
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #000000;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E8E9EA;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #8A6BBE, #5A9BD5);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: rgba(138, 107, 190, 0.3) 0px 4px 12px;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            font-size: 13px;
+            color: #8A6BBE;
+            margin-top: 20px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">Edu<span>Platform</span></div>
+        
+        <h1>Contacto</h1>
+        <p class="subtitle">Envíanos tu mensaje</p>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label for="name">Nombre</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="subject">Asunto</label>
+                <input type="text" id="subject" name="subject" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="message">Mensaje</label>
+                <textarea id="message" name="message" rows="5" required></textarea>
+            </div>
+            
+            <button type="submit" class="submit-btn">Enviar</button>
+        </form>
+        
+        <a href="{{ url_for('login') }}" class="back-link">Volver al Login</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CECYTEM - Portal Académico</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --cecytem-green: #006b3e;
+            /* Verde institucional aprox */
+            --cecytem-dark-green: #004d2c;
+            --cecytem-gold: #d4af37;
+            --text-dark: #1a1a1a;
+            --text-light: #f5f5f5;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #0f172a;
+            /* Fallback */
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* Prevent scrolling on the main view */
+            position: relative;
+        }
+
+        /* --- Animated Background --- */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #004d2c, #006b3e, #0f172a);
+        }
+
+        .overlay-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image:
+                radial-gradient(var(--glass-border) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        /* --- Layout --- */
+        .main-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            box-shadow: var(--glass-shadow);
+            width: 100%;
+            max-width: 1200px;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            z-index: 20;
+            transition: transform 0.3s ease;
+        }
+
+        /* --- Header --- */
+        .panel-header {
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: white;
+            text-decoration: none;
+        }
+
+        .brand-logo {
+            width: 50px;
+            height: 50px;
+            background: white;
+            /* Placeholder for image */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--cecytem-green);
+        }
+
+        /* Simulating the Cecytem logo if image fails */
+        .brand-logo i {
+            transform: scale(1.1);
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title {
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            line-height: 1;
+        }
+
+        .brand-subtitle {
+            font-size: 0.8rem;
+            font-weight: 300;
+            opacity: 0.8;
+            letter-spacing: 2px;
+        }
+
+        .date-display {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* --- Content Area --- */
+        .panel-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- Left Side: Welcome & Info --- */
+        .content-left {
+            flex: 1;
+            padding: 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: white;
+            z-index: 2;
+        }
+
+        .welcome-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(212, 175, 55, 0.2);
+            /* Gold tint */
+            border: 1px solid var(--cecytem-gold);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--cecytem-gold);
+            margin-bottom: 2rem;
+            width: fit-content;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h1.hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        h1.hero-title span {
+            color: var(--cecytem-gold);
+            display: block;
+        }
+
+        p.hero-desc {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            opacity: 0.8;
+            max-width: 500px;
+            margin-bottom: 3rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .btn-primary {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--cecytem-gold), #b69225);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
+        }
+
+        .btn-outline {
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+            transform: translateY(-3px);
+        }
+
+        /* --- Right Side: Login / Role Selection --- */
+        .content-right {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* background: rgba(0,0,0,0.2); Gradient overlay handled by children */
+        }
+
+        /* 3D Carousel Container */
+        .role-carousel-container {
+            width: 100%;
+            height: 100%;
+            perspective: 1000px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .role-card {
+            position: absolute;
+            width: 280px;
+            height: 380px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.5s ease-out;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            transform-style: preserve-3d;
+        }
+
+        .role-card.active {
+            opacity: 1;
+            transform: translateZ(100px) scale(1.1);
+            z-index: 10;
+            border: 2px solid var(--cecytem-green);
+        }
+
+        .role-card.prev {
+            opacity: 0.6;
+            transform: translateX(-150%) translateZ(-100px) rotateY(25deg);
+            z-index: 5;
+            filter: blur(2px);
+        }
+
+        .role-card.next {
+            opacity: 0.6;
+            transform: translateX(150%) translateZ(-100px) rotateY(-25deg);
+            z-index: 5;
+            filter: blur(2px);
+        }
+
+        /* Hidden cards */
+        .role-card.hidden {
+            transform: translateZ(-200px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .role-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            color: var(--cecytem-green);
+        }
+
+        .role-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .role-desc {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .role-action {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            width: 100%;
+            background: var(--cecytem-green);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .role-action:hover {
+            background: var(--cecytem-dark-green);
+        }
+
+        .carousel-nav {
+            position: absolute;
+            bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 20;
+        }
+
+        .nav-dot {
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-dot.active {
+            background: var(--cecytem-gold);
+            transform: scale(1.3);
+        }
+
+        /* --- Login Form Overlay --- */
+        .login-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            /* Darken background */
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .login-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .login-container {
+            background: white;
+            width: 100%;
+            max-width: 450px;
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            transition: transform 0.4s ease;
+            position: relative;
+        }
+
+        .login-overlay.active .login-container {
+            transform: translateY(0);
+        }
+
+        .close-login {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-login:hover {
+            color: var(--text-dark);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header .icon {
+            font-size: 2.5rem;
+            color: var(--cecytem-green);
+            margin-bottom: 1rem;
+        }
+
+        .login-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--cecytem-green);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 1rem;
+            background: var(--cecytem-green);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background 0.3s;
+        }
+
+        .btn-login:hover {
+            background: var(--cecytem-dark-green);
+        }
+
+        /* --- Footer --- */
+        .panel-footer {
+            text-align: center;
+            padding: 1rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            z-index: 5;
+        }
+
+        /* --- Alerts --- */
+        .flashed-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .alert-error,
+        .alert-danger {
+            background: #ef4444;
+        }
+
+        .alert-success {
+            background: #10b981;
+        }
+
+        .alert-warning {
+            background: #f59e0b;
+        }
+
+        .alert-info {
+            background: #3b82f6;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .panel-content {
+                flex-direction: column;
+            }
+
+            .content-left {
+                padding: 2rem;
+                text-align: center;
+                align-items: center;
+            }
+
+            .content-right {
+                flex: 1.5;
+                /* Give more space to carousel */
+            }
+
+            h1.hero-title {
+                font-size: 2.5rem;
+            }
+
+            .role-card {
+                width: 260px;
+                height: 340px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <canvas id="bg-canvas"></canvas>
+    <div class="overlay-pattern"></div>
+
+    <!-- Flashed Messages -->
+    <div class="flashed-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            <i class="fas fa-info-circle"></i> {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Interface -->
+    <div class="main-container">
+        <div class="glass-panel">
+            <!-- Header -->
+            <header class="panel-header">
+                <a href="#" class="brand">
+                    <div class="brand-logo">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">CECYTEM</span>
+                        <span class="brand-subtitle">Plataforma Educativa</span>
+                    </div>
+                </a>
+                <div class="date-display" id="dateDisplay">
+                    <!-- Javascript will populate date -->
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="panel-content">
+                <!-- Left: Info -->
+                <div class="content-left">
+                    <div class="welcome-badge">
+                        <i class="fas fa-shield-alt"></i> Acceso Seguro
+                    </div>
+                    <h1 class="hero-title">
+                        Bienvenido a tu <span>Espacio Digital</span>
+                    </h1>
+                    <p class="hero-desc">
+                        Plataforma integral para la gestión académica y el aprendizaje.
+                        Ingresa con tus credenciales institucionales para acceder a todos los servicios.
+                    </p>
+                    <div class="action-buttons">
+                        <a href="{{ url_for('about') }}" class="btn-outline">
+                            <i class="fas fa-info-circle"></i> Conocer más
+                        </a>
+                        <a href="{{ url_for('help_page') }}" class="btn-outline">
+                            <i class="fas fa-question-circle"></i> Ayuda
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right: Carousel -->
+                <div class="content-right">
+                    <div class="role-carousel-container" id="roleCarousel">
+                        <!-- Cards will be inserted by JS -->
+                    </div>
+                    <div class="carousel-nav" id="carouselNav">
+                        <!-- Dots inserted by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="panel-footer">
+        © 2025 Colegio de Estudios Científicos y Tecnológicos del Estado de México. Todos los derechos reservados.
+    </footer>
+
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-container">
+            <button class="close-login" onclick="closeLogin()">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="login-header">
+                <div class="icon" id="loginIcon"><i class="fas fa-user"></i></div>
+                <h2 id="loginTitle">Iniciar Sesión</h2>
+                <p id="loginSubtitle">Ingresa tus datos para continuar</p>
+            </div>
+
+            <form action="{{ url_for('login') }}" method="POST" id="loginForm">
+                <input type="hidden" name="role" id="roleInput">
+
+                <div class="form-group">
+                    <label class="form-label">Número de Control / Usuario</label>
+                    <input type="text" name="numeroControl" class="form-input" required placeholder="Ej. 12345678">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" name="password" class="form-input" required
+                        placeholder="Ingresa tu contraseña">
+                </div>
+
+                <button type="submit" class="btn-login">
+                    Ingresar <i class="fas fa-arrow-right"></i>
+                </button>
+
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="{{ url_for('google_login_init') }}"
+                        style="color: #666; font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border: 1px solid #ddd; padding: 0.5rem; border-radius: 8px;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+                            width="18" alt="G">
+                        Acceder con Google
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- Data ---
+        const roles = [
+            {
+                id: 'alumno',
+                title: 'Alumno',
+                icon: 'fa-user-graduate',
+                desc: 'Accede a tus clases, calificaciones y recursos educativos.'
+            },
+            {
+                id: 'docente',
+                title: 'Docente',
+                icon: 'fa-chalkboard-teacher',
+                desc: 'Gestiona tus grupos, calificaciones y material didáctico.'
+            },
+            {
+                id: 'orientador',
+                title: 'Orientador',
+                icon: 'fa-compass',
+                desc: 'Herramientas de seguimiento y apoyo estudiantil.'
+            },
+            {
+                id: 'tutor',
+                title: 'Tutor',
+                icon: 'fa-user-friends',
+                desc: 'Consulta el progreso académico de tus hijos.'
+            },
+            {
+                id: 'admin',
+                title: 'Administrativo',
+                icon: 'fa-cogs',
+                desc: 'Panel de control y configuración del sistema.'
+            }
+        ];
+
+        // --- State ---
+        let currentIndex = 0;
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initCarousel();
+            updateDate();
+            initBackground();
+        });
+
+        // --- Carousel Logic ---
+        function initCarousel() {
+            const container = document.getElementById('roleCarousel');
+            const nav = document.getElementById('carouselNav');
+
+            // Create Cards
+            roles.forEach((role, index) => {
+                const card = document.createElement('div');
+                card.className = 'role-card';
+                card.dataset.index = index;
+                card.innerHTML = `
+                    <div class="role-icon"><i class="fas ${role.icon}"></i></div>
+                    <div>
+                        <div class="role-title">${role.title}</div>
+                        <div class="role-desc">${role.desc}</div>
+                    </div>
+                    <button class="role-action" onclick="openLogin('${role.id}', '${role.title}', '${role.icon}')">
+                        Acceder
+                    </button>
+                `;
+                container.appendChild(card);
+
+                // Create Nav Dot
+                const dot = document.createElement('div');
+                dot.className = 'nav-dot';
+                dot.onclick = () => rotateTo(index);
+                nav.appendChild(dot);
+            });
+
+            updateCarouselView();
+        }
+
+        function rotateTo(index) {
+            currentIndex = index;
+            updateCarouselView();
+        }
+
+        function updateCarouselView() {
+            const cards = document.querySelectorAll('.role-card');
+            const dots = document.querySelectorAll('.nav-dot');
+            const total = roles.length;
+
+            cards.forEach((card) => {
+                const index = parseInt(card.dataset.index);
+                card.className = 'role-card hidden'; // Reset
+
+                // Calculate relative position
+                let diff = (index - currentIndex);
+                if (diff < -2) diff += total;
+                if (diff > 2) diff -= total;
+
+                if (diff === 0) {
+                    card.className = 'role-card active';
+                } else if (diff === -1 || (currentIndex === 0 && index === total - 1)) {
+                    card.className = 'role-card prev';
+                    card.onclick = () => rotateTo(index);
+                } else if (diff === 1 || (currentIndex === total - 1 && index === 0)) {
+                    card.className = 'role-card next';
+                    card.onclick = () => rotateTo(index);
+                }
+            });
+
+            dots.forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === currentIndex);
+            });
+        }
+
+        // Auto rotate
+        setInterval(() => {
+            if (!document.getElementById('loginOverlay').classList.contains('active')) {
+                currentIndex = (currentIndex + 1) % roles.length;
+                updateCarouselView();
+            }
+        }, 5000);
+
+        // --- Login Modal Logic ---
+        function openLogin(roleId, roleTitle, roleIcon) {
+            const overlay = document.getElementById('loginOverlay');
+            const title = document.getElementById('loginTitle');
+            const subtitle = document.getElementById('loginSubtitle');
+            const icon = document.getElementById('loginIcon');
+            const input = document.getElementById('roleInput');
+
+            title.textContent = `Acceso: ${roleTitle}`;
+            subtitle.textContent = `Ingresa tus credenciales de ${roleTitle}`;
+            icon.innerHTML = `<i class="fas ${roleIcon}"></i>`;
+            input.value = roleId;
+
+            overlay.classList.add('active');
+        }
+
+        function closeLogin() {
+            document.getElementById('loginOverlay').classList.remove('active');
+        }
+
+        // --- Utilities ---
+        function updateDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = now.toLocaleDateString('es-ES', options);
+            document.getElementById('dateDisplay').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+        }
+
+        // --- Background Animation (Simple Particles) ---
+        function initBackground() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+
+            // Resize
+            const resize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            };
+            window.addEventListener('resize', resize);
+            resize();
+
+            // Particle Class
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 3;
+                    this.speedX = Math.random() * 1 - 0.5;
+                    this.speedY = Math.random() * 1 - 0.5;
+                    this.color = `rgba(255, 255, 255, ${Math.random() * 0.3})`;
+                }
+                update() {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    if (this.x > canvas.width) this.x = 0;
+                    if (this.x < 0) this.x = canvas.width;
+                    if (this.y > canvas.height) this.y = 0;
+                    if (this.y < 0) this.y = canvas.height;
+                }
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Init Particles
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle());
+            }
+
+            // Animate
+            const animate = () => {
+                // Gradient Background
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#004d2c');
+                gradient.addColorStop(1, '#0f172a');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                particles.forEach(p => {
+                    p.update();
+                    p.draw();
+                });
+                requestAnimationFrame(animate);
+            };
+            animate();
+        }
+    </script>
+</body>
+
+</html>

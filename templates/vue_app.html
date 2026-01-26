@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Educativa 2.0</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vue-router@4"></script>
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        .fade-enter-active,
+        .fade-leave-active {
+            transition: opacity 0.5s ease;
+        }
+
+        .fade-enter-from,
+        .fade-leave-to {
+            opacity: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans">
+    <div id="app">
+        <router-view></router-view>
+    </div>
+
+    <!-- VUE TEMPLATES (COMPONENTS) -->
+
+    <!-- LOGIN/DASHBOARD PLACEHOLDER -->
+    <script type="text/x-template" id="dashboard-template">
+        <div class="min-h-screen flex flex-col">
+            <header class="bg-indigo-600 text-white p-4 shadow-md">
+                <div class="container mx-auto flex justify-between items-center">
+                    <h1 class="text-2xl font-bold">EduPlatform AI</h1>
+                    <div class="flex items-center space-x-4">
+                        <span v-if="user">Hola, {{ user.nombre }} ({{ user.rango }})</span>
+                        <button @click="logout" class="bg-indigo-700 px-4 py-2 rounded hover:bg-indigo-800">Salir</button>
+                    </div>
+                </div>
+            </header>
+            
+            <main class="flex-grow container mx-auto p-4 flex">
+                <aside class="w-64 bg-white rounded-lg shadow-md p-4 mr-4 hidden md:block">
+                    <nav class="space-y-2">
+                        <router-link to="/dashboard" class="block p-2 rounded hover:bg-indigo-50 text-gray-700 font-medium">
+                            <i class="fas fa-home mr-2"></i> Inicio
+                        </router-link>
+                        <router-link to="/flashcards" class="block p-2 rounded hover:bg-indigo-50 text-gray-700 font-medium">
+                            <i class="fas fa-layer-group mr-2"></i> Flashcards
+                        </router-link>
+                        <router-link to="/exams" class="block p-2 rounded hover:bg-indigo-50 text-gray-700 font-medium">
+                            <i class="fas fa-edit mr-2"></i> Exámenes
+                        </router-link>
+                        <router-link to="/tutor" class="block p-2 rounded hover:bg-indigo-50 text-gray-700 font-medium">
+                            <i class="fas fa-chalkboard-teacher mr-2"></i> Tutoría IA
+                        </router-link>
+                    </nav>
+                </aside>
+                
+                <div class="flex-grow bg-white rounded-lg shadow-md p-6">
+                    <router-view></router-view>
+                </div>
+            </main>
+        </div>
+    </script>
+
+    <!-- FLASHCARDS COMPONENT -->
+    <script type="text/x-template" id="flashcards-template">
+        <div>
+            <h2 class="text-2xl font-bold mb-4">Mis Flashcards</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div v-for="card in cards" :key="card.id" class="border p-4 rounded-lg hover:shadow-lg transition">
+                    <div class="font-bold mb-2">{{ card.pregunta }}</div>
+                    <div class="text-gray-600 cursor-pointer text-sm" @click="card.show = !card.show">
+                        {{ card.show ? card.respuesta : 'Ver Respuesta' }}
+                    </div>
+                </div>
+                
+                <!-- Add New Card -->
+                <div class="border p-4 rounded-lg border-dashed flex items-center justify-center cursor-pointer hover:bg-gray-50" @click="showAddModal = true">
+                    <span class="text-indigo-600 font-bold">+ Crear Nueva</span>
+                </div>
+            </div>
+            
+            <!-- Simple Modal -->
+            <div v-if="showAddModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                <div class="bg-white p-6 rounded-lg w-96">
+                    <h3 class="text-xl font-bold mb-4">Nueva Flashcard</h3>
+                    <input v-model="newCard.pregunta" placeholder="Pregunta" class="mb-2 w-full border p-2 rounded">
+                    <textarea v-model="newCard.respuesta" placeholder="Respuesta" class="mb-4 w-full border p-2 rounded"></textarea>
+                    <div class="flex justify-end space-x-2">
+                        <button @click="showAddModal = false" class="text-gray-500">Cancelar</button>
+                        <button @click="addCard" class="bg-indigo-600 text-white px-4 py-2 rounded">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        const { createRouter, createWebHashHistory } = VueRouter;
+
+        // Components
+        const Dashboard = {
+            template: '#dashboard-template',
+            setup() {
+                const user = ref(null);
+
+                onMounted(async () => {
+                    const res = await fetch('/api/user/me');
+                    if (res.ok) user.value = await res.json();
+                    else window.location.href = '/login';
+                });
+
+                const logout = () => window.location.href = '/logout'; // Assuming exists
+
+                return { user, logout };
+            }
+        };
+
+        const Home = { template: '<div class="text-center p-10"><h2 class="text-2xl">Bienvenido a su Panel de Aprendizaje</h2><p class="text-gray-600 mt-2">Seleccione una opción del menú.</p></div>' };
+
+        const Flashcards = {
+            template: '#flashcards-template',
+            setup() {
+                const cards = ref([]);
+                const showAddModal = ref(false);
+                const newCard = ref({ pregunta: '', respuesta: '' });
+
+                const load = async () => {
+                    const res = await fetch('/api/flashcards');
+                    cards.value = (await res.json()).map(c => ({ ...c, show: false }));
+                };
+
+                const addCard = async () => {
+                    await fetch('/api/flashcards', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newCard.value)
+                    });
+                    showAddModal.value = false;
+                    newCard.value = { pregunta: '', respuesta: '' };
+                    load();
+                };
+
+                onMounted(load);
+                return { cards, showAddModal, newCard, addCard };
+            }
+        };
+
+        // Router
+        const routes = [
+            {
+                path: '/',
+                component: Dashboard,
+                children: [
+                    { path: '', redirect: '/dashboard' },
+                    { path: 'dashboard', component: Home },
+                    { path: 'flashcards', component: Flashcards },
+                    // Placeholder for others
+                    { path: 'exams', component: { template: '<div>Exámenes en construcción</div>' } },
+                    { path: 'tutor', component: { template: '<div>Tutoría IA en construcción</div>' } },
+                ]
+            }
+        ];
+
+        const router = createRouter({
+            history: createWebHashHistory(),
+            routes,
+        });
+
+        const app = createApp({});
+        app.use(router);
+        app.mount('#app');
+    </script>
+</body>
+
+</html>

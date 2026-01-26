@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Editar Usuario | EduPlatform{% endblock %}
+{% block content %}
+<div class="min-h-screen py-8"><div class="max-w-2xl mx-auto px-6">
+<h1 class="text-3xl font-bold mb-8">Editar Usuario</h1>
+<div class="bg-white rounded-xl shadow-sm p-8">
+<form action="/admin/usuario/{{ usuario.id }}/editar" method="POST">
+<div class="mb-6"><label class="block text-sm font-medium mb-2">Nombre</label>
+<input type="text" name="nombre" value="{{ usuario.nombre }}" class="w-full border rounded-lg px-4 py-3" required></div>
+<div class="mb-6"><label class="block text-sm font-medium mb-2">Email</label>
+<input type="email" name="email" value="{{ usuario.email }}" class="w-full border rounded-lg px-4 py-3" required></div>
+<div class="mb-6"><label class="block text-sm font-medium mb-2">Rol</label>
+<select name="rol" class="w-full border rounded-lg px-4 py-3">
+<option value="alumno" {{ 'selected' if usuario.rol=='alumno' }}>Alumno</option>
+<option value="docente" {{ 'selected' if usuario.rol=='docente' }}>Docente</option>
+<option value="admin" {{ 'selected' if usuario.rol=='admin' }}>Admin</option>
+</select></div>
+<button type="submit" class="w-full bg-brand-600 text-white py-3 rounded-lg">Guardar Cambios</button>
+</form></div></div></div>
+{% endblock %}

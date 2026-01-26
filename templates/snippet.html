@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Snippet | EduPlatform{% endblock %}
+{% block content %}
+<div class="min-h-screen py-8">
+    <div class="max-w-4xl mx-auto px-6">
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold">{{ snippet.titulo or 'Código Compartido' }}</h1>
+                    <p class="text-sm text-gray-500">Por {{ snippet.autor_nombre }} • {{ snippet.fecha }}</p>
+                </div>
+                <button onclick="copiarCodigo()" class="bg-brand-600 text-white px-4 py-2 rounded-lg"><i
+                        class="fas fa-copy mr-2"></i>Copiar</button>
+            </div>
+            <pre
+                class="p-6 bg-gray-900 text-gray-100 overflow-auto"><code id="code-content">{{ snippet.codigo }}</code></pre>
+        </div>
+    </div>
+</div>
+<script>
+    function copiarCodigo() {
+        navigator.clipboard.writeText(document.getElementById('code-content').textContent);
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copiado', showConfirmButton: false, timer: 1500 });
+    }
+</script>
+{% endblock %}

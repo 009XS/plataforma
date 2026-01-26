@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Flashcards | EduPlatform{% endblock %}
+{% block content %}
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <div class="w-64 bg-dark-900 text-white p-4 flex-shrink-0">
+        <div class="text-2xl font-bold mb-8">Edu<span class="text-brand-500">Platform</span></div>
+        <nav class="space-y-2">
+            <a href="/panel-alumno" class="block py-2 px-4 rounded hover:bg-dark-800"><i
+                    class="fas fa-arrow-left mr-2"></i>Volver al Panel</a>
+            <a href="#" onclick="showSection('mazos')" class="nav-item active py-2 px-4 rounded bg-brand-500"><i
+                    class="fas fa-layer-group mr-2"></i>Mis Mazos</a>
+            <a href="#" onclick="showSection('estudiar')" class="nav-item py-2 px-4 rounded hover:bg-dark-800"><i
+                    class="fas fa-brain mr-2"></i>Estudiar</a>
+            <a href="#" onclick="showSection('crear')" class="nav-item py-2 px-4 rounded hover:bg-dark-800"><i
+                    class="fas fa-plus mr-2"></i>Crear Tarjeta</a>
+            <a href="#" onclick="showSection('stats')" class="nav-item py-2 px-4 rounded hover:bg-dark-800"><i
+                    class="fas fa-chart-bar mr-2"></i>Estadísticas</a>
+        </nav>
+    </div>
+
+    <!-- Main -->
+    <div class="flex-1 p-8">
+        <!-- Mis Mazos -->
+        <div id="section-mazos" class="content-section active">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold">Mis Mazos de Tarjetas</h1>
+                <button onclick="showSection('crear')"
+                    class="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">
+                    <i class="fas fa-plus mr-2"></i>Nuevo Mazo
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="mazos-grid">
+                <!-- Mazos loaded dynamically -->
+                <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+                    <i class="fas fa-spinner fa-spin text-3xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500">Cargando mazos...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estudiar -->
+        <div id="section-estudiar" class="content-section hidden">
+            <h1 class="text-3xl font-bold mb-8">Modo Estudio</h1>
+
+            <div id="flashcard-container" class="max-w-2xl mx-auto">
+                <div class="bg-white rounded-2xl shadow-lg p-8 min-h-[400px] flex items-center justify-center cursor-pointer"
+                    id="flashcard" onclick="flipCard()">
+                    <div id="card-front" class="text-center">
+                        <p class="text-2xl font-semibold text-gray-800" id="card-question">Selecciona un mazo para
+                            estudiar</p>
+                    </div>
+                    <div id="card-back" class="text-center hidden">
+                        <p class="text-xl text-gray-600" id="card-answer"></p>
+                    </div>
+                </div>
+
+                <div class="flex justify-center gap-4 mt-8" id="study-controls" style="display: none;">
+                    <button onclick="rateCard(1)" class="bg-red-100 text-red-700 px-6 py-3 rounded-lg hover:bg-red-200">
+                        <i class="fas fa-times mr-2"></i>No lo sé
+                    </button>
+                    <button onclick="rateCard(3)"
+                        class="bg-yellow-100 text-yellow-700 px-6 py-3 rounded-lg hover:bg-yellow-200">
+                        <i class="fas fa-meh mr-2"></i>Más o menos
+                    </button>
+                    <button onclick="rateCard(5)"
+                        class="bg-green-100 text-green-700 px-6 py-3 rounded-lg hover:bg-green-200">
+                        <i class="fas fa-check mr-2"></i>¡Lo sé!
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crear -->
+        <div id="section-crear" class="content-section hidden">
+            <h1 class="text-3xl font-bold mb-8">Crear Nueva Tarjeta</h1>
+
+            <div class="max-w-xl mx-auto bg-white rounded-xl shadow-sm p-8">
+                <form onsubmit="createFlashcard(event)">
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mazo</label>
+                        <select id="fc-mazo" class="w-full border rounded-lg px-4 py-3" required>
+                            <option value="">Seleccionar mazo...</option>
+                        </select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Pregunta / Frente</label>
+                        <textarea id="fc-question" class="w-full border rounded-lg px-4 py-3" rows="3"
+                            placeholder="Escribe la pregunta..." required></textarea>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Respuesta / Reverso</label>
+                        <textarea id="fc-answer" class="w-full border rounded-lg px-4 py-3" rows="3"
+                            placeholder="Escribe la respuesta..." required></textarea>
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-brand-600 text-white py-3 rounded-lg font-semibold hover:bg-brand-700">
+                        <i class="fas fa-save mr-2"></i>Guardar Tarjeta
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div id="section-stats" class="content-section hidden">
+            <h1 class="text-3xl font-bold mb-8">Estadísticas de Estudio</h1>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl p-6 shadow-sm">
+                    <p class="text-gray-500 text-sm">Total Tarjetas</p>
+                    <p class="text-3xl font-bold text-brand-500" id="stat-total">0</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm">
+                    <p class="text-gray-500 text-sm">Estudiadas Hoy</p>
+                    <p class="text-3xl font-bold text-green-500" id="stat-today">0</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm">
+                    <p class="text-gray-500 text-sm">Racha</p>
+                    <p class="text-3xl font-bold text-orange-500" id="stat-streak">0 días</p>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-sm">
+                    <p class="text-gray-500 text-sm">Dominio</p>
+                    <p class="text-3xl font-bold text-purple-500" id="stat-mastery">0%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentCards = [];
+    let currentIndex = 0;
+    let isFlipped = false;
+
+    async function loadMazos() {
+        try {
+            const res = await fetch('/api/flashcards/mazos');
+            const mazos = await res.json();
+
+            const grid = document.getElementById('mazos-grid');
+            const select = document.getElementById('fc-mazo');
+
+            if (mazos.length === 0) {
+                grid.innerHTML = `
+                <div class="col-span-3 bg-white rounded-xl shadow-sm p-12 text-center">
+                    <i class="fas fa-layer-group text-gray-300 text-5xl mb-4"></i>
+                    <p class="text-gray-500 mb-4">No tienes mazos aún</p>
+                    <button onclick="crearMazo()" class="bg-brand-600 text-white px-4 py-2 rounded-lg">Crear mi primer mazo</button>
+                </div>`;
+                return;
+            }
+
+            grid.innerHTML = mazos.map(m => `
+            <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition cursor-pointer" onclick="selectMazo(${m.id})">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-layer-group text-brand-600 text-xl"></i>
+                    </div>
+                    <span class="text-sm text-gray-500">${m.total_cards || 0} tarjetas</span>
+                </div>
+                <h3 class="font-semibold text-gray-800">${m.nombre}</h3>
+                <p class="text-sm text-gray-500 mt-1">${m.descripcion || 'Sin descripción'}</p>
+                <div class="mt-4">
+                    <div class="bg-gray-200 rounded-full h-2">
+                        <div class="bg-brand-500 rounded-full h-2" style="width: ${m.mastery || 0}%"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">${m.mastery || 0}% dominado</p>
+                </div>
+            </div>
+        `).join('');
+
+            select.innerHTML = '<option value="">Seleccionar mazo...</option>' +
+                mazos.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    function flipCard() {
+        isFlipped = !isFlipped;
+        document.getElementById('card-front').classList.toggle('hidden', isFlipped);
+        document.getElementById('card-back').classList.toggle('hidden', !isFlipped);
+    }
+
+    document.addEventListener('DOMContentLoaded', loadMazos);
+</script>
+{% endblock %}

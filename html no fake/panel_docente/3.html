@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Editar Materia</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem", 
+                        "lg": "0.5rem", 
+                        "xl": "0.75rem", 
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for better aesthetic in dark mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #324d67; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #476a8b; 
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark">
+<!-- TopAppBar -->
+<div class="flex items-center p-4 pb-2 justify-between sticky top-0 z-10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md">
+<button aria-label="Volver" class="flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-white text-2xl">arrow_back</span>
+</button>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-12">
+                Editar Materia
+            </h2>
+</div>
+<!-- Content Scroll Area -->
+<div class="flex-1 overflow-y-auto pb-8">
+<!-- Hero / Visual Context (Abstract pattern for education) -->
+<div class="w-full h-32 bg-gradient-to-r from-blue-600 to-purple-600 relative mb-6">
+<div class="absolute inset-0 bg-black/20"></div>
+<div class="absolute bottom-4 left-4">
+<p class="text-white/80 text-sm font-medium uppercase tracking-wider">Curso</p>
+<h1 class="text-white text-2xl font-bold">Matemáticas Avanzadas</h1>
+</div>
+</div>
+<!-- Form Section -->
+<form class="flex flex-col gap-6 px-4" onsubmit="event.preventDefault()">
+<!-- TextField: Nombre -->
+<div class="flex flex-col gap-2">
+<label class="text-slate-700 dark:text-white text-base font-medium leading-normal" for="subject-name">
+                        Nombre de la materia
+                    </label>
+<input class="form-input flex w-full resize-none overflow-hidden rounded-xl focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-[#324d67] bg-white dark:bg-[#192633] focus:border-primary h-14 placeholder:text-slate-400 dark:placeholder:text-[#92adc9] px-4 text-slate-900 dark:text-white text-base font-normal leading-normal transition-all" id="subject-name" type="text" value="Matemáticas Avanzadas"/>
+</div>
+<!-- TextField: Descripción -->
+<div class="flex flex-col gap-2">
+<label class="text-slate-700 dark:text-white text-base font-medium leading-normal" for="subject-desc">
+                        Descripción
+                    </label>
+<textarea class="form-textarea flex w-full resize-none overflow-hidden rounded-xl focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-slate-300 dark:border-[#324d67] bg-white dark:bg-[#192633] focus:border-primary min-h-[140px] placeholder:text-slate-400 dark:placeholder:text-[#92adc9] p-4 text-slate-900 dark:text-white text-base font-normal leading-normal transition-all" id="subject-desc">Curso intensivo de cálculo y álgebra para 5to año, enfocado en preparación universitaria y resolución de problemas complejos.</textarea>
+</div>
+<!-- ListItem: Status Toggle -->
+<div class="flex items-center gap-4 bg-white dark:bg-[#192633] px-4 py-3 rounded-xl border border-slate-300 dark:border-[#324d67] justify-between shadow-sm">
+<div class="flex flex-col">
+<p class="text-slate-900 dark:text-white text-base font-medium leading-normal">Materia Activa</p>
+<p class="text-slate-500 dark:text-[#92adc9] text-sm font-normal">Visible para los alumnos</p>
+</div>
+<div class="shrink-0">
+<label class="relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none bg-slate-200 dark:bg-[#233648] p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary transition-colors">
+<div class="h-full w-[27px] rounded-full bg-white shadow-sm transform transition-transform" style="box-shadow: rgba(0, 0, 0, 0.15) 0px 3px 8px, rgba(0, 0, 0, 0.06) 0px 3px 1px;"></div>
+<input checked="" class="peer sr-only" type="checkbox"/>
+</label>
+</div>
+</div>
+<div class="h-4"></div>
+<!-- Actions -->
+<div class="flex flex-col gap-3">
+<!-- Primary Button -->
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 bg-primary hover:bg-primary/90 active:bg-primary/95 text-white text-base font-bold leading-normal tracking-[0.015em] shadow-lg shadow-primary/20 transition-all transform active:scale-[0.98]">
+<span class="truncate">Guardar Cambios</span>
+</button>
+<!-- Destructive Button -->
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-14 px-5 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-transparent dark:border-red-500/20 text-base font-bold leading-normal tracking-[0.015em] transition-all">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-xl">delete</span>
+<span class="truncate">Eliminar Materia</span>
+</span>
+</button>
+<p class="text-center text-xs text-slate-400 dark:text-slate-500 mt-2">
+                        Última modificación: 12 de Oct, 2023
+                    </p>
+</div>
+</form>
+</div>
+</div>
+</body></html>

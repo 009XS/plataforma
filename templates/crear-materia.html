@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Materia | EduPlatform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        },
+                        dark: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="/panel-docente" class="text-brand-600 hover:text-brand-700 flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Volver
+            </a>
+            <h1 class="text-xl font-bold text-gray-800">Crear Nueva Materia</h1>
+            <div class="w-20"></div>
+        </div>
+    </header>
+
+    <main class="max-w-2xl mx-auto px-4 py-8">
+        <form action="/crear-materia" method="POST" class="space-y-6">
+            <!-- Card: Información Básica -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-book text-brand-500 mr-2"></i> Información de la Materia
+                </h2>
+
+                <div class="space-y-4">
+                    <!-- Nombre -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de la Materia *</label>
+                        <input type="text" name="nombre" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                            placeholder="Ej: Matemáticas Avanzadas">
+                    </div>
+
+                    <!-- Descripción -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                        <textarea name="descripcion" rows="3"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-none"
+                            placeholder="Breve descripción del contenido del curso..."></textarea>
+                    </div>
+
+                    <!-- Semestre -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Semestre</label>
+                        <select name="semestre"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                            <option value="">Seleccionar semestre...</option>
+                            <option value="1">1er Semestre</option>
+                            <option value="2">2do Semestre</option>
+                            <option value="3">3er Semestre</option>
+                            <option value="4">4to Semestre</option>
+                            <option value="5">5to Semestre</option>
+                            <option value="6">6to Semestre</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card: Configuración -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-cog text-gray-500 mr-2"></i> Configuración
+                </h2>
+
+                <div class="space-y-4">
+                    <!-- Portada -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Color de Portada</label>
+                        <div class="flex gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="color" value="blue" checked class="sr-only peer">
+                                <div
+                                    class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 ring-2 ring-transparent peer-checked:ring-brand-500 peer-checked:ring-offset-2">
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="color" value="green" class="sr-only peer">
+                                <div
+                                    class="w-12 h-12 rounded-lg bg-gradient-to-br from-green-400 to-green-600 ring-2 ring-transparent peer-checked:ring-brand-500 peer-checked:ring-offset-2">
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="color" value="purple" class="sr-only peer">
+                                <div
+                                    class="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 ring-2 ring-transparent peer-checked:ring-brand-500 peer-checked:ring-offset-2">
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="color" value="red" class="sr-only peer">
+                                <div
+                                    class="w-12 h-12 rounded-lg bg-gradient-to-br from-red-400 to-red-600 ring-2 ring-transparent peer-checked:ring-brand-500 peer-checked:ring-offset-2">
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="color" value="yellow" class="sr-only peer">
+                                <div
+                                    class="w-12 h-12 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 ring-2 ring-transparent peer-checked:ring-brand-500 peer-checked:ring-offset-2">
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Activo -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-800">Materia Activa</p>
+                            <p class="text-sm text-gray-500">Si se desactiva, la materia no será visible para los
+                                alumnos</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="activo" value="1" checked class="sr-only peer">
+                            <div
+                                class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500">
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-4">
+                <a href="/panel-docente"
+                    class="flex-1 py-3 px-4 text-center text-gray-600 bg-gray-200 rounded-lg font-semibold hover:bg-gray-300 transition">
+                    Cancelar
+                </a>
+                <button type="submit"
+                    class="flex-1 py-3 px-4 bg-brand-600 text-white rounded-lg font-semibold hover:bg-brand-700 transition flex items-center justify-center">
+                    <i class="fas fa-save mr-2"></i> Guardar Materia
+                </button>
+            </div>
+        </form>
+    </main>
+</body>
+
+</html>

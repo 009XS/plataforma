@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Grupos | EduPlatform{% endblock %}
+{% block content %}
+<div class="min-h-screen py-8"><div class="max-w-4xl mx-auto px-6">
+<h1 class="text-3xl font-bold mb-8">Gestión de Grupos</h1>
+<div class="bg-white rounded-xl shadow-sm p-6">
+{% for grupo in grupos %}
+<div class="p-4 border-b flex justify-between items-center">
+<div><p class="font-semibold">{{ grupo.nombre }}</p><p class="text-sm text-gray-500">{{ grupo.total_alumnos }} alumnos</p></div>
+<a href="/admin/grupo/{{ grupo.id }}" class="text-brand-600">Ver</a>
+</div>
+{% else %}<p class="text-gray-500 text-center py-8">No hay grupos</p>{% endfor %}
+</div></div></div>
+{% endblock %}

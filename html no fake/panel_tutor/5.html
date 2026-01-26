@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pagos y Trámites</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2230",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(19, 91, 236, 0.08)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white min-h-screen flex flex-col items-center">
+<div class="w-full max-w-md bg-background-light dark:bg-background-dark min-h-screen relative shadow-2xl overflow-hidden">
+<!-- Header -->
+<header class="flex items-center justify-between p-5 pt-8 bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-md sticky top-0 z-50">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold text-slate-900 dark:text-white">Pagos y Trámites</h1>
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-900 dark:text-white relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-800"></span>
+</button>
+</header>
+<!-- Segmented Control -->
+<div class="px-5 pb-4">
+<div class="flex p-1 bg-slate-200/50 dark:bg-slate-700/50 rounded-xl relative">
+<button class="flex-1 py-2 text-sm font-semibold rounded-lg bg-surface-light dark:bg-surface-dark text-primary shadow-sm transition-all text-center">
+                    Pendientes
+                </button>
+<button class="flex-1 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all text-center">
+                    Historial
+                </button>
+</div>
+</div>
+<!-- Scrollable Content -->
+<main class="px-5 pb-24 space-y-6">
+<!-- Summary Card -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-5 shadow-soft border border-slate-100 dark:border-slate-700 relative overflow-hidden group">
+<!-- Background decoration -->
+<div class="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-8 -mt-8 z-0"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Total a Pagar</p>
+<h2 class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">$450.00</h2>
+</div>
+<div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
+<span class="material-symbols-outlined">warning</span>
+</div>
+</div>
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-orange-500 text-sm">schedule</span>
+<p class="text-sm text-slate-600 dark:text-slate-300">Vencimiento próximo: <span class="font-semibold text-orange-600 dark:text-orange-400">30 Oct</span></p>
+</div>
+<button class="w-full h-12 bg-primary hover:bg-primary/90 active:scale-[0.98] transition-all rounded-xl flex items-center justify-center gap-2 text-white font-bold shadow-lg shadow-primary/25">
+<span class="material-symbols-outlined">credit_card</span>
+                        Pagar Todo
+                    </button>
+</div>
+</div>
+<!-- Pending Section -->
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    Pagos Pendientes
+                    <span class="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full font-bold">3</span>
+</h3>
+<div class="flex flex-col gap-3">
+<!-- Item 1 -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">school</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white leading-tight">Mensualidad Octubre</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Vence: 30 Oct</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="font-bold text-slate-900 dark:text-white">$150.00</span>
+<button class="bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                                Pagar
+                            </button>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 shrink-0">
+<span class="material-symbols-outlined">museum</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white leading-tight">Excursión Museo</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Vence: 05 Nov</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="font-bold text-slate-900 dark:text-white">$50.00</span>
+<button class="bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                                Pagar
+                            </button>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 shrink-0">
+<span class="material-symbols-outlined">menu_book</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white leading-tight">Material Didáctico</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Vence: 10 Nov</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="font-bold text-slate-900 dark:text-white">$250.00</span>
+<button class="bg-primary/10 hover:bg-primary/20 text-primary text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors">
+                                Pagar
+                            </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent/History Preview (To show download action) -->
+<div class="pt-4">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">Últimos Pagos</h3>
+<a class="text-primary text-sm font-medium hover:underline" href="#">Ver todo</a>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Paid Item 1 -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between opacity-80 hover:opacity-100 transition-opacity">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 shrink-0">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<h4 class="font-bold text-slate-900 dark:text-white leading-tight">Mensualidad Septiembre</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Pagado: 28 Sep</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="font-bold text-slate-900 dark:text-white">$150.00</span>
+<button class="flex items-center gap-1 text-slate-400 hover:text-primary transition-colors text-sm">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span class="text-xs font-medium">Recibo</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Secure Payment Footer -->
+<div class="flex items-center justify-center gap-2 text-slate-400 dark:text-slate-500 py-4">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+<span class="text-xs font-medium">Pagos procesados de forma segura</span>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Contextual) -->
+<nav class="absolute bottom-0 w-full bg-surface-light dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center z-50">
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined filled-icon">payments</span>
+<span class="text-[10px] font-bold">Pagos</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">school</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person</span>
+</button>
+</nav>
+</div>
+</body></html>

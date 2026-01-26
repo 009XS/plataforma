@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Tutor IA | EduPlatform{% endblock %}
+{% block content %}
+<div class="flex h-screen">
+    <div class="w-64 bg-dark-900 text-white p-4 flex-shrink-0">
+        <div class="text-2xl font-bold mb-8">Edu<span class="text-brand-500">Platform</span></div>
+        <a href="/panel-alumno" class="block py-2 px-4 rounded hover:bg-dark-800"><i
+                class="fas fa-arrow-left mr-2"></i>Volver</a>
+    </div>
+    <div class="flex-1 flex flex-col">
+        <div class="bg-gradient-to-r from-brand-500 to-purple-600 p-6 text-white">
+            <h1 class="text-2xl font-bold"><i class="fas fa-robot mr-2"></i>Tutor IA</h1>
+            <p class="opacity-80">Tu asistente de aprendizaje personalizado</p>
+        </div>
+        <div class="flex-1 overflow-auto p-6" id="chat-container">
+            <div class="max-w-2xl mx-auto space-y-4" id="messages">
+                <div class="bg-gray-100 rounded-lg p-4">
+                    <p>¡Hola! Soy tu tutor IA. ¿En qué puedo ayudarte hoy?</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white border-t p-4">
+            <div class="max-w-2xl mx-auto flex space-x-4">
+                <input type="text" id="user-input" placeholder="Escribe tu pregunta..."
+                    class="flex-1 border rounded-lg px-4 py-3" onkeypress="if(event.key==='Enter')sendMessage()">
+                <button onclick="sendMessage()" class="bg-brand-600 text-white px-6 py-3 rounded-lg hover:bg-brand-700">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const msg = input.value.trim();
+        if (!msg) return;
+        const container = document.getElementById('messages');
+        container.innerHTML += `<div class="bg-brand-100 rounded-lg p-4 ml-12"><p>${msg}</p></div>`;
+        input.value = '';
+        container.innerHTML += `<div class="bg-gray-100 rounded-lg p-4"><p><i class="fas fa-spinner fa-spin mr-2"></i>Pensando...</p></div>`;
+        try {
+            const res = await fetch('/api/tutor_ia', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) });
+            const data = await res.json();
+            container.lastChild.innerHTML = `<p>${data.response}</p>`;
+        } catch (e) {
+            container.lastChild.innerHTML = '<p class="text-red-500">Error de conexión</p>';
+        }
+        container.scrollTop = container.scrollHeight;
+    }
+</script>
+{% endblock %}

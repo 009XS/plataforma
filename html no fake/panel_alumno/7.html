@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Tasks List</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1C2630",
+                        "text-main-light": "#111418",
+                        "text-main-dark": "#F3F4F6",
+                        "text-sec-light": "#617589",
+                        "text-sec-dark": "#9CA3AF",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Hide scrollbar for chrome/safari/opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main-light dark:text-text-main-dark transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-hidden pb-20">
+<!-- Top App Bar -->
+<header class="flex items-center justify-between bg-surface-light dark:bg-surface-dark p-4 sticky top-0 z-10 shadow-sm transition-colors duration-200">
+<div class="flex items-center gap-3">
+<button class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-text-main-light dark:text-text-main-dark transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-xl font-bold leading-tight tracking-tight">Activities</h2>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-text-main-light dark:text-text-main-dark transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-text-main-light dark:text-text-main-dark transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Segmented Buttons / Filters -->
+<div class="sticky top-[72px] z-10 bg-background-light dark:bg-background-dark px-4 py-3 transition-colors duration-200">
+<div class="flex h-12 w-full items-center justify-center rounded-xl bg-gray-200 dark:bg-gray-800 p-1">
+<label class="group flex h-full flex-1 cursor-pointer items-center justify-center rounded-lg px-2 transition-all has-[:checked]:bg-surface-light dark:has-[:checked]:bg-surface-dark has-[:checked]:shadow-sm">
+<span class="truncate text-sm font-medium text-text-sec-light dark:text-text-sec-dark group-has-[:checked]:text-primary dark:group-has-[:checked]:text-primary">To Do</span>
+<input checked="" class="invisible w-0" name="status-filter" type="radio" value="To Do"/>
+</label>
+<label class="group flex h-full flex-1 cursor-pointer items-center justify-center rounded-lg px-2 transition-all has-[:checked]:bg-surface-light dark:has-[:checked]:bg-surface-dark has-[:checked]:shadow-sm">
+<span class="truncate text-sm font-medium text-text-sec-light dark:text-text-sec-dark group-has-[:checked]:text-primary dark:group-has-[:checked]:text-primary">Done</span>
+<input class="invisible w-0" name="status-filter" type="radio" value="Done"/>
+</label>
+<label class="group flex h-full flex-1 cursor-pointer items-center justify-center rounded-lg px-2 transition-all has-[:checked]:bg-surface-light dark:has-[:checked]:bg-surface-dark has-[:checked]:shadow-sm">
+<span class="truncate text-sm font-medium text-text-sec-light dark:text-text-sec-dark group-has-[:checked]:text-primary dark:group-has-[:checked]:text-primary">Overdue</span>
+<input class="invisible w-0" name="status-filter" type="radio" value="Overdue"/>
+</label>
+</div>
+</div>
+<!-- Content List -->
+<div class="flex flex-col gap-4 p-4">
+<!-- Section Header -->
+<div class="flex items-center justify-between">
+<h3 class="text-sm font-semibold uppercase tracking-wider text-text-sec-light dark:text-text-sec-dark">This Week</h3>
+<span class="text-xs font-medium text-text-sec-light dark:text-text-sec-dark bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded-full">3 Tasks</span>
+</div>
+<!-- Card 1: Pending -->
+<div class="group flex flex-col gap-4 rounded-xl bg-surface-light dark:bg-surface-dark p-4 shadow-sm ring-1 ring-gray-200 dark:ring-gray-800 transition-all hover:shadow-md">
+<div class="flex items-start justify-between gap-4">
+<div class="flex flex-1 flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="inline-flex items-center rounded-full bg-orange-100 dark:bg-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
+                                Pending
+                            </span>
+<span class="text-xs text-text-sec-light dark:text-text-sec-dark">•</span>
+<span class="text-xs font-medium text-text-sec-light dark:text-text-sec-dark">Mathematics</span>
+</div>
+<h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark leading-tight">Algebra II - Quadratic Equations</h3>
+<div class="mt-1 flex items-center gap-1.5 text-text-sec-light dark:text-text-sec-dark">
+<span class="material-symbols-outlined text-[18px]">event</span>
+<p class="text-sm">Due Oct 12, 11:59 PM</p>
+</div>
+</div>
+<!-- Thumbnail Image -->
+<div class="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+<div class="h-full w-full bg-cover bg-center" data-alt="Abstract geometric shapes representing math" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDB0hzFbZvV106tYrbelX8qoijwtqzBq-JB4SQdzy7ogfMXoj97MUPCOYaWLddXPDYpFRCbaVODG-EGfb6OzO8lHkkCOtmo_yLOXxGlon0KJRRIdXNMibYxNs7uBpXSpRGHIOSE9GNA-tkSu3gIxNcG2OJfqlM0DYOqJQdqg9ZvVBP58U9tLd1T4Uc9pd0PzWNZ8l-A2lvZsd71HutIjIdLqmrj_U_GXCbxzuYGxGSQ3THcAKx9ihuwcGu0RryA4fmsphkbO0kqsG4');"></div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-800/50">
+<button class="flex h-10 flex-1 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-white shadow hover:bg-blue-600 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined mr-2 text-[20px]">upload_file</span>
+                        Upload Delivery
+                    </button>
+<button class="flex size-10 items-center justify-center rounded-lg bg-background-light dark:bg-gray-800 text-text-sec-light dark:text-text-sec-dark hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Card 2: In Progress -->
+<div class="group flex flex-col gap-4 rounded-xl bg-surface-light dark:bg-surface-dark p-4 shadow-sm ring-1 ring-gray-200 dark:ring-gray-800 transition-all hover:shadow-md">
+<div class="flex items-start justify-between gap-4">
+<div class="flex flex-1 flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
+                                In Progress
+                            </span>
+<span class="text-xs text-text-sec-light dark:text-text-sec-dark">•</span>
+<span class="text-xs font-medium text-text-sec-light dark:text-text-sec-dark">Biology</span>
+</div>
+<h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark leading-tight">Lab Report: Photosynthesis</h3>
+<div class="mt-1 flex items-center gap-1.5 text-text-sec-light dark:text-text-sec-dark">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<p class="text-sm">Due Oct 14</p>
+</div>
+</div>
+<!-- Thumbnail Image -->
+<div class="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+<div class="h-full w-full bg-cover bg-center" data-alt="Microscope slide close up for biology" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCLbi3wmMVLtSZqphkcrFc9BP9yZyYYiaT8NV9x4kN3K7gZLUTDEYlOLwOCs17mgFC41cSe9PUlEYFGgiiqzyZ2sv6F4tE4VFikaM9sJ0ZxTuw529Eny_cFpDSqZQx73wyBbwgO6kjfJljyQ8CR5Frst5TOWWV0pHjFXN5kbbGCJgtRwtDTPuJ-64cb7ya28v5tBxp38QYoQzvAgPNaU968O3l2DdSuWcXrOjPQE1w96hcO5SpgVw4u2qXsSC49Urzw66DeJFRwtsE');"></div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-800/50">
+<button class="flex h-10 flex-1 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20 px-4 text-sm font-medium text-primary shadow-sm hover:bg-primary/20 dark:hover:bg-primary/30 active:scale-[0.98] transition-all">
+                        Continue
+                    </button>
+</div>
+</div>
+<!-- Section Header -->
+<div class="flex items-center justify-between mt-2">
+<h3 class="text-sm font-semibold uppercase tracking-wider text-text-sec-light dark:text-text-sec-dark">Previous</h3>
+<span class="text-xs font-medium text-text-sec-light dark:text-text-sec-dark bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded-full">1 Task</span>
+</div>
+<!-- Card 3: Submitted -->
+<div class="group flex flex-col gap-4 rounded-xl bg-surface-light dark:bg-surface-dark p-4 shadow-sm ring-1 ring-gray-200 dark:ring-gray-800 opacity-90 hover:opacity-100 transition-all">
+<div class="flex items-start justify-between gap-4">
+<div class="flex flex-1 flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-300">
+                                Submitted
+                            </span>
+<span class="text-xs text-text-sec-light dark:text-text-sec-dark">•</span>
+<span class="text-xs font-medium text-text-sec-light dark:text-text-sec-dark">History</span>
+</div>
+<h3 class="text-lg font-bold text-text-main-light dark:text-text-main-dark leading-tight line-through decoration-gray-400 dark:decoration-gray-600">Essay: The Industrial Revolution</h3>
+<div class="mt-1 flex items-center gap-1.5 text-text-sec-light dark:text-text-sec-dark">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<p class="text-sm">Submitted Oct 10</p>
+</div>
+</div>
+<!-- Thumbnail Image -->
+<div class="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 grayscale">
+<div class="h-full w-full bg-cover bg-center" data-alt="Old paper texture for history assignment" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBEIfGWVXFs6fEVrv74sC9zlX-o823fnOQyutm8XNWJAAOtHSeWL14UNWv7oZUMYQNWE22TcEmF6t7miuM4DzyjBG50b_UyIFXftu3ElQXD-xHLEz0M-0_YTdTANZZFfxXItudfLiDEC0oe26uvJ7LKImum6nEiyop4eLsZXs8pgsozxszjxoIE8nymJIXGHPa-apy0YZQbIgFgjl8KAlsUwZwn2DEmN-fVk8msJqbX-xS5yRMIRpHzXx31VT2qSQE4xxS-6Y4n3PE');"></div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-800/50">
+<button class="flex h-10 flex-1 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 px-4 text-sm font-medium text-text-main-light dark:text-text-main-dark hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.98] transition-all">
+                        View Task
+                    </button>
+<button class="flex h-10 px-4 items-center justify-center rounded-lg text-sm font-medium text-primary hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                        Edit
+                    </button>
+</div>
+</div>
+</div>
+<!-- Bottom Spacing for Nav -->
+<div class="h-20"></div>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 flex h-[80px] items-center justify-around border-t border-gray-200 dark:border-gray-800 bg-surface-light dark:bg-surface-dark pb-4">
+<a class="flex flex-col items-center justify-center gap-1 p-2 text-text-sec-light dark:text-text-sec-dark hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 p-2 text-text-sec-light dark:text-text-sec-dark hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="text-[10px] font-medium">Courses</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 p-2 text-primary" href="#">
+<span class="material-symbols-outlined filled">assignment</span>
+<span class="text-[10px] font-medium">Activities</span>
+</a>
+<a class="flex flex-col items-center justify-center gap-1 p-2 text-text-sec-light dark:text-text-sec-dark hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</a>
+</nav>
+</div>
+</body></html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entregas de Tarea | EduPlatform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <a href="/panel-docente" class="text-brand-600 hover:text-brand-700 flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Volver
+            </a>
+            <h1 class="text-xl font-bold text-gray-800">Entregas de Tarea</h1>
+            <div class="flex items-center gap-2">
+                <span class="bg-brand-100 text-brand-700 px-3 py-1 rounded-full text-sm font-semibold">
+                    {{ entregas|length }} entregas
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Total Entregas</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ entregas|length }}</p>
+                    </div>
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-file-alt text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Calificadas</p>
+                        <p class="text-2xl font-bold text-green-600">{{ entregas|selectattr('calificacion')|list|length
+                            }}</p>
+                    </div>
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Pendientes</p>
+                        <p class="text-2xl font-bold text-yellow-600">{{ entregas|rejectattr('calificacion')|list|length
+                            }}</p>
+                    </div>
+                    <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-clock text-yellow-600"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Promedio</p>
+                        <p class="text-2xl font-bold text-purple-600">--</p>
+                    </div>
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entregas Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="font-bold text-lg text-gray-800">Lista de Entregas</h2>
+                <div class="flex gap-2">
+                    <button class="px-3 py-1.5 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">
+                        <i class="fas fa-download mr-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+
+            {% if entregas %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                        <tr>
+                            <th class="text-left px-6 py-3 font-medium">Alumno</th>
+                            <th class="text-left px-6 py-3 font-medium">Archivo</th>
+                            <th class="text-left px-6 py-3 font-medium">Fecha Entrega</th>
+                            <th class="text-left px-6 py-3 font-medium">Calificación</th>
+                            <th class="text-left px-6 py-3 font-medium">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for e in entregas %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <img src="https://ui-avatars.com/api/?name={{ e.alumno_nombre|urlencode }}"
+                                        alt="Avatar" class="w-8 h-8 rounded-full mr-3">
+                                    <div>
+                                        <p class="font-medium text-gray-800">{{ e.alumno_nombre }}</p>
+                                        <p class="text-xs text-gray-500">{{ e.numero_control }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if e.archivo_nombre %}
+                                <a href="/uploads/{{ e.archivo_ruta }}" target="_blank"
+                                    class="text-brand-600 hover:underline flex items-center">
+                                    <i class="fas fa-paperclip mr-1"></i>
+                                    {{ e.archivo_nombre[:20] }}{% if e.archivo_nombre|length > 20 %}...{% endif %}
+                                </a>
+                                {% else %}
+                                <span class="text-gray-400">Sin archivo</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                {{ e.fecha_entrega.strftime('%d/%m/%Y %H:%M') }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if e.calificacion is not none %}
+                                <span class="px-2 py-1 text-sm font-bold rounded-full 
+                                    {% if e.calificacion >= 8 %}bg-green-100 text-green-700
+                                    {% elif e.calificacion >= 6 %}bg-yellow-100 text-yellow-700
+                                    {% else %}bg-red-100 text-red-700{% endif %}">
+                                    {{ e.calificacion }}
+                                </span>
+                                {% else %}
+                                <span class="text-gray-400 text-sm">Sin calificar</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <button onclick="calificarEntrega({{ e.id }}, '{{ e.alumno_nombre }}')"
+                                    class="px-3 py-1.5 text-sm bg-brand-600 text-white rounded-lg hover:bg-brand-700">
+                                    <i class="fas fa-edit mr-1"></i> Calificar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-12 text-center">
+                <i class="fas fa-inbox text-6xl text-gray-200 mb-4"></i>
+                <h3 class="text-lg font-bold text-gray-700">Sin entregas aún</h3>
+                <p class="text-gray-500">Los alumnos aún no han entregado esta tarea.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script>
+        function calificarEntrega(entregaId, alumnoNombre) {
+            Swal.fire({
+                title: `Calificar a ${alumnoNombre}`,
+                html: `
+                    <div class="text-left">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Calificación (0-10)</label>
+                        <input type="number" id="swal-calificacion" class="swal2-input" min="0" max="10" step="0.5" placeholder="8.5">
+                        <label class="block text-sm font-medium text-gray-700 mb-1 mt-4">Comentarios</label>
+                        <textarea id="swal-comentarios" class="swal2-textarea" placeholder="Retroalimentación para el alumno..."></textarea>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#0284c7',
+                preConfirm: () => {
+                    const calificacion = document.getElementById('swal-calificacion').value;
+                    const comentarios = document.getElementById('swal-comentarios').value;
+                    if (!calificacion) {
+                        Swal.showValidationMessage('La calificación es requerida');
+                        return false;
+                    }
+                    return { calificacion, comentarios };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/api/calificar-entrega/${entregaId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(result.value)
+                    })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('¡Guardado!', 'La calificación ha sido registrada.', 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('Error', data.error || 'No se pudo guardar', 'error');
+                            }
+                        });
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

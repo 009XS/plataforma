@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Exámenes | EduPlatform{% endblock %}
+{% block content %}
+<div class="flex min-h-screen">
+    <!-- Sidebar placeholder -->
+    <div class="w-64 bg-dark-900 text-white p-4">
+        <div class="text-2xl font-bold mb-8">Edu<span class="text-brand-500">Platform</span></div>
+        <a href="/panel-alumno" class="block py-2 px-4 rounded hover:bg-dark-800"><i
+                class="fas fa-arrow-left mr-2"></i>Volver</a>
+    </div>
+
+    <!-- Main content -->
+    <div class="flex-1 p-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Mis Exámenes</h1>
+            <div class="flex gap-4">
+                <select class="border rounded-lg px-4 py-2" id="filter-materia">
+                    <option value="">Todas las materias</option>
+                    {% for m in materias %}
+                    <option value="{{ m.id }}">{{ m.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Pendientes</p>
+                        <p class="text-3xl font-bold text-orange-500">{{ examenes_pendientes|default(0) }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-clock text-orange-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Completados</p>
+                        <p class="text-3xl font-bold text-green-500">{{ examenes_completados|default(0) }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check text-green-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Promedio</p>
+                        <p class="text-3xl font-bold text-brand-500">{{ promedio|default('N/A') }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-brand-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">XP Ganado</p>
+                        <p class="text-3xl font-bold text-purple-500">{{ xp_ganado|default(0) }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-star text-purple-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exámenes List -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b">
+                <h2 class="text-xl font-bold">Exámenes Disponibles</h2>
+            </div>
+            <div class="divide-y" id="examenes-list">
+                {% if examenes %}
+                {% for examen in examenes %}
+                <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file-alt text-brand-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">{{ examen.titulo }}</h3>
+                                <p class="text-sm text-gray-500">{{ examen.materia_nombre }} • {{ examen.tiempo_limite
+                                    }} min</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <span class="px-3 py-1 rounded-full text-sm font-medium
+                                    {% if examen.estado == 'pendiente' %}bg-orange-100 text-orange-700
+                                    {% elif examen.estado == 'completado' %}bg-green-100 text-green-700
+                                    {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ examen.estado|capitalize }}
+                            </span>
+                            {% if examen.estado == 'pendiente' %}
+                            <a href="/iniciar-examen/{{ examen.id }}"
+                                class="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700">
+                                <i class="fas fa-play mr-2"></i>Iniciar
+                            </a>
+                            {% elif examen.estado == 'completado' %}
+                            <a href="/resultado-examen/{{ examen.respuesta_id }}"
+                                class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
+                                <i class="fas fa-eye mr-2"></i>Ver Resultado
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="p-12 text-center">
+                    <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+                    <p class="text-gray-500">No hay exámenes disponibles</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

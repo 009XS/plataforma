@@ -1,0 +1,126 @@
+Found 31 duplicate functions:
+
+Function: crear_tablas_mensajeria_notificaciones
+  - Line 1332
+  - Line 17783
+
+Function: allowed_file
+  - Line 1393
+  - Line 1598
+
+Function: decorated_function
+  - Line 1416
+  - Line 1426
+
+Function: get_db_connection
+  - Line 1570
+  - Line 7975
+
+Function: log_accion
+  - Line 1576
+  - Line 8962
+
+Function: train_model
+  - Line 1608
+  - Line 10377
+
+Function: actualizar_racha
+  - Line 1714
+  - Line 9231
+  - Line 12243
+
+Function: get_all_users
+  - Line 1722
+  - Line 12235
+
+Function: panel_orientador
+  - Line 5867
+  - Line 27289
+
+Function: panel_tutor
+  - Line 7042
+  - Line 27323
+
+Function: tutor_estudiante_detalle
+  - Line 7100
+  - Line 22548
+
+Function: tutor_citas
+  - Line 7162
+  - Line 22476
+
+Function: tutor_cancelar_cita
+  - Line 7264
+  - Line 22680
+
+Function: tutor_comunicados
+  - Line 7289
+  - Line 22454
+
+Function: on_join
+  - Line 8315
+  - Line 20004
+
+Function: on_leave
+  - Line 8342
+  - Line 9316
+
+Function: calcular_liga_semanal
+  - Line 9421
+  - Line 12328
+
+Function: stats_encuestas
+  - Line 9495
+  - Line 23387
+
+Function: responder_encuesta_docente
+  - Line 9546
+  - Line 23251
+
+Function: crear_encuesta_docente
+  - Line 9618
+  - Line 23465
+
+Function: ai_generar_encuesta
+  - Line 9750
+  - Line 23500
+
+Function: stats_pagos
+  - Line 9793
+  - Line 23406
+
+Function: stats_asistencias
+  - Line 9808
+  - Line 23426
+
+Function: stats_gamificacion
+  - Line 9851
+  - Line 23445
+
+Function: search_logs
+  - Line 9869
+  - Line 23530
+
+Function: backup_bd
+  - Line 9891
+  - Line 23581
+
+Function: restore_bd
+  - Line 9906
+  - Line 23612
+
+Function: detectar_plagio
+  - Line 12291
+  - Line 23297
+
+Function: delete_old_files
+  - Line 12673
+  - Line 18024
+
+Function: fetch_khan_academy_content
+  - Line 12925
+  - Line 13287
+
+Function: tutor_hijos
+  - Line 21601
+  - Line 22438

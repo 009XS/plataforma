@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Home Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem", 
+                        "lg": "0.5rem", 
+                        "xl": "0.75rem", 
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white overflow-x-hidden min-h-screen pb-24 relative">
+<!-- Top Navigation / Header -->
+<div class="sticky top-0 z-30 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm transition-colors duration-200">
+<div class="flex items-center p-4 pb-2 justify-between">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border-2 border-white dark:border-slate-700 shadow-sm" data-alt="Portrait of a female student smiling" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAiGg_qxiw8Cxgtc6NdLomOjdtr9_giRddXRXHu7xcYO72bhWDQhL2yUSuxUM3QFG60DYl2lXJbZfTXM14Zi_1ONfvITpaX368H1rqrfKA_xf-2x3Qp4S5q12kqG3MK4-PIV2nOSJSrIzUnYIuVBUPKh8dMugBZJz41Q_ivFqW-NDEWD72R4x5vd9WmzmW93SK9DHGIHuYlGoyOyGkI_PPUVXtDDonvWSvkaNKrp_0-_lzmTteBgIkrRKYGHlinOScuCyKd5Hv7Lqk");'>
+</div>
+</div>
+<div class="flex items-center justify-end">
+<button class="relative flex items-center justify-center rounded-full size-10 text-[#111418] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+<span class="absolute top-2 right-2 size-2.5 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span>
+</button>
+</div>
+</div>
+</div>
+<!-- Greeting Section -->
+<div class="px-4 pt-2 pb-4">
+<p class="text-[#617589] dark:text-slate-400 text-sm font-medium leading-normal">Wednesday, Oct 24</p>
+<h1 class="text-[#111418] dark:text-white tracking-tight text-[28px] font-bold leading-tight pt-1">Hello, Sarah!</h1>
+</div>
+<!-- Hero Section: Continue Learning -->
+<div class="px-4 pb-2">
+<div class="flex justify-between items-end mb-3">
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Continue Learning</h2>
+</div>
+<div class="bg-white dark:bg-[#1A2633] rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none overflow-hidden group cursor-pointer transition-transform active:scale-[0.99]">
+<!-- Hero Image -->
+<div class="w-full bg-center bg-no-repeat aspect-[21/9] bg-cover relative" data-alt="Abstract geometric shapes representing mathematics" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAWbjgisfKkom-MPqIn0_D1Rimr2prsCJslQZsvIINy31x57jeg6kFYELBnARjtoTUTbanX9qqdmiCCB9DMIkyh4owG4wLSB9QXAv9RcH1YxPZmRtsap-7Xy5BqsGfLza7-0eRzKTsBsTt9zmUIbKQXeEaXjYHM3NhWAro7w_-DRjmytJDvzcDMhXR8TY47ai04GOEHsUOOTuY7lVLp6wWFaRn9pEfF0OUszOw0xtHmzz73bNHwJVyVmm0Jw013Fr_mkNb51ysrK_I");'>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-3 left-4 text-white">
+<span class="bg-primary/90 text-xs font-bold px-2 py-1 rounded text-white backdrop-blur-md">Math 101</span>
+</div>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="text-[#111418] dark:text-white text-xl font-bold leading-tight tracking-tight">Advanced Mathematics</h3>
+</div>
+<p class="text-[#617589] dark:text-slate-400 text-sm font-normal mt-1">Chapter 4: Calculus Basics</p>
+</div>
+<!-- Progress Bar -->
+<div class="flex flex-col gap-1.5">
+<div class="flex justify-between text-xs font-medium text-[#617589] dark:text-slate-400">
+<span>Progress</span>
+<span>75%</span>
+</div>
+<div class="h-2 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%] rounded-full"></div>
+</div>
+</div>
+<div class="pt-1">
+<button class="w-full flex items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal hover:bg-primary/90 transition-colors">
+                        Resume Module
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Summary Section Grid -->
+<div class="px-4 py-6 flex flex-col gap-5">
+<!-- Upcoming Classes -->
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Upcoming Class</h2>
+<a class="text-primary text-sm font-semibold" href="#">See Schedule</a>
+</div>
+<div class="bg-white dark:bg-[#1A2633] p-4 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none flex items-start gap-4">
+<div class="shrink-0 size-12 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
+<span class="material-symbols-outlined">history_edu</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-[#111418] dark:text-white font-bold text-base truncate">History 101</h4>
+<p class="text-[#617589] dark:text-slate-400 text-sm truncate">World War II Overview</p>
+<div class="flex items-center gap-3 mt-2 text-xs font-medium text-[#617589] dark:text-slate-400">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span>10:00 AM</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span>Room 302</span>
+</div>
+</div>
+</div>
+<div class="self-center">
+<span class="material-symbols-outlined text-slate-300 dark:text-slate-600">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Pending Tasks -->
+<div class="flex flex-col gap-3">
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Pending Tasks</h2>
+<div class="bg-white dark:bg-[#1A2633] p-4 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="shrink-0 size-12 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+<span class="material-symbols-outlined">assignment</span>
+</div>
+<div>
+<h4 class="text-[#111418] dark:text-white font-bold text-base">3 Assignments</h4>
+<p class="text-[#617589] dark:text-slate-400 text-sm">Due this week</p>
+</div>
+</div>
+<button class="px-4 py-2 bg-background-light dark:bg-slate-700 rounded-lg text-sm font-semibold text-[#111418] dark:text-white hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                    View all
+                </button>
+</div>
+</div>
+<!-- Recent Messages -->
+<div class="flex flex-col gap-3">
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Recent Messages</h2>
+<div class="bg-white dark:bg-[#1A2633] p-4 rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-none">
+<div class="flex items-start gap-3">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 shrink-0" data-alt="Portrait of Mr. Johnson" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCAlB4ToFu0L-VZC0dPfofcz6EIwEYl7KsDVN55mExHaqGa3ZLhbd9MazKkJxXTZYT5Fjxatu3r_Zyuk7qJnYe9JlcCOSA8Tex12hhtEtjjGd4U4jrqM5i22NVJfcW-yPaeMkTcVb146OkAnoFJ9cIcfNCDNLt5bfcoDenUvO9NvKHW1_MkM7IqgEYYrjE7IvzJMnXL5ZM2zAxrrRBNoP5U163VURebT9zq1zctwY-NI2mQ-VkrITm3zyxzrEYGZ5NOJEZjEnNI12s");'>
+<div class="absolute bottom-0 right-0 size-2.5 bg-green-500 rounded-full border-2 border-white dark:border-[#1A2633] transform translate-x-1 translate-y-1"></div>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-baseline">
+<h4 class="text-[#111418] dark:text-white font-bold text-sm">Mr. Johnson</h4>
+<span class="text-xs text-[#617589] dark:text-slate-500">2m ago</span>
+</div>
+<p class="text-[#617589] dark:text-slate-400 text-sm mt-0.5 line-clamp-2">Great job on the last assignment, Sarah! I left some feedback on your submission.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 left-0 w-full bg-white dark:bg-[#1A2633] border-t border-slate-100 dark:border-slate-800 pb-safe pt-2 px-2 z-50">
+<div class="flex justify-around items-end h-[60px] pb-2">
+<!-- Home (Active) -->
+<button class="flex flex-col items-center gap-1 w-full text-primary">
+<span class="material-symbols-outlined icon-filled text-2xl">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</button>
+<!-- Courses -->
+<button class="flex flex-col items-center gap-1 w-full text-[#617589] dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">menu_book</span>
+<span class="text-[10px] font-medium">Courses</span>
+</button>
+<!-- Calendar -->
+<button class="flex flex-col items-center gap-1 w-full text-[#617589] dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">calendar_month</span>
+<span class="text-[10px] font-medium">Calendar</span>
+</button>
+<!-- Messages -->
+<button class="flex flex-col items-center gap-1 w-full text-[#617589] dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
+<div class="relative">
+<span class="material-symbols-outlined text-2xl">chat_bubble</span>
+<span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">1</span>
+</div>
+<span class="text-[10px] font-medium">Messages</span>
+</button>
+<!-- Profile -->
+<button class="flex flex-col items-center gap-1 w-full text-[#617589] dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</button>
+</div>
+</div>
+<!-- Safe Area spacer for bottom nav -->
+<div class="h-6"></div>
+</body></html>
