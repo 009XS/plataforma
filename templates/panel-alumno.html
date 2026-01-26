@@ -72,7 +72,7 @@
 <body
     class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased transition-colors duration-200">
     <div id="main-app-container"
-        class="relative flex h-full min-h-screen w-full flex-col overflow-hidden max-w-md mx-auto bg-white dark:bg-background-dark shadow-2xl pb-20">
+        class="relative flex flex-col w-full max-w-md mx-auto bg-white dark:bg-background-dark shadow-2xl min-h-screen h-screen overflow-hidden">
 
         <!-- Header / Stats Container -->
         <!-- ID requested for: header-stats (XP, Nivel, Monedas) -->
@@ -80,14 +80,15 @@
             <!-- Profile Section -->
             <div class="relative mb-3">
                 <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center"
-                    style="background-image: url('https://ui-avatars.com/api/?name=Alex+Doe&background=random');"></div>
+                    style="background-image: url('{{ avatar_url if 'http' in avatar_url else url_for('uploaded_file', filename=avatar_url) if avatar_url else 'https://ui-avatars.com/api/?name=' + nombre + '&background=random' }}');">
+                </div>
                 <div
                     class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark cursor-pointer hover:bg-blue-600 transition">
                     <span class="material-symbols-outlined text-[16px] block">edit</span>
                 </div>
             </div>
-            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Alex Doe</h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Level 5 • Student</p>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ nombre }}</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">{{ rango }} • {{ xp }} XP</p>
 
             <!-- Stats Cards Grid -->
             <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
@@ -99,7 +100,7 @@
                         <span class="material-symbols-outlined text-[80px]">star</span>
                     </div>
                     <p class="text-white/80 text-xs font-medium mb-1">Total XP</p>
-                    <h3 class="text-2xl font-bold">1,250</h3>
+                    <h3 class="text-2xl font-bold">{{ xp }}</h3>
                     <div class="w-full bg-white/30 h-1 rounded-full mt-2">
                         <div class="bg-white h-1 rounded-full w-[70%]"></div>
                     </div>
@@ -112,8 +113,8 @@
                         <span class="material-symbols-outlined text-[80px]">monetization_on</span>
                     </div>
                     <p class="text-white/80 text-xs font-medium mb-1">EduCoins</p>
-                    <h3 class="text-2xl font-bold">350</h3>
-                    <button
+                    <h3 class="text-2xl font-bold">{{ educoins }}</h3>
+                    <button onclick="alert('Próximamente estaremos abriendo la tienda de recompensas.')"
                         class="mt-2 text-[10px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-white font-medium transition">
                         Redeem
                     </button>
@@ -123,7 +124,7 @@
 
         <!-- Main Content -->
         <!-- Main scrollable area -->
-        <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6">
+        <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6" id="dashboard-main">
 
             <!-- Missions Container -->
             <!-- ID requested: missions-container -->
@@ -134,42 +135,9 @@
                     <span class="text-xs text-primary font-medium cursor-pointer hover:underline">View All</span>
                 </div>
                 <!-- Horizontal Scroll List -->
-                <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                    <!-- Mission 1 -->
-                    <div
-                        class="min-w-[200px] bg-white dark:bg-surface-dark p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2">
-                        <div class="flex items-center gap-2">
-                            <div class="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg shrink-0">
-                                <span class="material-symbols-outlined text-[20px]">target</span>
-                            </div>
-                            <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Complete 2 Tasks
-                            </p>
-                        </div>
-                        <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-1">
-                            <div class="bg-purple-500 h-1.5 rounded-full w-[50%]"></div>
-                        </div>
-                        <div class="flex justify-between items-center text-xs text-slate-500">
-                            <span>+50 XP</span>
-                            <span>1/2</span>
-                        </div>
-                    </div>
-                    <!-- Mission 2 -->
-                    <div
-                        class="min-w-[200px] bg-white dark:bg-surface-dark p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2">
-                        <div class="flex items-center gap-2">
-                            <div class="p-2 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-lg shrink-0">
-                                <span class="material-symbols-outlined text-[20px]">menu_book</span>
-                            </div>
-                            <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight">Read 15 mins</p>
-                        </div>
-                        <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-1">
-                            <div class="bg-green-500 h-1.5 rounded-full w-[100%]"></div>
-                        </div>
-                        <div class="flex justify-between items-center text-xs text-slate-500">
-                            <span>+30 XP</span>
-                            <span class="text-green-500 font-bold">Done</span>
-                        </div>
-                    </div>
+                <!-- Filled by JS loadMissions() -->
+                <div id="missions-scroll-area" class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                    <p class="text-xs text-slate-400 p-2">Cargando misiones...</p>
                 </div>
             </div>
 
@@ -184,38 +152,39 @@
                         <span class="text-xs text-primary font-medium cursor-pointer hover:underline">Full
                             Calendar</span>
                     </div>
-                    <!-- Timeline Item: Current -->
-                    <div class="flex gap-3 mb-4 relative">
+                    <!-- Timeline Items Loop -->
+                    {% if materias %}
+                    {% for materia in materias %}
+                    <!-- Simple logic to alternate timeline styles or just list them -->
+                    <div class="flex gap-3 mb-4 last:mb-0 relative">
                         <div class="flex flex-col items-center">
+                            <!-- Helper logic for 'current' class could go here, for now generic style -->
                             <div
-                                class="w-3 h-3 bg-green-500 rounded-full ring-2 ring-green-100 dark:ring-green-900/30 z-10">
+                                class="w-3 h-3 bg-blue-500 rounded-full ring-2 ring-blue-100 dark:ring-blue-900/30 z-10">
                             </div>
+                            {% if not loop.last %}
                             <div class="w-0.5 bg-slate-200 dark:bg-slate-700 h-full -my-1 absolute top-3"></div>
+                            {% endif %}
                         </div>
                         <div class="flex-1">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <p class="text-xs text-green-600 font-bold uppercase tracking-wide mb-0.5">Now
-                                        (09:00 - 10:30)</p>
-                                    <p class="text-base font-bold text-slate-900 dark:text-white">Mathematics</p>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">Room 304 • Mr. Anderson</p>
+                                    <p class="text-xs text-blue-600 font-bold uppercase tracking-wide mb-0.5">
+                                        {{ materia.horario if materia.horario else '--:--' }}
+                                    </p>
+                                    <p class="text-base font-bold text-slate-900 dark:text-white">{{ materia.nombre }}
+                                    </p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Prof. {{ materia.docente }}
+                                    </p>
                                 </div>
-                                <span class="material-symbols-outlined text-green-500 text-[20px]">play_circle</span>
+                                <!-- <span class="material-symbols-outlined text-green-500 text-[20px]">play_circle</span> -->
                             </div>
                         </div>
                     </div>
-                    <!-- Timeline Item: Next -->
-                    <div class="flex gap-3">
-                        <div class="flex flex-col items-center">
-                            <div class="w-3 h-3 bg-slate-300 dark:bg-slate-600 rounded-full z-10"></div>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-500 font-bold uppercase tracking-wide mb-0.5">Next (10:45 -
-                                12:15)</p>
-                            <p class="text-base font-bold text-slate-900 dark:text-white">History</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Room 102 • Mrs. Smith</p>
-                        </div>
-                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-sm text-slate-500 text-center py-2">No hay horario disponible.</p>
+                    {% endif %}
                 </div>
             </div>
 
@@ -235,61 +204,54 @@
                 </div>
 
                 <div class="flex flex-col gap-3">
-                    <!-- Card 1: Pending (From 7.html) -->
-                    <div
-                        class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer">
+                    {% for tarea in tareas %}
+                    {% set is_pending = not tarea.entregada %}
+                    {% set is_late = tarea.vencida %}
+                    <div class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer"
+                        onclick="openAssignment({{ tarea.id }})">
                         <div class="flex items-start justify-between gap-4">
                             <div class="flex flex-1 flex-col gap-1">
                                 <div class="flex items-center gap-2 mb-1">
+                                    {% if tarea.entregada %}
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-300">
+                                        Entregada
+                                    </span>
+                                    {% elif tarea.vencida %}
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">
+                                        Vencida
+                                    </span>
+                                    {% else %}
                                     <span
                                         class="inline-flex items-center rounded-full bg-orange-100 dark:bg-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
-                                        Pending
+                                        Pendiente
                                     </span>
+                                    {% endif %}
+
                                     <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
-                                    <span
-                                        class="text-xs font-medium text-slate-500 dark:text-slate-400">Mathematics</span>
+                                    <span class="text-xs font-medium text-slate-500 dark:text-slate-400">{{
+                                        tarea.materia }}</span>
                                 </div>
-                                <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">Algebra II -
-                                    Quadratic Equations</h3>
+                                <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">{{
+                                    tarea.titulo }}</h3>
                                 <div class="mt-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                     <span class="material-symbols-outlined text-[18px]">event</span>
-                                    <p class="text-sm">Due Oct 12, 11:59 PM</p>
+                                    <p class="text-sm">Vence: {{ tarea.fecha_vencimiento }}</p>
                                 </div>
                             </div>
                             <!-- Thumbnail with darker background fallback -->
                             <div
                                 class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300">
-                                <span class="material-symbols-outlined text-[32px]">calculate</span>
+                                <span class="material-symbols-outlined text-[32px]">assignment</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Card 2: In Progress (From 7.html) -->
-                    <div
-                        class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="flex flex-1 flex-col gap-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span
-                                        class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
-                                        In Progress
-                                    </span>
-                                    <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
-                                    <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Biology</span>
-                                </div>
-                                <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">Lab Report:
-                                    Photosynthesis</h3>
-                                <div class="mt-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-                                    <span class="material-symbols-outlined text-[18px]">schedule</span>
-                                    <p class="text-sm">Due Oct 14</p>
-                                </div>
-                            </div>
-                            <div
-                                class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300">
-                                <span class="material-symbols-outlined text-[32px]">science</span>
-                            </div>
-                        </div>
+                    {% else %}
+                    <div class="p-6 text-center text-slate-500">
+                        <p>No tienes tareas asignadas por el momento.</p>
                     </div>
+                    {% endfor %}
                 </div>
 
                 <button
@@ -304,49 +266,277 @@
         <!-- Bottom Navigation -->
         <!-- Based on 4.html (Fixed Bottom Nav) -->
         <nav
-            class="fixed bottom-0 left-0 right-0 z-30 max-w-md mx-auto bg-white/90 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800">
-            <div class="flex h-16 items-center justify-around px-2">
-                <!-- Home (Active by default for Panel) -->
-                <a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary transition-colors"
-                    href="#">
-                    <span class="material-symbols-outlined fill-current">home</span>
-                    <span class="text-[10px] font-medium">Home</span>
-                </a>
+            class="fixed bottom-0 left-0 right-0 z-30 max-w-md mx-auto bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg">
+            <div class="flex h-16 items-center justify-between px-1" id="bottom-nav">
+                <!-- Los accesos directos se renderizan por JS -->
+            </div>
+                <script>
+                // --- Estado activo de navegación ---
+                const navItems = [
+                    { key: 'dashboard', icon: 'home', label: 'Inicio', action: () => showPanel('dashboard') },
+                    { key: 'subjects', icon: 'school', label: 'Materias', action: () => showPanel('subjects') },
+                    { key: 'notes', icon: 'sticky_note_2', label: 'Notas', action: () => showPanel('notes') },
+                    { key: 'portfolio', icon: 'workspaces', label: 'Portafolio', action: () => showPanel('portfolio') },
+                    { key: 'tutorias', icon: 'support_agent', label: 'Tutorías', action: () => showPanel('tutorias') },
+                    { key: 'equipos', icon: 'groups', label: 'Equipos', action: () => showPanel('equipos') },
+                    { key: 'community', icon: 'chat_bubble', label: 'Comunidad', action: () => showPanel('community') },
+                    { key: 'perfil', icon: 'person', label: 'Perfil', action: () => openProfileModal() }
+                ];
 
-                <!-- Courses -->
-                <a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary dark:text-slate-500 dark:hover:text-primary transition-colors"
-                    href="#" onclick="showPanel('subjects'); return false;">
-                    <span class="material-symbols-outlined">school</span>
-                    <span class="text-[10px] font-medium">Courses</span>
-                </a>
+                let activeNav = 'dashboard';
 
-                <!-- Messages -->
-                <!-- Community/Messages -->
-                <a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary dark:text-slate-500 dark:hover:text-primary transition-colors"
-                    href="#" onclick="showPanel('community'); return false;">
-                    <div class="relative">
-                        <span class="material-symbols-outlined">chat_bubble</span>
-                    </div>
-                    <span class="text-[10px] font-medium">Community</span>
-                </a>
+                function renderBottomNav() {
+                    const nav = document.getElementById('bottom-nav');
+                    nav.innerHTML = navItems.map(item => `
+                        <a href="#" onclick="setActiveNav('${item.key}'); return false;"
+                            class="flex flex-1 flex-col items-center justify-center gap-0.5 ${activeNav === item.key ? 'text-primary font-bold' : 'text-slate-400'} transition-colors hover:text-primary dark:text-slate-500 dark:hover:text-primary hover:bg-primary/10 dark:hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                            <span class="material-symbols-outlined text-[26px]">${item.icon}</span>
+                            <span class="text-[11px] font-semibold">${item.label}</span>
+                        </a>
+                    `).join('');
+                }
 
-                <!-- Profile -->
-                <a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary dark:text-slate-500 dark:hover:text-primary transition-colors"
-                    href="#">
-                    <span class="material-symbols-outlined">person</span>
-                    <span class="text-[10px] font-medium">Profile</span>
-                </a>
+                function setActiveNav(key) {
+                    activeNav = key;
+                    renderBottomNav();
+                    const item = navItems.find(i => i.key === key);
+                    if (item && typeof item.action === 'function') item.action();
+                }
+
+                // Inicializar nav al cargar
+                document.addEventListener('DOMContentLoaded', () => {
+                    renderBottomNav();
+                });
+                </script>
             </div>
 
             <!-- Home Indicator (iOS Style) -->
             <div class="flex justify-center pb-2 pt-1">
-                <div class="h-1 w-32 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                <div class="h-1 w-24 rounded-full bg-slate-300 dark:bg-slate-700"></div>
             </div>
+            <!-- Notas personales View -->
+            <div id="notes-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mis Notas</h2>
+                </div>
+                <div id="notes-list" class="flex flex-col gap-3"></div>
+                <button onclick="openNoteModal()" class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition mt-4">Nueva Nota</button>
+            </div>
+
+            <!-- Portafolio View -->
+            <div id="portfolio-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Portafolio</h2>
+                </div>
+                <div id="portfolio-list" class="flex flex-col gap-3"></div>
+            </div>
+
+            <!-- Tutorías View -->
+            <div id="tutorias-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Tutorías</h2>
+                </div>
+                <div id="tutorias-list" class="flex flex-col gap-3"></div>
+            </div>
+
+            <!-- Equipos View -->
+            <div id="equipos-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Equipos</h2>
+                </div>
+                <div id="equipos-list" class="flex flex-col gap-3"></div>
+            </div>
+            <script>
+            // --- Panel Switching extendido ---
+            function showPanel(panelName) {
+                const dashboard = document.querySelector('main');
+                const header = document.getElementById('header-stats');
+                const courses = document.getElementById('courses-view');
+                const resources = document.getElementById('resources-view');
+                const community = document.getElementById('community-container');
+                const notes = document.getElementById('notes-view');
+                const portfolio = document.getElementById('portfolio-view');
+                const tutorias = document.getElementById('tutorias-view');
+                const equipos = document.getElementById('equipos-view');
+
+                // Ocultar todos
+                dashboard.classList.add('hidden');
+                header.classList.add('hidden');
+                if (courses) courses.classList.add('hidden');
+                if (resources) resources.classList.add('hidden');
+                if (community) community.classList.add('hidden');
+                if (notes) notes.classList.add('hidden');
+                if (portfolio) portfolio.classList.add('hidden');
+                if (tutorias) tutorias.classList.add('hidden');
+                if (equipos) equipos.classList.add('hidden');
+
+                if (panelName === 'subjects') {
+                    courses.classList.remove('hidden');
+                    loadCourses();
+                } else if (panelName === 'community') {
+                    community.classList.remove('hidden');
+                    scrollToBottomChat();
+                } else if (panelName === 'notes') {
+                    notes.classList.remove('hidden');
+                    loadNotes();
+                } else if (panelName === 'portfolio') {
+                    portfolio.classList.remove('hidden');
+                    loadPortfolio();
+                } else if (panelName === 'tutorias') {
+                    tutorias.classList.remove('hidden');
+                    loadTutorias();
+                } else if (panelName === 'equipos') {
+                    equipos.classList.remove('hidden');
+                    loadEquipos();
+                } else {
+                    dashboard.classList.remove('hidden');
+                    header.classList.remove('hidden');
+                }
+            }
+
+            // --- APIs: Notas personales ---
+            async function loadNotes() {
+                const list = document.getElementById('notes-list');
+                list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+                try {
+                    const res = await fetch('/api/notes');
+                    const notes = await res.json();
+                    if (!notes.length) {
+                        list.innerHTML = '<p class="text-center text-slate-500">No tienes notas aún.</p>';
+                        return;
+                    }
+                    list.innerHTML = notes.map(n => `
+                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                            <h4 class="font-bold text-slate-900 dark:text-white">${n.titulo}</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">${n.contenido}</p>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    list.innerHTML = '<p class="text-center text-red-500">Error al cargar notas.</p>';
+                }
+            }
+
+            // --- APIs: Portafolio ---
+            async function loadPortfolio() {
+                const list = document.getElementById('portfolio-list');
+                list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+                try {
+                    const res = await fetch('/api/alumno/portafolio');
+                    const items = await res.json();
+                    if (!items || !items.length) {
+                        list.innerHTML = '<p class="text-center text-slate-500">No hay elementos en tu portafolio.</p>';
+                        return;
+                    }
+                    list.innerHTML = items.map(i => `
+                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                            <h4 class="font-bold text-slate-900 dark:text-white">${i.titulo || i.nombre || 'Elemento'}</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">${i.descripcion || ''}</p>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    list.innerHTML = '<p class="text-center text-red-500">Error al cargar portafolio.</p>';
+                }
+            }
+
+            // --- APIs: Tutorías ---
+            async function loadTutorias() {
+                const list = document.getElementById('tutorias-list');
+                list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+                try {
+                    const res = await fetch('/api/alumno/tutorias');
+                    const tutorias = await res.json();
+                    if (!tutorias.length) {
+                        list.innerHTML = '<p class="text-center text-slate-500">No tienes tutorías asignadas.</p>';
+                        return;
+                    }
+                    list.innerHTML = tutorias.map(t => `
+                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                            <h4 class="font-bold text-slate-900 dark:text-white">${t.titulo || 'Tutoría'}</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">${t.descripcion || ''}</p>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    list.innerHTML = '<p class="text-center text-red-500">Error al cargar tutorías.</p>';
+                }
+            }
+
+            // --- APIs: Equipos ---
+            async function loadEquipos() {
+                const list = document.getElementById('equipos-list');
+                list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+                try {
+                    const res = await fetch('/api/alumno/equipos');
+                    const equipos = await res.json();
+                    if (!equipos.length) {
+                        list.innerHTML = '<p class="text-center text-slate-500">No perteneces a ningún equipo.</p>';
+                        return;
+                    }
+                    list.innerHTML = equipos.map(eq => `
+                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                            <h4 class="font-bold text-slate-900 dark:text-white">${eq.nombre || 'Equipo'}</h4>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">${eq.descripcion || ''}</p>
+                        </div>
+                    `).join('');
+                } catch (e) {
+                    list.innerHTML = '<p class="text-center text-red-500">Error al cargar equipos.</p>';
+                }
+            }
+            </script>
         </nav>
 
     </div>
 
     <!-- Quiz Zen Mode (Phase 6) -->
+    <!-- Subjects View (Materias) -->
+    <div id="subjects-container" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-4">
+            <button onclick="showPanel('dashboard')"
+                class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mis Materias</h2>
+        </div>
+        {% if materias and materias|length > 0 %}
+        <div id="subjects-list" class="flex flex-col gap-4">
+            {% for materia in materias %}
+            <div class="flex items-center justify-between bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 hover:shadow-md transition cursor-pointer">
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 text-xl font-bold">
+                        <span class="material-symbols-outlined">menu_book</span>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-900 dark:text-white">{{ materia.nombre }}</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">{{ materia.docente }}</div>
+                        <div class="text-xs text-slate-400 mt-1">Promedio: <span class="font-semibold">{{ materia.promedio }}</span></div>
+                    </div>
+                </div>
+                <button onclick="openSubjectDetails({{ materia.id }}, '{{ materia.nombre }}')" class="ml-2 px-3 py-1 rounded-lg bg-primary text-white text-xs font-bold shadow hover:bg-blue-700 transition flex items-center gap-1">
+                    Ver recursos
+                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center h-64 text-slate-400">
+            <span class="material-symbols-outlined text-5xl mb-2">school</span>
+            <div class="text-lg font-semibold mb-1">No tienes materias inscritas</div>
+            <div class="text-sm">Contacta a tu coordinador académico si esto es un error.</div>
+        </div>
+        {% endif %}
+    </div>
     <div id="quiz-mode"
         class="fixed inset-0 z-[200] bg-white dark:bg-background-dark flex flex-col hidden overflow-hidden">
         <!-- Progress Header -->
@@ -437,7 +627,7 @@
                     <div class="relative group cursor-pointer">
                         <div id="profile-preview"
                             class="h-24 w-24 rounded-full border-4 border-slate-100 dark:border-slate-700 bg-cover bg-center"
-                            style="background-image: url('https://ui-avatars.com/api/?name=User&background=random');">
+                            style="background-image: url('{{ avatar_url if 'http' in avatar_url else url_for('uploaded_file', filename=avatar_url) if avatar_url else 'https://ui-avatars.com/api/?name=' + nombre + '&background=random' }}');">
                         </div>
                         <div
                             class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
@@ -471,7 +661,7 @@
 
     <!-- Courses View (Grid) -->
     <div id="courses-view"
-        class="hidden w-full h-full min-h-screen max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20">
+        class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
         <div class="flex items-center gap-2 mb-2">
             <button onclick="showPanel('dashboard')"
                 class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
@@ -486,7 +676,7 @@
 
     <!-- Resources View (Detail) -->
     <div id="resources-view"
-        class="hidden w-full h-full min-h-screen max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20">
+        class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
         <div class="flex items-center gap-2 mb-2">
             <button onclick="showPanel('subjects')"
                 class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
@@ -500,7 +690,7 @@
     </div>
     <!-- Community/Chat Container (Hidden) -->
     <div id="community-container"
-        class="hidden w-full h-full min-h-screen max-w-md mx-auto bg-white dark:bg-background-dark flex flex-col pb-20">
+        class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark flex flex-col pb-20 overflow-y-auto z-20">
         <!-- Chat Header -->
         <div
             class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center sticky top-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-sm z-10">
@@ -629,21 +819,16 @@
 
             socket.on('connect', () => {
                 console.log('Conectado al servidor SocketIO');
-                // Join default room (e.g., student's group)
                 socket.emit('room_join', { room: 'grupo_501' });
             });
 
-            // Listen for Real-time Notifications
             socket.on('notification', (data) => {
                 showToast(data.message, data.type || 'info');
-                // Play Sound
                 const audio = document.getElementById('notification-sound');
                 if (audio) audio.play().catch(e => console.log('Audio blocked', e));
             });
 
-            // Listen for Group Messages
             socket.on('message', (data) => {
-                // data = { user: "Name", text: "Hello", avatar: "url", time: "10:00" }
                 appendGroupMessage(data);
             });
 
@@ -651,121 +836,151 @@
                 console.log('Desconectado del servidor');
             });
 
-            // 2. Load Data
-            loadStats();
-            loadMissions();
-            loadAssignments();
+            // --- Dashboard Inicio: cargar datos dinámicamente ---
+            loadDashboard();
+        });
 
-            // --- Functions ---
+        async function loadDashboard() {
+            await loadStats();
+            await loadMissions();
+            await loadAssignments();
+        }
 
-            async function loadStats() {
-                try {
-                    const response = await fetch('/api/student/stats');
-                    if (!response.ok) throw new Error('Failed to fetch stats');
-                    const data = await response.json();
-
-                    // Render Header Stats
-                    const headerHTML = `
-                        <!-- Profile Section -->
-                        <div class="relative mb-3">
-                            <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center" 
-                                 style="background-image: url('${data.avatar_url || 'https://ui-avatars.com/api/?name=' + (data.nombre || 'User') + '&background=random'}');"></div>
-                            <div class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark cursor-pointer hover:bg-blue-600 transition" onclick="openProfileModal()">
-                                 <span class="material-symbols-outlined text-[16px] block">edit</span>
-                            </div>
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/student/stats');
+                if (!response.ok) throw new Error('Failed to fetch stats');
+                const data = await response.json();
+                // Render Header Stats
+                const headerHTML = `
+                    <div class="relative mb-3">
+                        <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center" 
+                             style="background-image: url('${data.avatar_url || 'https://ui-avatars.com/api/?name=' + (data.nombre || 'User') + '&background=random'}');"></div>
+                        <div class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark cursor-pointer hover:bg-blue-600 transition" onclick="openProfileModal()">
+                             <span class="material-symbols-outlined text-[16px] block">edit</span>
                         </div>
-                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">${data.nombre || 'Estudiante'}</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">${data.rango || 'Nivel 1'} • ${data.xp} XP</p>
-
-                        <!-- Stats Cards Grid -->
-                        <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
-                            <!-- XP Card -->
-                            <div class="bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden group">
-                                 <div class="absolute -right-2 -top-2 opacity-20 group-hover:scale-110 transition-transform duration-500">
-                                    <span class="material-symbols-outlined text-[80px]">star</span>
-                                 </div>
-                                 <p class="text-white/80 text-xs font-medium mb-1">Total XP</p>
-                                 <h3 class="text-2xl font-bold">${data.xp || 0}</h3>
-                                 <div class="w-full bg-white/30 h-1 rounded-full mt-2">
-                                    <div class="bg-white h-1 rounded-full" style="width: ${data.xp_percent || 0}%"></div>
-                                 </div>
-                            </div>
-                            <!-- Coins Card -->
-                            <div class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl p-4 text-white shadow-lg relative overflow-hidden group">
-                                 <div class="absolute -right-2 -top-2 opacity-20 group-hover:scale-110 transition-transform duration-500">
-                                    <span class="material-symbols-outlined text-[80px]">monetization_on</span>
-                                 </div>
-                                 <p class="text-white/80 text-xs font-medium mb-1">EduCoins</p>
-                                 <h3 class="text-2xl font-bold">${data.educoins || 0}</h3>
-                                 <button class="mt-2 text-[10px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-white font-medium transition" onclick="alert('Ir a Tienda')">
-                                    Redeem
-                                 </button>
-                            </div>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">${data.nombre || 'Estudiante'}</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">${data.rango || 'Nivel 1'} • ${data.xp} XP</p>
+                    <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
+                        <div class="bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden group">
+                             <div class="absolute -right-2 -top-2 opacity-20 group-hover:scale-110 transition-transform duration-500">
+                                <span class="material-symbols-outlined text-[80px]">star</span>
+                             </div>
+                             <p class="text-white/80 text-xs font-medium mb-1">Total XP</p>
+                             <h3 class="text-2xl font-bold">${data.xp || 0}</h3>
+                             <div class="w-full bg-white/30 h-1 rounded-full mt-2">
+                                <div class="bg-white h-1 rounded-full" style="width: ${data.xp_percent || 0}%"></div>
+                             </div>
                         </div>
-                    `;
-                    document.getElementById('header-stats').innerHTML = headerHTML;
-
-                } catch (error) {
-                    console.error('Error loading stats:', error);
-                    // Keep dummy data if fail or cleaner handling
-                }
+                        <div class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl p-4 text-white shadow-lg relative overflow-hidden group">
+                             <div class="absolute -right-2 -top-2 opacity-20 group-hover:scale-110 transition-transform duration-500">
+                                <span class="material-symbols-outlined text-[80px]">monetization_on</span>
+                             </div>
+                             <p class="text-white/80 text-xs font-medium mb-1">EduCoins</p>
+                             <h3 class="text-2xl font-bold">${data.educoins || 0}</h3>
+                             <button class="mt-2 text-[10px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-white font-medium transition" onclick="alert('Ir a Tienda')">
+                                Redeem
+                             </button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('header-stats').innerHTML = headerHTML;
+            } catch (error) {
+                console.error('Error loading stats:', error);
             }
+        }
 
             async function loadMissions() {
                 try {
-                    const response = await fetch('/api/student/missions');
+                    const response = await fetch('/api/alumno/misiones');
                     if (!response.ok) throw new Error('Failed to fetch missions');
                     const missions = await response.json();
 
-                    const container = document.getElementById('missions-container');
+                    const container = document.getElementById('missions-scroll-area');
 
                     if (!missions || missions.length === 0) {
                         container.innerHTML = '<p class="text-center text-sm text-slate-500 p-4">No hay misiones activas.</p>';
                         return;
                     }
 
-                    // Shell for scrollable area
-                    let html = `
-                        <div class="flex items-center justify-between mb-3 px-1">
-                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Misiones Diarias</h3>
-                            <span class="text-xs text-primary font-medium cursor-pointer hover:underline">Ver Todas</span>
-                        </div>
-                        <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
-                    `;
+                    // Shell for scrollable area (Already in HTML, just clear it)
+                    container.innerHTML = '';
+                    let html = '';
+                    // Note: We append items to html then set innerHTML of the scroll-area container directly
+
 
                     missions.forEach(m => {
-                        // Determine colors/icons based on mission type
-                        const isTarget = m.type === 'target';
+                        // Determine colors/icons based on mission type (using 'tipo' from DB)
+                        const isTarget = m.tipo === 'academica'; // Example type logic
                         const bgColor = isTarget ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-green-100 dark:bg-green-900/30';
                         const textColor = isTarget ? 'text-purple-600' : 'text-green-600';
                         const barColor = isTarget ? 'bg-purple-500' : 'bg-green-500';
-                        const icon = m.type === 'target' ? 'target' : 'menu_book';
-                        const percent = (m.progress / m.total) * 100;
+                        const icon = m.icono || (isTarget ? 'school' : 'menu_book');
+                        // Use safe defaults if total is 0
+                        const total = m.requisito_cantidad || 1;
+                        const progress = m.progreso || 0;
+                        const percent = Math.min((progress / total) * 100, 100);
 
                         html += `
-                            <div class="min-w-[200px] bg-white dark:bg-surface-dark p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2">
+                            <div class="min-w-[200px] bg-white dark:bg-surface-dark p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2 relative">
+                                <!-- Complete Check Overlay (Hidden by default unless done) -->
+                                ${m.completada ? `
+                                <div class="absolute top-2 right-2 text-green-500">
+                                    <span class="material-symbols-outlined">check_circle</span>
+                                </div>` : ''}
+                                
                                 <div class="flex items-center gap-2">
                                     <div class="p-2 ${bgColor} ${textColor} rounded-lg shrink-0">
                                         <span class="material-symbols-outlined text-[20px]">${icon}</span>
                                     </div>
-                                    <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight">${m.title}</p>
+    
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight">${m.titulo}</p>
                                 </div>
                                 <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-1">
                                     <div class="${barColor} h-1.5 rounded-full" style="width: ${percent}%"></div>
                                 </div>
                                 <div class="flex justify-between items-center text-xs text-slate-500">
-                                    <span>+${m.xp_reward} XP</span>
-                                    <span>${m.progress}/${m.total}</span>
+                                    <span>+${m.xp_recompensa} XP</span>
+                                    <span>${progress}/${total}</span>
                                 </div>
+                                
+                                ${!m.completada ? `
+                                <button onclick="updateMissionProgress(${m.id}, 1)" class="mt-1 w-full text-[10px] py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-400 transition">
+                                    Registrar Progreso
+                                </button>
+                                ` : ''}
+
                             </div>
                         `;
                     });
 
-                    html += `</div>`;
                     container.innerHTML = html;
 
                 } catch (error) {
                     console.error('Error loading missions:', error);
+                }
+            }
+
+            async function updateMissionProgress(id, increment) {
+                try {
+                    const response = await fetch('/api/alumno/misiones/progreso', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mision_id: id, incremento: increment })
+                    });
+
+                    if (response.ok) {
+                        showToast('¡Progreso registrado!', 'success');
+                        // Play small sound or effect?
+                        loadMissions(); // Refresh UI
+                        // Also refresh stats if leveled up (optional, but good)
+                        // window.location.reload(); // Too heavy, maybe just leave it
+                    } else {
+                        showToast('No se pudo registrar', 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
                 }
             }
 

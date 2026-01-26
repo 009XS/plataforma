@@ -2694,32 +2694,67 @@ def api_alumno_ayuda(seccion):
     cursor.execute("SELECT * FROM ayuda_contextual WHERE seccion = %s AND activo = 1 ORDER BY orden", (seccion,))
     return jsonify(cursor.fetchall())
 
-@app.route('/api/alumno/faq', methods=['GET'])
-@login_required
-def api_alumno_faq():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    categoria = request.args.get('categoria')
-    if categoria:
-        cursor.execute("SELECT * FROM preguntas_frecuentes WHERE categoria = %s AND activa = 1 ORDER BY orden", (categoria,))
-    else:
-        cursor.execute("SELECT * FROM preguntas_frecuentes WHERE activa = 1 ORDER BY categoria, orden")
-    return jsonify(cursor.fetchall())
 
+# ...existing code...
 # 14. VISTA DIARIA "QUÉ DEBO HACER HOY"
 @app.route('/api/alumno/hoy', methods=['GET'])
 @login_required
 def api_alumno_hoy():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    hoy = datetime.now().date()
-    cursor.execute("SELECT * FROM agenda_diaria WHERE alumno_id = %s AND fecha = %s ORDER BY hora_inicio, prioridad", (session['user_id'], hoy))
-    agenda = cursor.fetchall()
-    cursor.execute("SELECT * FROM resumen_dia WHERE alumno_id = %s AND fecha = %s", (session['user_id'], hoy))
-    resumen = cursor.fetchone()
-    if not resumen:
-        cursor.execute("SELECT COUNT(*) as pendientes FROM tareas t JOIN matriculas m ON t.materia_id = m.materia_id WHERE m.estudiante_id = %s AND t.fecha_vencimiento >= %s", (session['user_id'], hoy))
-        tareas = cursor.fetchone()
-        mensajes = ['¡Hoy es un gran día para aprender!', '¡Tú puedes lograrlo!', 'Cada paso cuenta hacia tu meta.']
-        import random
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        hoy = datetime.now().date()
+        cursor.execute("SELECT * FROM agenda_diaria WHERE alumno_id = %s AND fecha = %s ORDER BY hora_inicio, prioridad", (session['user_id'], hoy))
+        agenda = cursor.fetchall()
+        cursor.execute("SELECT * FROM resumen_dia WHERE alumno_id = %s AND fecha = %s", (session['user_id'], hoy))
+        resumen = cursor.fetchone()
+        if not resumen:
+            cursor.execute("SELECT COUNT(*) as pendientes FROM tareas t JOIN matriculas m ON t.materia_id = m.materia_id WHERE m.estudiante_id = %s AND t.fecha_vencimiento >= %s", (session['user_id'], hoy))
+            tareas = cursor.fetchone()
+            mensajes = ['¡Hoy es un gran día para aprender!', '¡Tú puedes lograrlo!', 'Cada paso cuenta hacia tu meta.']
+            import random
+            cursor.execute("""
+                INSERT INTO resumen_dia (alumno_id, fecha, tareas_pendientes, mensaje_motivacional)
+                VALUES (%s, %s, %s, %s)
+            """, (session['user_id'], hoy, tareas['pendientes'] if tareas else 0, random.choice(mensajes)))
+            mysql.connection.commit()
+            cursor.execute("SELECT * FROM resumen_dia WHERE alumno_id = %s AND fecha = %s", (session['user_id'], hoy))
+            resumen = cursor.fetchone()
+        cursor.close()
+        return jsonify({'agenda': agenda, 'resumen': resumen})
+    except Exception as e:
+        print(f"[ERROR panel-alumno] {str(e)}")
+        import traceback
+        traceback.print_exc()
+        flash("Error al cargar el panel. Inténtalo más tarde.", "danger")
+        return render_template('panel-alumno.html', tareas=[], pendientes=0, materias=[], reportes=[], insignias=[], nombre='Estudiante', xp=0, educoins=0, racha=0, foto_perfil=None, avatar_url=None)
+# ...existing code...
+# --- API para materias del alumno ---
+@app.route('/api/alumno/materias', methods=['GET'])
+@login_required
+@role_required('alumno')
+def api_alumno_materias():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        user_id = session['user_id']
+        # Obtener el semestre del alumno
+        cursor.execute("SELECT semestre FROM usuarios WHERE id = %s", (user_id,))
+        alumno = cursor.fetchone()
+        semestre = alumno['semestre'] if alumno else None
+        if not semestre:
+            return jsonify([])
+        # Obtener materias del semestre
+        cursor.execute("""
+            SELECT m.id, m.nombre, u.nombre AS docente, m.horario
+            FROM materias m
+            JOIN usuarios u ON m.docente_id = u.id
+            WHERE m.semestre = %s AND m.activo = 1
+            ORDER BY m.nombre
+        """, (semestre,))
+        materias = cursor.fetchall()
+        cursor.close()
+        return jsonify(materias)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
         cursor.execute("""
             INSERT INTO resumen_dia (alumno_id, fecha, tareas_pendientes, mensaje_motivacional)
             VALUES (%s, %s, %s, %s)
@@ -5910,7 +5945,17 @@ def panel_alumno():
         if not alumno or not alumno['semestre']:
             flash("No se encontró tu semestre. Contacta al administrador.", "danger")
             return render_template('panel-alumno.html',
-                                   tareas=[], pendientes=0, materias=[], reportes=[], insignias=[])
+                                   tareas=[], pendientes=0, materias=[], reportes=[], insignias=[],
+                                   nombre=alumno['nombre'] if alumno else 'Estudiante',
+                                   xp=alumno['xp'] if alumno else 0,
+                                   educoins=alumno['educoins'] if alumno else 0,
+                                   racha=alumno['racha'] if alumno else 0,
+                                   rango=alumno['rango'] if alumno else 'Nivel 1',
+                                   avatar_url=alumno['avatar_url'] if alumno else None,
+                                   foto_perfil=alumno['foto_perfil'] if alumno else None,
+                                   tema=alumno['tema'] if alumno else 'light',
+                                   promedio=0,
+                                   examenes=[])
 
 
         semestre_alumno = alumno['semestre']
@@ -28220,6 +28265,91 @@ def api_responder_encuesta_docente():
         return jsonify({'success': 'Encuesta enviada. ¡Ganaste 25 XP!'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+        
+@app.route('/api/student/dashboard-data')
+@login_required
+def get_student_dashboard_data():
+    """Devuelve todos los datos estadísticos y misiones del alumno en una sola llamada"""
+    # 1. Obtener Estadísticas Reales
+    stats = {
+        "nombre": current_user.nombre,
+        "avatar": current_user.avatar or "https://ui-avatars.com/api/?name=" + current_user.nombre,
+        "xp": getattr(current_user, 'xp', 0),
+        "nivel": getattr(current_user, 'nivel', 1),
+        "monedas": getattr(current_user, 'monedas', 0),
+        # Calculamos porcentaje para el siguiente nivel (ejemplo simple)
+        "xp_percent": (getattr(current_user, 'xp', 0) % 1000) / 10
+    }
+    
+    # 2. Obtener Misiones (Ejemplo: hardcoded o desde DB si tienes tabla Misiones)
+    # Lo ideal es conectar esto a una tabla 'Misiones'
+    misiones = [
+        {"id": 1, "title": "Completar 2 Tareas", "type": "target", "progress": 1, "total": 2, "xp_reward": 50},
+        {"id": 2, "title": "Leer 15 mins", "type": "reading", "progress": 15, "total": 15, "xp_reward": 30}
+    ]
+
+    return jsonify({
+        "stats": stats,
+        "missions": misiones
+    })
+
+@app.route('/api/student/assignments', methods=['GET'])
+@login_required
+def get_student_assignments():
+    """Obtiene las tareas pendientes del alumno"""
+    # Aquí deberías hacer la consulta real a tu base de datos:
+    # tareas = Tarea.query.filter_by(grupo_id=current_user.grupo_id).all()
+    
+    # Simulación de respuesta basada en estructura DB (Modifica según tus modelos reales)
+    # Esto es para que el frontend no se rompa mientras conectas la DB real
+    return jsonify([
+        {
+            "id": 101,
+            "title": "Ecuaciones Cuadráticas",
+            "subject": "Matemáticas",
+            "status": "Pending", 
+            "due_date": "25 Ene",
+            "type": "homework"
+        },
+        {
+            "id": 102,
+            "title": "Reporte de Laboratorio",
+            "subject": "Biología",
+            "status": "In Progress", 
+            "due_date": "28 Ene",
+            "type": "lab"
+        }
+    ])
+
+@app.route('/api/student/upload-assignment', methods=['POST'])
+@login_required
+def upload_assignment():
+    """Maneja la subida de archivos de tareas"""
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    file = request.files['file']
+    assignment_id = request.form.get('assignment_id')
+    
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    if file:
+        # Asegúrate de crear la carpeta 'uploads/tareas'
+        upload_folder = os.path.join(current_app.root_path, 'uploads', 'tareas')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        filename = f"{current_user.id}_{assignment_id}_{secure_filename(file.filename)}"
+        file.save(os.path.join(upload_folder, filename))
+        
+        # AQUÍ: Guardar registro en la tabla 'Entrega' de la base de datos
+        # nueva_entrega = Entrega(alumno_id=current_user.id, tarea_id=assignment_id, archivo=filename...)
+        # db.session.add(nueva_entrega)
+        # db.session.commit()
+        
+        return jsonify({"success": True, "message": "Tarea subida correctamente"})
+
+    return jsonify({"error": "Error desconocido"}), 500
 
 
 # ==================== MAIN EXECUTION ====================
