@@ -88,7 +88,8 @@
                 </div>
             </div>
             <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ nombre }}</h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">{{ rango }} • {{ xp }} XP</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium"><span id="user-level"></span>{{ rango
+                }}</span> • <span id="xp-val">{{ xp }}</span> XP</p>
 
             <!-- Stats Cards Grid -->
             <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
@@ -100,9 +101,10 @@
                         <span class="material-symbols-outlined text-[80px]">star</span>
                     </div>
                     <p class="text-white/80 text-xs font-medium mb-1">Total XP</p>
-                    <h3 class="text-2xl font-bold">{{ xp }}</h3>
+                    <h3 class="text-2xl font-bold" id="xp-card-val">{{ xp }}</h3>
                     <div class="w-full bg-white/30 h-1 rounded-full mt-2">
-                        <div class="bg-white h-1 rounded-full w-[70%]"></div>
+                        <div id="xp-progress-bar" class="bg-white h-1 rounded-full transition-all duration-1000"
+                            style="width: 0%"></div>
                     </div>
                 </div>
                 <!-- Coins Card -->
@@ -113,7 +115,7 @@
                         <span class="material-symbols-outlined text-[80px]">monetization_on</span>
                     </div>
                     <p class="text-white/80 text-xs font-medium mb-1">EduCoins</p>
-                    <h3 class="text-2xl font-bold">{{ educoins }}</h3>
+                    <h3 class="text-2xl font-bold" id="coin-count">{{ educoins }}</h3>
                     <button onclick="alert('Próximamente estaremos abriendo la tienda de recompensas.')"
                         class="mt-2 text-[10px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-white font-medium transition">
                         Redeem
@@ -270,7 +272,7 @@
             <div class="flex h-16 items-center justify-between px-1" id="bottom-nav">
                 <!-- Los accesos directos se renderizan por JS -->
             </div>
-                <script>
+            <script>
                 // --- Estado activo de navegación ---
                 const navItems = [
                     { key: 'dashboard', icon: 'home', label: 'Inicio', action: () => showPanel('dashboard') },
@@ -307,200 +309,211 @@
                 document.addEventListener('DOMContentLoaded', () => {
                     renderBottomNav();
                 });
-                </script>
-            </div>
+            </script>
+    </div>
 
-            <!-- Home Indicator (iOS Style) -->
-            <div class="flex justify-center pb-2 pt-1">
-                <div class="h-1 w-24 rounded-full bg-slate-300 dark:bg-slate-700"></div>
-            </div>
-            <!-- Notas personales View -->
-            <div id="notes-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
-                <div class="flex items-center gap-2 mb-2">
-                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
-                        <span class="material-symbols-outlined">arrow_back</span>
-                    </button>
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mis Notas</h2>
-                </div>
-                <div id="notes-list" class="flex flex-col gap-3"></div>
-                <button onclick="openNoteModal()" class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition mt-4">Nueva Nota</button>
-            </div>
+    <!-- Home Indicator (iOS Style) -->
+    <div class="flex justify-center pb-2 pt-1">
+        <div class="h-1 w-24 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+    </div>
+    <!-- Notas personales View -->
+    <div id="notes-view"
+        class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('dashboard')"
+                class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mis Notas</h2>
+        </div>
+        <div id="notes-list" class="flex flex-col gap-3"></div>
+        <button onclick="openNoteModal()"
+            class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition mt-4">Nueva
+            Nota</button>
+    </div>
 
-            <!-- Portafolio View -->
-            <div id="portfolio-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
-                <div class="flex items-center gap-2 mb-2">
-                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
-                        <span class="material-symbols-outlined">arrow_back</span>
-                    </button>
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Portafolio</h2>
-                </div>
-                <div id="portfolio-list" class="flex flex-col gap-3"></div>
-            </div>
+    <!-- Portafolio View -->
+    <div id="portfolio-view"
+        class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('dashboard')"
+                class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Portafolio</h2>
+        </div>
+        <div id="portfolio-list" class="flex flex-col gap-3"></div>
+    </div>
 
-            <!-- Tutorías View -->
-            <div id="tutorias-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
-                <div class="flex items-center gap-2 mb-2">
-                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
-                        <span class="material-symbols-outlined">arrow_back</span>
-                    </button>
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Tutorías</h2>
-                </div>
-                <div id="tutorias-list" class="flex flex-col gap-3"></div>
-            </div>
+    <!-- Tutorías View -->
+    <div id="tutorias-view"
+        class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('dashboard')"
+                class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Tutorías</h2>
+        </div>
+        <div id="tutorias-list" class="flex flex-col gap-3"></div>
+    </div>
 
-            <!-- Equipos View -->
-            <div id="equipos-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
-                <div class="flex items-center gap-2 mb-2">
-                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
-                        <span class="material-symbols-outlined">arrow_back</span>
-                    </button>
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Equipos</h2>
-                </div>
-                <div id="equipos-list" class="flex flex-col gap-3"></div>
-            </div>
-            <script>
-            // --- Panel Switching extendido ---
-            function showPanel(panelName) {
-                const dashboard = document.querySelector('main');
-                const header = document.getElementById('header-stats');
-                const courses = document.getElementById('courses-view');
-                const resources = document.getElementById('resources-view');
-                const community = document.getElementById('community-container');
-                const notes = document.getElementById('notes-view');
-                const portfolio = document.getElementById('portfolio-view');
-                const tutorias = document.getElementById('tutorias-view');
-                const equipos = document.getElementById('equipos-view');
+    <!-- Equipos View -->
+    <div id="equipos-view"
+        class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('dashboard')"
+                class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Equipos</h2>
+        </div>
+        <div id="equipos-list" class="flex flex-col gap-3"></div>
+    </div>
+    <script>
+        // --- Panel Switching extendido ---
+        function showPanel(panelName) {
+            const dashboard = document.querySelector('main');
+            const header = document.getElementById('header-stats');
+            const courses = document.getElementById('courses-view');
+            const resources = document.getElementById('resources-view');
+            const community = document.getElementById('community-container');
+            const notes = document.getElementById('notes-view');
+            const portfolio = document.getElementById('portfolio-view');
+            const tutorias = document.getElementById('tutorias-view');
+            const equipos = document.getElementById('equipos-view');
 
-                // Ocultar todos
-                dashboard.classList.add('hidden');
-                header.classList.add('hidden');
-                if (courses) courses.classList.add('hidden');
-                if (resources) resources.classList.add('hidden');
-                if (community) community.classList.add('hidden');
-                if (notes) notes.classList.add('hidden');
-                if (portfolio) portfolio.classList.add('hidden');
-                if (tutorias) tutorias.classList.add('hidden');
-                if (equipos) equipos.classList.add('hidden');
+            // Ocultar todos
+            dashboard.classList.add('hidden');
+            header.classList.add('hidden');
+            if (courses) courses.classList.add('hidden');
+            if (resources) resources.classList.add('hidden');
+            if (community) community.classList.add('hidden');
+            if (notes) notes.classList.add('hidden');
+            if (portfolio) portfolio.classList.add('hidden');
+            if (tutorias) tutorias.classList.add('hidden');
+            if (equipos) equipos.classList.add('hidden');
 
-                if (panelName === 'subjects') {
-                    courses.classList.remove('hidden');
-                    loadCourses();
-                } else if (panelName === 'community') {
-                    community.classList.remove('hidden');
-                    scrollToBottomChat();
-                } else if (panelName === 'notes') {
-                    notes.classList.remove('hidden');
-                    loadNotes();
-                } else if (panelName === 'portfolio') {
-                    portfolio.classList.remove('hidden');
-                    loadPortfolio();
-                } else if (panelName === 'tutorias') {
-                    tutorias.classList.remove('hidden');
-                    loadTutorias();
-                } else if (panelName === 'equipos') {
-                    equipos.classList.remove('hidden');
-                    loadEquipos();
-                } else {
-                    dashboard.classList.remove('hidden');
-                    header.classList.remove('hidden');
-                }
+            if (panelName === 'subjects') {
+                courses.classList.remove('hidden');
+                loadCourses();
+            } else if (panelName === 'community') {
+                community.classList.remove('hidden');
+                scrollToBottomChat();
+            } else if (panelName === 'notes') {
+                notes.classList.remove('hidden');
+                loadNotes();
+            } else if (panelName === 'portfolio') {
+                portfolio.classList.remove('hidden');
+                loadPortfolio();
+            } else if (panelName === 'tutorias') {
+                tutorias.classList.remove('hidden');
+                loadTutorias();
+            } else if (panelName === 'equipos') {
+                equipos.classList.remove('hidden');
+                loadEquipos();
+            } else {
+                dashboard.classList.remove('hidden');
+                header.classList.remove('hidden');
             }
+        }
 
-            // --- APIs: Notas personales ---
-            async function loadNotes() {
-                const list = document.getElementById('notes-list');
-                list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
-                try {
-                    const res = await fetch('/api/notes');
-                    const notes = await res.json();
-                    if (!notes.length) {
-                        list.innerHTML = '<p class="text-center text-slate-500">No tienes notas aún.</p>';
-                        return;
-                    }
-                    list.innerHTML = notes.map(n => `
+        // --- APIs: Notas personales ---
+        async function loadNotes() {
+            const list = document.getElementById('notes-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/notes');
+                const notes = await res.json();
+                if (!notes.length) {
+                    list.innerHTML = '<p class="text-center text-slate-500">No tienes notas aún.</p>';
+                    return;
+                }
+                list.innerHTML = notes.map(n => `
                         <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
                             <h4 class="font-bold text-slate-900 dark:text-white">${n.titulo}</h4>
                             <p class="text-sm text-slate-500 dark:text-slate-400">${n.contenido}</p>
                         </div>
                     `).join('');
-                } catch (e) {
-                    list.innerHTML = '<p class="text-center text-red-500">Error al cargar notas.</p>';
-                }
+            } catch (e) {
+                list.innerHTML = '<p class="text-center text-red-500">Error al cargar notas.</p>';
             }
+        }
 
-            // --- APIs: Portafolio ---
-            async function loadPortfolio() {
-                const list = document.getElementById('portfolio-list');
-                list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
-                try {
-                    const res = await fetch('/api/alumno/portafolio');
-                    const items = await res.json();
-                    if (!items || !items.length) {
-                        list.innerHTML = '<p class="text-center text-slate-500">No hay elementos en tu portafolio.</p>';
-                        return;
-                    }
-                    list.innerHTML = items.map(i => `
+        // --- APIs: Portafolio ---
+        async function loadPortfolio() {
+            const list = document.getElementById('portfolio-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/alumno/portafolio');
+                const items = await res.json();
+                if (!items || !items.length) {
+                    list.innerHTML = '<p class="text-center text-slate-500">No hay elementos en tu portafolio.</p>';
+                    return;
+                }
+                list.innerHTML = items.map(i => `
                         <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
                             <h4 class="font-bold text-slate-900 dark:text-white">${i.titulo || i.nombre || 'Elemento'}</h4>
                             <p class="text-sm text-slate-500 dark:text-slate-400">${i.descripcion || ''}</p>
                         </div>
                     `).join('');
-                } catch (e) {
-                    list.innerHTML = '<p class="text-center text-red-500">Error al cargar portafolio.</p>';
-                }
+            } catch (e) {
+                list.innerHTML = '<p class="text-center text-red-500">Error al cargar portafolio.</p>';
             }
+        }
 
-            // --- APIs: Tutorías ---
-            async function loadTutorias() {
-                const list = document.getElementById('tutorias-list');
-                list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
-                try {
-                    const res = await fetch('/api/alumno/tutorias');
-                    const tutorias = await res.json();
-                    if (!tutorias.length) {
-                        list.innerHTML = '<p class="text-center text-slate-500">No tienes tutorías asignadas.</p>';
-                        return;
-                    }
-                    list.innerHTML = tutorias.map(t => `
+        // --- APIs: Tutorías ---
+        async function loadTutorias() {
+            const list = document.getElementById('tutorias-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/alumno/tutorias');
+                const tutorias = await res.json();
+                if (!tutorias.length) {
+                    list.innerHTML = '<p class="text-center text-slate-500">No tienes tutorías asignadas.</p>';
+                    return;
+                }
+                list.innerHTML = tutorias.map(t => `
                         <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
                             <h4 class="font-bold text-slate-900 dark:text-white">${t.titulo || 'Tutoría'}</h4>
                             <p class="text-sm text-slate-500 dark:text-slate-400">${t.descripcion || ''}</p>
                         </div>
                     `).join('');
-                } catch (e) {
-                    list.innerHTML = '<p class="text-center text-red-500">Error al cargar tutorías.</p>';
-                }
+            } catch (e) {
+                list.innerHTML = '<p class="text-center text-red-500">Error al cargar tutorías.</p>';
             }
+        }
 
-            // --- APIs: Equipos ---
-            async function loadEquipos() {
-                const list = document.getElementById('equipos-list');
-                list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
-                try {
-                    const res = await fetch('/api/alumno/equipos');
-                    const equipos = await res.json();
-                    if (!equipos.length) {
-                        list.innerHTML = '<p class="text-center text-slate-500">No perteneces a ningún equipo.</p>';
-                        return;
-                    }
-                    list.innerHTML = equipos.map(eq => `
+        // --- APIs: Equipos ---
+        async function loadEquipos() {
+            const list = document.getElementById('equipos-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/alumno/equipos');
+                const equipos = await res.json();
+                if (!equipos.length) {
+                    list.innerHTML = '<p class="text-center text-slate-500">No perteneces a ningún equipo.</p>';
+                    return;
+                }
+                list.innerHTML = equipos.map(eq => `
                         <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
                             <h4 class="font-bold text-slate-900 dark:text-white">${eq.nombre || 'Equipo'}</h4>
                             <p class="text-sm text-slate-500 dark:text-slate-400">${eq.descripcion || ''}</p>
                         </div>
                     `).join('');
-                } catch (e) {
-                    list.innerHTML = '<p class="text-center text-red-500">Error al cargar equipos.</p>';
-                }
+            } catch (e) {
+                list.innerHTML = '<p class="text-center text-red-500">Error al cargar equipos.</p>';
             }
-            </script>
-        </nav>
+        }
+    </script>
+    </nav>
 
     </div>
 
     <!-- Quiz Zen Mode (Phase 6) -->
     <!-- Subjects View (Materias) -->
-    <div id="subjects-container" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+    <div id="subjects-container"
+        class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
         <div class="flex items-center gap-2 mb-4">
             <button onclick="showPanel('dashboard')"
                 class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
@@ -511,18 +524,22 @@
         {% if materias and materias|length > 0 %}
         <div id="subjects-list" class="flex flex-col gap-4">
             {% for materia in materias %}
-            <div class="flex items-center justify-between bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 hover:shadow-md transition cursor-pointer">
+            <div
+                class="flex items-center justify-between bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 hover:shadow-md transition cursor-pointer">
                 <div class="flex items-center gap-3">
-                    <div class="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 text-xl font-bold">
+                    <div
+                        class="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 text-xl font-bold">
                         <span class="material-symbols-outlined">menu_book</span>
                     </div>
                     <div>
                         <div class="font-bold text-slate-900 dark:text-white">{{ materia.nombre }}</div>
                         <div class="text-xs text-slate-500 dark:text-slate-400 font-medium">{{ materia.docente }}</div>
-                        <div class="text-xs text-slate-400 mt-1">Promedio: <span class="font-semibold">{{ materia.promedio }}</span></div>
+                        <div class="text-xs text-slate-400 mt-1">Promedio: <span class="font-semibold">{{
+                                materia.promedio }}</span></div>
                     </div>
                 </div>
-                <button onclick="openSubjectDetails({{ materia.id }}, '{{ materia.nombre }}')" class="ml-2 px-3 py-1 rounded-lg bg-primary text-white text-xs font-bold shadow hover:bg-blue-700 transition flex items-center gap-1">
+                <button onclick="openSubjectDetails({{ materia.id }}, '{{ materia.nombre }}')"
+                    class="ml-2 px-3 py-1 rounded-lg bg-primary text-white text-xs font-bold shadow hover:bg-blue-700 transition flex items-center gap-1">
                     Ver recursos
                     <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                 </button>
@@ -577,6 +594,8 @@
             class="bg-white dark:bg-surface-dark w-full max-w-md rounded-2xl p-6 shadow-2xl transform scale-95 transition-transform duration-300">
             <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-4">Subir Entrega</h3>
             <input type="hidden" id="upload-task-id">
+            <textarea id="upload-comment" rows="2" placeholder="Comentario opcional..."
+                class="w-full mt-3 mb-2 p-2 rounded border border-slate-200 dark:border-slate-700 text-sm"></textarea>
 
             <div
                 class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition relative">
@@ -602,7 +621,7 @@
             <div class="flex gap-3 mt-6">
                 <button onclick="closeUploadModal()"
                     class="flex-1 py-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition font-medium">Cancelar</button>
-                <button onclick="submitCurrentAssignment()"
+                <button onclick="enviarTarea(document.getElementById('upload-task-id').value)"
                     class="flex-1 py-2 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition">Entregar</button>
             </div>
         </div>
@@ -851,78 +870,72 @@
                 const response = await fetch('/api/student/stats');
                 if (!response.ok) throw new Error('Failed to fetch stats');
                 const data = await response.json();
-                // Render Header Stats
-                const headerHTML = `
-                    <div class="relative mb-3">
-                        <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center" 
-                             style="background-image: url('${data.avatar_url || 'https://ui-avatars.com/api/?name=' + (data.nombre || 'User') + '&background=random'}');"></div>
-                        <div class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark cursor-pointer hover:bg-blue-600 transition" onclick="openProfileModal()">
-                             <span class="material-symbols-outlined text-[16px] block">edit</span>
-                        </div>
-                    </div>
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">${data.nombre || 'Estudiante'}</h2>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">${data.rango || 'Nivel 1'} • ${data.xp} XP</p>
-                    <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
-                        <div class="bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden group">
-                             <div class="absolute -right-2 -top-2 opacity-20 group-hover:scale-110 transition-transform duration-500">
-                                <span class="material-symbols-outlined text-[80px]">star</span>
-                             </div>
-                             <p class="text-white/80 text-xs font-medium mb-1">Total XP</p>
-                             <h3 class="text-2xl font-bold">${data.xp || 0}</h3>
-                             <div class="w-full bg-white/30 h-1 rounded-full mt-2">
-                                <div class="bg-white h-1 rounded-full" style="width: ${data.xp_percent || 0}%"></div>
-                             </div>
-                        </div>
-                        <div class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl p-4 text-white shadow-lg relative overflow-hidden group">
-                             <div class="absolute -right-2 -top-2 opacity-20 group-hover:scale-110 transition-transform duration-500">
-                                <span class="material-symbols-outlined text-[80px]">monetization_on</span>
-                             </div>
-                             <p class="text-white/80 text-xs font-medium mb-1">EduCoins</p>
-                             <h3 class="text-2xl font-bold">${data.educoins || 0}</h3>
-                             <button class="mt-2 text-[10px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-white font-medium transition" onclick="alert('Ir a Tienda')">
-                                Redeem
-                             </button>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('header-stats').innerHTML = headerHTML;
+
+                // Update DOM elements by ID
+                const userLevel = document.getElementById('user-level');
+                const xpVal = document.getElementById('xp-val');
+                const xpCardVal = document.getElementById('xp-card-val');
+                const coinCount = document.getElementById('coin-count');
+                const xpBar = document.getElementById('xp-progress-bar');
+
+                if (userLevel) userLevel.innerText = data.rango || 'Nivel 1';
+                if (xpVal) xpVal.innerText = data.xp || 0;
+                if (xpCardVal) xpCardVal.innerText = data.xp || 0;
+                if (coinCount) coinCount.innerText = data.educoins || 0;
+
+                // Animate XP Bar
+                if (xpBar) {
+                    // Force reflow for animation
+                    xpBar.style.width = '0%';
+                    setTimeout(() => {
+                        xpBar.style.width = (data.xp_percent || 0) + '%';
+                    }, 100);
+                }
+
+                // Update avatar if needed (optional based on user request, but good for consistency)
+                // const avatarEl = document.querySelector('.bg-cover'); 
+                // if (avatarEl && data.avatar_url) ... 
+
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
         }
 
-            async function loadMissions() {
-                try {
-                    const response = await fetch('/api/alumno/misiones');
-                    if (!response.ok) throw new Error('Failed to fetch missions');
-                    const missions = await response.json();
+        // Alias for user request compatibility
+        const loadStudentStats = loadStats;
 
-                    const container = document.getElementById('missions-scroll-area');
+        async function loadMissions() {
+            try {
+                const response = await fetch('/api/alumno/misiones');
+                if (!response.ok) throw new Error('Failed to fetch missions');
+                const missions = await response.json();
 
-                    if (!missions || missions.length === 0) {
-                        container.innerHTML = '<p class="text-center text-sm text-slate-500 p-4">No hay misiones activas.</p>';
-                        return;
-                    }
+                const container = document.getElementById('missions-scroll-area');
 
-                    // Shell for scrollable area (Already in HTML, just clear it)
-                    container.innerHTML = '';
-                    let html = '';
-                    // Note: We append items to html then set innerHTML of the scroll-area container directly
+                if (!missions || missions.length === 0) {
+                    container.innerHTML = '<p class="text-center text-sm text-slate-500 p-4">No hay misiones activas.</p>';
+                    return;
+                }
+
+                // Shell for scrollable area (Already in HTML, just clear it)
+                container.innerHTML = '';
+                let html = '';
+                // Note: We append items to html then set innerHTML of the scroll-area container directly
 
 
-                    missions.forEach(m => {
-                        // Determine colors/icons based on mission type (using 'tipo' from DB)
-                        const isTarget = m.tipo === 'academica'; // Example type logic
-                        const bgColor = isTarget ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-green-100 dark:bg-green-900/30';
-                        const textColor = isTarget ? 'text-purple-600' : 'text-green-600';
-                        const barColor = isTarget ? 'bg-purple-500' : 'bg-green-500';
-                        const icon = m.icono || (isTarget ? 'school' : 'menu_book');
-                        // Use safe defaults if total is 0
-                        const total = m.requisito_cantidad || 1;
-                        const progress = m.progreso || 0;
-                        const percent = Math.min((progress / total) * 100, 100);
+                missions.forEach(m => {
+                    // Determine colors/icons based on mission type (using 'tipo' from DB)
+                    const isTarget = m.tipo === 'academica'; // Example type logic
+                    const bgColor = isTarget ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-green-100 dark:bg-green-900/30';
+                    const textColor = isTarget ? 'text-purple-600' : 'text-green-600';
+                    const barColor = isTarget ? 'bg-purple-500' : 'bg-green-500';
+                    const icon = m.icono || (isTarget ? 'school' : 'menu_book');
+                    // Use safe defaults if total is 0
+                    const total = m.requisito_cantidad || 1;
+                    const progress = m.progreso || 0;
+                    const percent = Math.min((progress / total) * 100, 100);
 
-                        html += `
+                    html += `
                             <div class="min-w-[200px] bg-white dark:bg-surface-dark p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2 relative">
                                 <!-- Complete Check Overlay (Hidden by default unless done) -->
                                 ${m.completada ? `
@@ -953,47 +966,47 @@
 
                             </div>
                         `;
-                    });
+                });
 
-                    container.innerHTML = html;
+                container.innerHTML = html;
 
-                } catch (error) {
-                    console.error('Error loading missions:', error);
-                }
+            } catch (error) {
+                console.error('Error loading missions:', error);
             }
+        }
 
-            async function updateMissionProgress(id, increment) {
-                try {
-                    const response = await fetch('/api/alumno/misiones/progreso', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ mision_id: id, incremento: increment })
-                    });
+        async function updateMissionProgress(id, increment) {
+            try {
+                const response = await fetch('/api/alumno/misiones/progreso', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mision_id: id, incremento: increment })
+                });
 
-                    if (response.ok) {
-                        showToast('¡Progreso registrado!', 'success');
-                        // Play small sound or effect?
-                        loadMissions(); // Refresh UI
-                        // Also refresh stats if leveled up (optional, but good)
-                        // window.location.reload(); // Too heavy, maybe just leave it
-                    } else {
-                        showToast('No se pudo registrar', 'error');
-                    }
-                } catch (e) {
-                    console.error(e);
+                if (response.ok) {
+                    showToast('¡Progreso registrado!', 'success');
+                    // Play small sound or effect?
+                    loadMissions(); // Refresh UI
+                    // Also refresh stats if leveled up (optional, but good)
+                    // window.location.reload(); // Too heavy, maybe just leave it
+                } else {
+                    showToast('No se pudo registrar', 'error');
                 }
+            } catch (e) {
+                console.error(e);
             }
+        }
 
-            async function loadAssignments() {
-                try {
-                    const response = await fetch('/api/assignments');
-                    if (!response.ok) throw new Error('Failed to fetch assignments');
-                    const assignments = await response.json();
+        async function loadAssignments() {
+            try {
+                const response = await fetch('/api/assignments');
+                if (!response.ok) throw new Error('Failed to fetch assignments');
+                const assignments = await response.json();
 
-                    const container = document.getElementById('assignments-container');
+                const container = document.getElementById('assignments-container');
 
-                    // Header reused
-                    let html = `
+                // Header reused
+                let html = `
                         <div class="flex items-center justify-between mb-3 px-1">
                             <h3 class="text-lg font-bold text-slate-900 dark:text-white">Assignments</h3>
                             <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
@@ -1004,25 +1017,25 @@
                         <div class="flex flex-col gap-3">
                     `;
 
-                    if (!assignments || assignments.length === 0) {
-                        html += `
+                if (!assignments || assignments.length === 0) {
+                    html += `
                             <div class="flex flex-col items-center justify-center py-8 text-center bg-white dark:bg-surface-dark rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                                 <span class="material-symbols-outlined text-4xl text-green-500 mb-2">check_circle</span>
                                 <p class="text-slate-900 dark:text-white font-medium">¡Todo al día!</p>
                                 <p class="text-xs text-slate-500">No tienes tareas pendientes.</p>
                             </div>
                          `;
-                    } else {
-                        assignments.forEach(task => {
-                            // Style Logic based on status/subject
-                            const isPending = task.status === 'Pending';
-                            const badgeBg = isPending ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-blue-100 dark:bg-blue-900/30';
-                            const badgeText = isPending ? 'text-orange-700 dark:text-orange-300' : 'text-blue-700 dark:text-blue-300';
+                } else {
+                    assignments.forEach(task => {
+                        // Style Logic based on status/subject
+                        const isPending = task.status === 'Pending';
+                        const badgeBg = isPending ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-blue-100 dark:bg-blue-900/30';
+                        const badgeText = isPending ? 'text-orange-700 dark:text-orange-300' : 'text-blue-700 dark:text-blue-300';
 
-                            // Image / Icon placeholder
-                            // Using a consistent placeholder logic or random colors for thumb
+                        // Image / Icon placeholder
+                        // Using a consistent placeholder logic or random colors for thumb
 
-                            html += `
+                        html += `
                             <div class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer" onclick="openAssignment(${task.id})">
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="flex flex-1 flex-col gap-1">
@@ -1045,10 +1058,10 @@
                                 </div>
                             </div>
                             `;
-                        });
-                    }
+                    });
+                }
 
-                    html += `
+                html += `
                         </div>
                         <button class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
                             View All Assignments
@@ -1056,70 +1069,18 @@
                         </button>
                     `;
 
-                    container.innerHTML = html;
+                container.innerHTML = html;
 
-                } catch (error) {
-                    console.error('Error loading assignments:', error);
-                }
+            } catch (error) {
+                console.error('Error loading assignments:', error);
             }
+        }
         });
         // Helper for interactivity
         function openAssignment(id) {
-            Swal.fire({
-                title: 'Entregar Tarea',
-                text: 'Selecciona tu archivo (PDF, Word, Imagen)',
-                input: 'file',
-                inputAttributes: {
-                    'accept': '.pdf,.doc,.docx,.jpg',
-                    'aria-label': 'Sube tu tarea aquí'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Enviar Entrega',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#137fec',
-                showLoaderOnConfirm: true,
-                preConfirm: async (file) => {
-                    if (!file) {
-                        Swal.showValidationMessage('Por favor selecciona un archivo');
-                        return;
-                    }
-
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('assignment_id', id);
-
-                    try {
-                        const response = await fetch('/api/submit_assignment', {
-                            method: 'POST',
-                            body: formData
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(response.statusText);
-                        }
-
-                        return await response.json();
-                    } catch (error) {
-                        Swal.showValidationMessage(
-                            `Error al subir: ${error}`
-                        );
-                    }
-                },
-                allowOutsideClick: () => !Swal.isLoading()
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: '¡Enviado!',
-                        text: 'Tu tarea ha sido enviada correctamente.',
-                        icon: 'success',
-                        confirmButtonColor: '#137fec'
-                    });
-                    // Refresh stats/assignments
-                    loadStats();
-                    loadAssignments();
-                }
-            });
+            openUploadModal(id);
         }
+
         // --- Phase 1: Academic Core Additions ---
 
         // Panel Switching
@@ -1171,23 +1132,18 @@
             }, 300);
         }
 
-        async function submitCurrentAssignment() {
-            const id = document.getElementById('upload-task-id').value;
+        async function enviarTarea(tareaId) {
             const fileInput = document.getElementById('fileInput');
-
+            const commentInput = document.getElementById('upload-comment');
             if (!fileInput.files[0]) {
                 Swal.fire('Error', 'Debes seleccionar un archivo', 'warning');
                 return;
             }
-
-            // Show Progress
+            // Mostrar barra de progreso
             const progressContainer = document.getElementById('upload-progress-container');
             const progressBar = document.getElementById('upload-bar');
             const progressText = document.getElementById('upload-percent');
-
             progressContainer.classList.remove('hidden');
-
-            // Simulate Progress (since fetch doesn't support progress events easily without XHR)
             let percent = 0;
             const interval = setInterval(() => {
                 percent += 10;
@@ -1198,9 +1154,11 @@
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
+            formData.append('tarea_id', tareaId);
+            formData.append('comentarios', commentInput.value);
 
             try {
-                const response = await fetch(`/api/assignments/${id}/submit`, {
+                const response = await fetch('/upload_entrega', {
                     method: 'POST',
                     body: formData
                 });
@@ -1209,7 +1167,11 @@
                 progressBar.style.width = '100%';
                 progressText.innerText = '100%';
 
-                if (!response.ok) throw new Error(response.statusText);
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || response.statusText);
+                }
 
                 setTimeout(() => {
                     closeUploadModal();
@@ -1219,13 +1181,12 @@
                         icon: 'success',
                         confirmButtonColor: '#137fec'
                     });
-                    loadAssignments(); // Refresh
+                    loadAssignments();
                 }, 500);
-
             } catch (error) {
                 clearInterval(interval);
                 progressContainer.classList.add('hidden');
-                Swal.fire('Error', 'Hubo un problema al subir el archivo.', 'error');
+                Swal.fire('Error', `Hubo un problema: ${error.message}`, 'error');
                 console.error(error);
             }
         }

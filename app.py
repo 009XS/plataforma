@@ -1803,6 +1803,34 @@ def api_user_me():
     user = cursor.fetchone()
     return jsonify(user)
 
+@app.route('/api/student/stats')
+@login_required
+def api_student_stats():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT xp, rango, educoins, nombre, avatar_url FROM usuarios WHERE id = %s", (session['user_id'],))
+    user = cursor.fetchone()
+    
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+        
+    # Logic for progress bar (Simplified: 1000 XP per level)
+    # If using dynamic levels, we would query a 'niveles' table.
+    xp_current = user['xp'] or 0
+    xp_per_level = 1000
+    
+    # Calculate progress % within current level
+    # e.g., 2500 XP -> Level 3 (2000 base), 500 into level -> 50%
+    progreso_nivel = (xp_current % xp_per_level) / xp_per_level * 100
+    
+    return jsonify({
+        'xp': xp_current,
+        'rango': user['rango'],
+        'educoins': user['educoins'],
+        'nombre': user['nombre'],
+        'avatar_url': user['avatar_url'],
+        'xp_percent': progreso_nivel
+    })
+
 @app.route('/api/flashcards', methods=['GET', 'POST'])
 def api_flashcards():
     if 'user_id' not in session: return jsonify({'error': 'Unauthorized'}), 401
@@ -17826,6 +17854,54 @@ def ver_tarea_detalle(tarea_id):
         flash(f'Error cargando tarea: {str(e)}', 'error')
         return redirect(url_for('lista_tareas'))
 
+@app.route('/upload_entrega', methods=['POST'])
+@login_required
+def upload_entrega():
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'No file part'}), 400
+    
+    file = request.files['file']
+    tarea_id = request.form.get('tarea_id')
+    comentarios = request.form.get('comentarios', '')
+    
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'No selected file'}), 400
+        
+    if file and allowed_file(file.filename):
+        try:
+            filename = secure_filename(file.filename)
+            user_id = session['user_id']
+            # Make filename unique
+            unique_filename = f"entrega_{tarea_id}_{user_id}_{filename}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+            file.save(file_path)
+            
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            # Check if an entry already exists
+            cursor.execute("SELECT id FROM entregas_tareas WHERE tarea_id = %s AND estudiante_id = %s", (tarea_id, user_id))
+            existing_entry = cursor.fetchone()
+
+            if existing_entry:
+                cursor.execute("""
+                    UPDATE entregas_tareas
+                    SET archivo_nombre = %s, archivo_ruta = %s, comentarios = %s, fecha_entrega = NOW()
+                    WHERE id = %s
+                """, (filename, unique_filename, comentarios, existing_entry['id']))
+            else:
+                cursor.execute("""
+                    INSERT INTO entregas_tareas (tarea_id, estudiante_id, archivo_nombre, archivo_ruta, comentarios, fecha_entrega)
+                    VALUES (%s, %s, %s, %s, %s, NOW())
+                """, (tarea_id, user_id, filename, unique_filename, comentarios))
+            
+            mysql.connection.commit()
+            cursor.close()
+            
+            return jsonify({'success': True, 'message': 'Tarea entregada correctamente'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+    
+    return jsonify({'success': False, 'message': 'File type not allowed'}), 400
+
 @app.route('/crear-tarea', methods=['GET', 'POST'])
 @login_required
 @role_required('docente')
@@ -23065,30 +23141,32 @@ def tutor_justificantes():
             
             # Procesar archivo de evidencia
             archivo_ruta = None
-            if 'evidencia' in request.files:
-                file = request.files['evidencia']
-                if file and file.filename:
-                    # Validar extensión
-                    allowed_extensions = {'pdf', 'jpg', 'jpeg', 'png'}
-                    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
-                    if ext not in allowed_extensions:
-                        cursor.close()
-                        return jsonify({'error': 'Tipo de archivo no permitido. Use PDF, JPG o PNG'}), 400
-                    
-                    # Guardar archivo
-                    filename = secure_filename(f"justificante_{session['user_id']}_{alumno_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.{ext}")
-                    upload_folder = os.path.join(app.root_path, 'static', 'uploads', 'justificantes')
-                    os.makedirs(upload_folder, exist_ok=True)
-                    filepath = os.path.join(upload_folder, filename)
-                    file.save(filepath)
-                    archivo_ruta = f'/static/uploads/justificantes/{filename}'
-            
-            # Insertar justificante
-            cursor.execute("""
-                INSERT INTO justificantes_tutor (tutor_id, alumno_id, fecha_falta, motivo, archivo_evidencia)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (session['user_id'], alumno_id, fecha_falta, motivo, archivo_ruta))
-            
+            if 'file' not in request.files:
+                return jsonify({"error": "No file part"}), 400
+            file = request.files['file']
+            assignment_id = request.form.get('assignment_id')
+            comentario = request.form.get('comentario', '')
+            if file.filename == '':
+                return jsonify({"error": "No selected file"}), 400
+            if file:
+                upload_folder = os.path.join(current_app.root_path, 'uploads', 'tareas')
+                os.makedirs(upload_folder, exist_ok=True)
+                filename = f"{current_user.id}_{assignment_id}_{secure_filename(file.filename)}"
+                file_path = os.path.join(upload_folder, filename)
+                file.save(file_path)
+                # Guardar registro en la tabla entregas_tareas
+                try:
+                    cursor = mysql.connection.cursor()
+                    cursor.execute("""
+                        INSERT INTO entregas_tareas (tarea_id, estudiante_id, archivo_nombre, archivo_ruta, comentarios)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (assignment_id, current_user.id, filename, file_path, comentario))
+                    mysql.connection.commit()
+                    cursor.close()
+                except Exception as e:
+                    return jsonify({"error": f"DB error: {str(e)}"}), 500
+                return jsonify({"success": True, "message": "Tarea subida correctamente"})
+            return jsonify({"error": "Error desconocido"}), 500
             justificante_id = cursor.lastrowid
             mysql.connection.commit()
             cursor.close()
