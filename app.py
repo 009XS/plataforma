@@ -27634,42 +27634,6 @@ def insertar_items_tienda_ejemplo():
         print(f"[WARN] Error insertando items de tienda: {e}")
 
 
-# ==================== RUTAS DE PANELES (FALTANTES) ====================
-
-@app.route('/panel-orientador')
-@login_required
-@role_required('orientador')
-def panel_orientador_v2():
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Obtener info del orientador
-        cursor.execute("""
-            SELECT nombre, email FROM usuarios WHERE id = %s
-        """, (session['user_id'],))
-        orientador_info = cursor.fetchone()
-        nombre = orientador_info['nombre'] if orientador_info else 'Orientador'
-        email = orientador_info['email'] if orientador_info else ''
-        
-        # Generar iniciales
-        partes = nombre.split()
-        iniciales = ''.join([p[0].upper() for p in partes[:2]]) if partes else 'OR'
-        
-        cursor.close()
-        return render_template('panel-orientador.html',
-            nombre=nombre,
-            email=email,
-            iniciales=iniciales
-        )
-    except Exception as e:
-        print(f"Error en panel orientador: {e}")
-        return render_template('panel-orientador.html',
-            nombre='Orientador',
-            email='',
-            iniciales='OR'
-        )
-
-
 # ==================== TAREAS PROGRAMADAS ALUMNO ====================
 
 def tarea_diaria_alumnos():
