@@ -1931,6 +1931,51 @@ def api_portfolio():
     cursor.close()
     return jsonify(items)
 
+@app.route('/api/portfolio/<int:item_id>', methods=['PUT', 'DELETE'])
+@login_required
+def api_portfolio_item(item_id):
+    """Actualizar o eliminar un item del portafolio del alumno"""
+    user_id = session['user_id']
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    if request.method == 'PUT':
+        data = request.json or {}
+        titulo = data.get('titulo', '').strip()
+        descripcion = data.get('descripcion', '').strip()
+        if not titulo:
+            return jsonify({'error': 'Título requerido'}), 400
+
+        cursor.execute("""
+            UPDATE portafolio_items
+            SET titulo = %s, descripcion = %s
+            WHERE id = %s AND usuario_id = %s
+        """, (titulo, descripcion, item_id, user_id))
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'success': True})
+
+    # DELETE
+    cursor.execute("SELECT archivo_url FROM portafolio_items WHERE id = %s AND usuario_id = %s", (item_id, user_id))
+    item = cursor.fetchone()
+    if not item:
+        cursor.close()
+        return jsonify({'error': 'Item no encontrado'}), 404
+
+    archivo_url = item.get('archivo_url')
+    cursor.execute("DELETE FROM portafolio_items WHERE id = %s AND usuario_id = %s", (item_id, user_id))
+    mysql.connection.commit()
+    cursor.close()
+
+    try:
+        if archivo_url:
+            archivo_path = os.path.join(app.config['UPLOAD_FOLDER'], archivo_url)
+            if os.path.exists(archivo_path):
+                os.remove(archivo_path)
+    except Exception as e:
+        print(f"[WARN] No se pudo eliminar archivo de portafolio: {e}")
+
+    return jsonify({'success': True})
+
 @app.route('/api/notifications', methods=['GET'])
 @login_required
 def api_notifications():
@@ -2727,6 +2772,46 @@ def api_alumno_materias():
         resumen = cursor.fetchone()
     return jsonify({'agenda': agenda, 'resumen': resumen})
 
+@app.route('/api/alumno/recursos/<int:materia_id>', methods=['GET'])
+@login_required
+@role_required('alumno')
+def api_alumno_recursos(materia_id):
+    """Listar recursos de una materia para el alumno"""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        user_id = session['user_id']
+
+        # Validar acceso del alumno a la materia
+        cursor.execute("SELECT semestre FROM usuarios WHERE id = %s", (user_id,))
+        alumno = cursor.fetchone()
+        semestre = alumno['semestre'] if alumno else None
+
+        cursor.execute("""
+            SELECT 1 FROM matriculas WHERE materia_id = %s AND estudiante_id = %s
+        """, (materia_id, user_id))
+        matriculado = cursor.fetchone() is not None
+
+        if not matriculado and semestre:
+            cursor.execute("SELECT 1 FROM materias WHERE id = %s AND semestre = %s AND activo = 1", (materia_id, semestre))
+            matriculado = cursor.fetchone() is not None
+
+        if not matriculado:
+            cursor.close()
+            return jsonify({'error': 'Sin acceso a la materia'}), 403
+
+        cursor.execute("""
+            SELECT id, titulo, descripcion, tipo_archivo, nombre_archivo
+            FROM recursos
+            WHERE materia_id = %s AND activo = 1
+            ORDER BY fecha_creacion DESC
+        """, (materia_id,))
+        recursos = cursor.fetchall()
+        cursor.close()
+        return jsonify(recursos)
+    except Exception as e:
+        print(f"[ERROR] api_alumno_recursos: {str(e)}")
+        return jsonify({'error': 'Error al obtener recursos'}), 500
+
 @app.route('/api/alumno/hoy/completar/<int:id>', methods=['POST'])
 @login_required
 def api_alumno_completar_tarea_hoy(id):
@@ -3192,6 +3277,402 @@ def api_docente_reportes():
         return jsonify({'status': 'ok', 'id': reporte_id})
     cursor.execute("SELECT * FROM reportes_academicos WHERE docente_id = %s ORDER BY fecha_solicitud DESC LIMIT 20", (session['user_id'],))
     return jsonify(cursor.fetchall())
+
+# Reportes y estadísticas del docente (resumen)
+@app.route('/api/docente/reportes/estadisticas', methods=['GET'])
+@login_required
+@role_required('docente')
+def api_docente_reportes_estadisticas():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Promedio general de calificaciones en tareas
+        cursor.execute("""
+            SELECT AVG(et.calificacion) as promedio
+            FROM entregas_tareas et
+            JOIN tareas t ON et.tarea_id = t.id
+            JOIN materias m ON t.materia_id = m.id
+            WHERE m.docente_id = %s AND t.activo = 1
+        """, (session['user_id'],))
+        promedio_general = cursor.fetchone()['promedio']
+        if promedio_general is not None:
+            promedio_general = float(promedio_general)
+
+        # Tasa de entrega (entregas / (tareas * estudiantes))
+        cursor.execute("""
+            SELECT COUNT(*) as total_entregas
+            FROM entregas_tareas et
+            JOIN tareas t ON et.tarea_id = t.id
+            JOIN materias m ON t.materia_id = m.id
+            WHERE m.docente_id = %s AND t.activo = 1
+        """, (session['user_id'],))
+        total_entregas = cursor.fetchone()['total_entregas']
+
+        cursor.execute("""
+            SELECT COUNT(DISTINCT mat.estudiante_id) as total_estudiantes
+            FROM matriculas mat
+            JOIN materias m ON mat.materia_id = m.id
+            WHERE m.docente_id = %s
+        """, (session['user_id'],))
+        total_estudiantes = cursor.fetchone()['total_estudiantes']
+
+        cursor.execute("""
+            SELECT COUNT(*) as total_tareas
+            FROM tareas t
+            JOIN materias m ON t.materia_id = m.id
+            WHERE m.docente_id = %s AND t.activo = 1
+        """, (session['user_id'],))
+        total_tareas = cursor.fetchone()['total_tareas']
+
+        total_posibles = (total_estudiantes or 0) * (total_tareas or 0)
+        tasa_entrega = (total_entregas / total_posibles * 100) if total_posibles else None
+
+        # Asistencia promedio basada en alumnos del docente
+        cursor.execute("""
+            SELECT AVG(asistencia_pct) as asistencia
+            FROM (
+                SELECT u.id,
+                       (SELECT COUNT(*) FROM asistencias a WHERE a.estudiante_id = u.id AND a.presente = 1) /
+                       NULLIF((SELECT COUNT(*) FROM asistencias a WHERE a.estudiante_id = u.id), 0) * 100 as asistencia_pct
+                FROM usuarios u
+                JOIN matriculas mat ON u.id = mat.estudiante_id
+                JOIN materias m ON mat.materia_id = m.id
+                WHERE m.docente_id = %s AND u.tipo_usuario = 'alumno' AND u.activo = 1
+            ) sub
+        """, (session['user_id'],))
+        asistencia_promedio = cursor.fetchone()['asistencia']
+        if asistencia_promedio is not None:
+            asistencia_promedio = float(asistencia_promedio)
+
+        cursor.close()
+
+        return jsonify({
+            'promedio_general': promedio_general,
+            'tasa_entrega': tasa_entrega,
+            'asistencia_promedio': asistencia_promedio
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Listado de evaluaciones (exámenes online) del docente
+@app.route('/api/docente/examenes', methods=['GET'])
+@login_required
+@role_required('docente')
+def api_docente_examenes():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT eo.id, eo.titulo, eo.descripcion, eo.tiempo_limite, eo.fecha_inicio, eo.fecha_fin, eo.activo,
+                   m.nombre as materia,
+                   (SELECT COUNT(*) FROM respuestas_examenes re WHERE re.examen_id = eo.id) as respuestas_count
+            FROM examenes_online eo
+            JOIN materias m ON eo.materia_id = m.id
+            WHERE eo.docente_id = %s
+            ORDER BY eo.fecha_creacion DESC
+        """, (session['user_id'],))
+        examenes = cursor.fetchall()
+        cursor.close()
+        for e in examenes:
+            if e.get('fecha_inicio'):
+                e['fecha_inicio'] = e['fecha_inicio'].strftime('%Y-%m-%d %H:%M')
+            if e.get('fecha_fin'):
+                e['fecha_fin'] = e['fecha_fin'].strftime('%Y-%m-%d %H:%M')
+        return jsonify(examenes)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/docente/examenes/<int:examen_id>', methods=['PUT', 'DELETE'])
+@login_required
+@role_required('docente')
+def api_docente_examenes_detalle(examen_id):
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT id FROM examenes_online WHERE id = %s AND docente_id = %s", (examen_id, session['user_id']))
+        if not cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Examen no encontrado o sin permisos'}), 404
+
+        if request.method == 'DELETE':
+            cursor.execute("UPDATE examenes_online SET activo = 0 WHERE id = %s", (examen_id,))
+            mysql.connection.commit()
+            cursor.close()
+            return jsonify({'success': True})
+
+        data = request.get_json() or {}
+        updates = []
+        params = []
+        if 'titulo' in data:
+            updates.append("titulo = %s")
+            params.append(data['titulo'])
+        if 'descripcion' in data:
+            updates.append("descripcion = %s")
+            params.append(data['descripcion'])
+        if 'tiempo_limite' in data:
+            updates.append("tiempo_limite = %s")
+            params.append(data['tiempo_limite'])
+        if 'fecha_inicio' in data:
+            updates.append("fecha_inicio = %s")
+            params.append(data['fecha_inicio'])
+        if 'fecha_fin' in data:
+            updates.append("fecha_fin = %s")
+            params.append(data['fecha_fin'])
+        if 'activo' in data:
+            updates.append("activo = %s")
+            params.append(data['activo'])
+
+        if not updates:
+            cursor.close()
+            return jsonify({'error': 'No hay campos para actualizar'}), 400
+
+        params.append(examen_id)
+        cursor.execute(f"UPDATE examenes_online SET {', '.join(updates)} WHERE id = %s", tuple(params))
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Retos de código del docente
+@app.route('/api/docente/retos', methods=['GET'])
+@login_required
+@role_required('docente')
+def api_docente_retos():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT r.id, r.titulo, r.descripcion, r.dificultad, r.activo,
+                   m.nombre as materia,
+                   COUNT(er.id) as envios
+            FROM retos_codigo r
+            JOIN materias m ON r.materia_id = m.id
+            LEFT JOIN envios_retos er ON r.id = er.reto_id
+            WHERE m.docente_id = %s
+            GROUP BY r.id
+            ORDER BY r.id DESC
+        """, (session['user_id'],))
+        retos = cursor.fetchall()
+        cursor.close()
+        return jsonify(retos)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Ranking de retos por envíos
+@app.route('/api/docente/retos/ranking', methods=['GET'])
+@login_required
+@role_required('docente')
+def api_docente_retos_ranking():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT u.id, u.nombre, COUNT(er.id) as envios
+            FROM envios_retos er
+            JOIN retos_codigo r ON er.reto_id = r.id
+            JOIN materias m ON r.materia_id = m.id
+            JOIN usuarios u ON er.estudiante_id = u.id
+            WHERE m.docente_id = %s
+            GROUP BY u.id
+            ORDER BY envios DESC
+            LIMIT 10
+        """, (session['user_id'],))
+        ranking = cursor.fetchall()
+        cursor.close()
+        return jsonify(ranking)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Tutorías del docente (usa sesiones_tutoria)
+@app.route('/api/docente/tutorias', methods=['GET', 'POST'])
+@login_required
+@role_required('docente')
+def api_docente_tutorias():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        if request.method == 'POST':
+            data = request.get_json() or {}
+            alumno_id = data.get('alumno_id')
+            fecha = data.get('fecha')
+            duracion = data.get('duracion_minutos', 60)
+            materia_id = data.get('materia_id')
+            notas = data.get('notas')
+
+            if not alumno_id or not fecha:
+                cursor.close()
+                return jsonify({'error': 'Faltan campos obligatorios'}), 400
+
+            meta = {
+                'materia_id': materia_id,
+                'notas': notas
+            }
+
+            cursor.execute("""
+                INSERT INTO sesiones_tutoria (tutor_id, alumno_id, fecha, duracion_minutos, notas, estado)
+                VALUES (%s, %s, %s, %s, %s, 'programada')
+            """, (session['user_id'], alumno_id, fecha, duracion, json.dumps(meta)))
+            mysql.connection.commit()
+            tutor_id = cursor.lastrowid
+            cursor.close()
+            return jsonify({'success': True, 'id': tutor_id}), 201
+
+        cursor.execute("""
+            SELECT st.id, st.fecha, st.duracion_minutos, st.estado, st.notas,
+                   u.nombre as alumno_nombre
+            FROM sesiones_tutoria st
+            JOIN usuarios u ON st.alumno_id = u.id
+            WHERE st.tutor_id = %s
+            ORDER BY st.fecha ASC
+            LIMIT 50
+        """, (session['user_id'],))
+        tutorias = cursor.fetchall()
+        cursor.close()
+
+        for t in tutorias:
+            if t.get('fecha'):
+                t['fecha'] = t['fecha'].strftime('%d/%m/%Y %H:%M')
+            materia = None
+            if t.get('notas'):
+                try:
+                    meta = json.loads(t['notas'])
+                    materia_id = meta.get('materia_id')
+                    if materia_id:
+                        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+                        cursor.execute("SELECT nombre FROM materias WHERE id = %s", (materia_id,))
+                        mat = cursor.fetchone()
+                        cursor.close()
+                        materia = mat['nombre'] if mat else None
+                except Exception:
+                    materia = None
+            t['materia'] = materia
+
+        return jsonify(tutorias)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Horario del docente basado en materias
+@app.route('/api/docente/horario', methods=['GET'])
+@login_required
+@role_required('docente')
+def api_docente_horario():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT m.id, m.nombre as materia, m.horario
+            FROM materias m
+            WHERE m.docente_id = %s AND m.activo = 1
+            ORDER BY m.nombre
+        """, (session['user_id'],))
+        horarios = cursor.fetchall()
+        cursor.close()
+        return jsonify(horarios)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Reportes de conducta desde docente
+@app.route('/api/docente/reportes-conducta', methods=['POST'])
+@login_required
+@role_required('docente')
+def api_docente_reportes_conducta():
+    try:
+        data = request.json or {}
+        alumno_id = data.get('alumno_id')
+        tipo = data.get('tipo')
+        descripcion = data.get('descripcion')
+
+        if not all([alumno_id, tipo, descripcion]):
+            return jsonify({'error': 'Faltan campos obligatorios'}), 400
+
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            INSERT INTO reportes_conducta (alumno_id, orientador_id, tipo, descripcion)
+            VALUES (%s, %s, %s, %s)
+        """, (alumno_id, session['user_id'], tipo, descripcion))
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Estudiantes en riesgo (predicción) para docente
+@app.route('/api/docente/riesgo', methods=['GET'])
+@login_required
+@role_required('docente')
+def api_docente_riesgo():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT DISTINCT u.id, u.nombre
+            FROM usuarios u
+            JOIN matriculas mat ON u.id = mat.estudiante_id
+            JOIN materias m ON mat.materia_id = m.id
+            WHERE m.docente_id = %s AND u.tipo_usuario = 'alumno' AND u.activo = 1
+        """, (session['user_id'],))
+        alumnos = cursor.fetchall()
+        if not alumnos:
+            cursor.close()
+            return jsonify([])
+
+        alumno_ids = [a['id'] for a in alumnos]
+        format_strings = ','.join(['%s'] * len(alumno_ids))
+        cursor.execute(f"""
+            SELECT pd.alumno_id, u.nombre, pd.riesgo, pd.probabilidad, pd.fecha_calculo
+            FROM predicciones_desercion pd
+            JOIN usuarios u ON pd.alumno_id = u.id
+            JOIN (
+                SELECT alumno_id, MAX(fecha_calculo) as max_fecha
+                FROM predicciones_desercion
+                WHERE alumno_id IN ({format_strings})
+                GROUP BY alumno_id
+            ) latest ON pd.alumno_id = latest.alumno_id AND pd.fecha_calculo = latest.max_fecha
+            ORDER BY pd.probabilidad DESC
+            LIMIT 20
+        """, alumno_ids)
+        riesgos = cursor.fetchall()
+        for r in riesgos:
+            if r.get('fecha_calculo'):
+                r['fecha_calculo'] = r['fecha_calculo'].strftime('%Y-%m-%d %H:%M')
+            if r.get('probabilidad') is not None:
+                r['probabilidad'] = float(r['probabilidad'])
+        cursor.close()
+        return jsonify(riesgos)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Entregas de una tarea para docente (JSON)
+@app.route('/api/docente/tareas/<int:tarea_id>/entregas', methods=['GET'])
+@login_required
+@role_required('docente')
+def api_docente_entregas_tarea(tarea_id):
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT docente_id FROM tareas WHERE id = %s", (tarea_id,))
+        tarea = cursor.fetchone()
+        if not tarea or tarea['docente_id'] != session['user_id']:
+            cursor.close()
+            return jsonify({'error': 'No autorizado'}), 403
+
+        cursor.execute("""
+            SELECT et.id, u.nombre as estudiante, et.archivo_nombre, et.archivo_ruta,
+                   et.fecha_entrega, et.calificacion
+            FROM entregas_tareas et
+            JOIN usuarios u ON et.estudiante_id = u.id
+            WHERE et.tarea_id = %s
+            ORDER BY et.fecha_entrega
+        """, (tarea_id,))
+        entregas = cursor.fetchall()
+        cursor.close()
+
+        for e in entregas:
+            e['archivo'] = e['archivo_nombre']
+            if e.get('archivo_ruta'):
+                e['archivo_url'] = url_for('uploaded_file', filename=os.path.basename(e['archivo_ruta']))
+            if e.get('fecha_entrega'):
+                e['fecha_entrega'] = e['fecha_entrega'].strftime('%d/%m/%Y %H:%M')
+            if e.get('calificacion') is not None:
+                e['calificacion'] = float(e['calificacion'])
+
+        return jsonify(entregas)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 def _generar_reporte_academico(reporte_id):
     try:
@@ -7765,10 +8246,10 @@ def panel_tutor():
         
         # Obtener comunicados recientes
         cursor.execute('''
-            SELECT id, titulo, mensaje, DATE_FORMAT(fecha_creacion, '%%Y-%%m-%%d') as fecha
+            SELECT id, titulo, contenido AS mensaje, DATE_FORMAT(fecha_publicacion, '%%Y-%%m-%%d') as fecha
             FROM comunicados
             WHERE activo = 1
-            ORDER BY fecha_creacion DESC
+            ORDER BY fecha_publicacion DESC
             LIMIT 5
         ''', ())
         comunicados = cursor.fetchall() or []
@@ -9031,6 +9512,24 @@ def on_join(data):
     elif role == 'student':
         emit('student_joined', room=room)
 
+@socketio.on('message')
+def on_message(data):
+    """Broadcast simple messages to a room"""
+    room = data.get('room')
+    text = data.get('text')
+    user = data.get('user', 'Alumno')
+    avatar = data.get('avatar')
+    if not room or not text:
+        return
+
+    payload = {
+        'user': user,
+        'text': text,
+        'avatar': avatar,
+        'time': datetime.now().strftime('%H:%M')
+    }
+    emit('message', payload, room=room)
+
 @socketio.on('offer')
 def on_offer(data):
     emit('offer', data['sdp'], room=data['room'], include_self=False)
@@ -9089,6 +9588,31 @@ def handle_announcements():
                 ann['adjunto_url'] = url_for('uploaded_file', filename=os.path.basename(ann['adjunto_ruta']))
         cursor.close()
         return jsonify(announcements)
+
+@app.route('/api/announcements/<int:announcement_id>', methods=['PUT', 'DELETE'])
+@login_required
+def update_or_delete_announcement(announcement_id):
+    if session.get('user_role') not in ['docente', 'admin']:
+        return jsonify({'error': 'No autorizado'}), 403
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    if request.method == 'DELETE':
+        cursor.execute("UPDATE comunicados SET activo = 0 WHERE id = %s", (announcement_id,))
+        mysql.connection.commit()
+        cursor.close()
+        return jsonify({'success': True})
+
+    data = request.get_json() or {}
+    titulo = data.get('title', '').strip()
+    contenido = data.get('content', '').strip()
+    if not titulo or not contenido:
+        cursor.close()
+        return jsonify({'error': 'Título y contenido son obligatorios'}), 400
+
+    cursor.execute("UPDATE comunicados SET titulo = %s, contenido = %s WHERE id = %s", (titulo, contenido, announcement_id))
+    mysql.connection.commit()
+    cursor.close()
+    return jsonify({'success': True})
 
 # API para eliminar recurso (expandido con log)
 @app.route('/api/eliminar-recurso', methods=['POST'])
@@ -21173,12 +21697,17 @@ def alumno_equipos():
             data = request.json
             if not data.get('nombre'):
                 return jsonify({'error': 'El nombre del equipo es requerido', 'success': False}), 400
+
+            # Generar código de acceso
+            import random
+            import string
+            codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
             
             cursor = mysql.connection.cursor()
             cursor.execute("""
-                INSERT INTO equipos_estudio (nombre, descripcion, materia_id, creador_id)
-                VALUES (%s, %s, %s, %s)
-            """, (data['nombre'], data.get('descripcion', ''), data.get('materia_id'), session['user_id']))
+                INSERT INTO equipos_estudio (nombre, descripcion, materia_id, creador_id, codigo_acceso)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (data['nombre'], data.get('descripcion', ''), data.get('materia_id'), session['user_id'], codigo))
             equipo_id = cursor.lastrowid
             
             # Agregar creador como líder
@@ -21192,6 +21721,7 @@ def alumno_equipos():
             return jsonify({
                 'success': True, 
                 'equipo_id': equipo_id,
+                'codigo': codigo,
                 'mensaje': 'Equipo creado exitosamente'
             })
         except Exception as e:
@@ -21202,7 +21732,7 @@ def alumno_equipos():
         try:
             cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
             cursor.execute("""
-                SELECT e.id, e.nombre, e.descripcion, m.nombre as materia,
+                SELECT e.id, e.nombre, e.descripcion, e.codigo_acceso, m.nombre as materia,
                        me.rol, e.fecha_creacion,
                        (SELECT COUNT(*) FROM miembros_equipo WHERE equipo_id = e.id) as total_miembros
                 FROM miembros_equipo me
@@ -21260,6 +21790,38 @@ def alumno_unirse_equipo(equipo_id):
         })
     except Exception as e:
         print(f"[ERROR] alumno_unirse_equipo: {str(e)}")
+        return jsonify({'error': 'Error al unirse al equipo', 'success': False}), 500
+
+@app.route('/api/alumno/equipos/unirse', methods=['POST'])
+@login_required
+@role_required('alumno')
+def alumno_unirse_equipo_codigo():
+    """Unirse a un equipo por código de acceso"""
+    try:
+        data = request.json or {}
+        codigo = (data.get('codigo') or '').strip().upper()
+        if not codigo:
+            return jsonify({'error': 'Código requerido', 'success': False}), 400
+
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT id, nombre FROM equipos_estudio WHERE codigo_acceso = %s AND activo = 1", (codigo,))
+        equipo = cursor.fetchone()
+        if not equipo:
+            cursor.close()
+            return jsonify({'error': 'Código inválido', 'success': False}), 404
+
+        cursor.execute("SELECT id FROM miembros_equipo WHERE equipo_id = %s AND alumno_id = %s", (equipo['id'], session['user_id']))
+        if cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Ya eres miembro de este equipo', 'success': False}), 400
+
+        cursor.execute("INSERT INTO miembros_equipo (equipo_id, alumno_id, rol) VALUES (%s, %s, 'miembro')", (equipo['id'], session['user_id']))
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({'success': True, 'message': f'Te uniste al equipo "{equipo["nombre"]}"'})
+    except Exception as e:
+        print(f"[ERROR] alumno_unirse_equipo_codigo: {str(e)}")
         return jsonify({'error': 'Error al unirse al equipo', 'success': False}), 500
 
 @app.route('/api/alumno/tareas', methods=['GET'])
@@ -22946,21 +23508,17 @@ def tutor_hijos_v2():
 def tutor_comunicados_v2():
     """Obtener comunicados oficiales"""
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    # Comunicados generales o para tutores
     cursor.execute("""
-        SELECT * FROM comunicados 
-        WHERE destinatario IN ('todos', 'tutores') 
-        ORDER BY fecha_publicacion DESC LIMIT 20
+        SELECT id, titulo, contenido AS mensaje,
+               DATE_FORMAT(fecha_publicacion, '%%Y-%%m-%%d %%H:%%i') as fecha
+        FROM comunicados
+        WHERE activo = 1
+        ORDER BY fecha_publicacion DESC
+        LIMIT 20
     """)
     comunicados = cursor.fetchall()
-    
-    # Formatear fechas
-    for c in comunicados:
-        if c.get('fecha_publicacion'):
-            c['fecha_publicacion'] = c['fecha_publicacion'].strftime('%Y-%m-%d %H:%M')
-            
     cursor.close()
-    return jsonify(comunicados)
+    return jsonify({'success': True, 'comunicados': comunicados})
 
 @app.route('/api/tutor/citas', methods=['GET', 'POST'])
 @login_required
@@ -28198,13 +28756,24 @@ def api_flashcards_review(card_id):
 
 # ============ 2. PORTFOLIO APIs ============
 
-@app.route('/api/portfolio', methods=['GET'])
+@app.route('/api/portfolio', methods=['GET', 'POST'])
 @login_required
 def api_portfolio_list():
-    """Listar items del portafolio del alumno"""
+    """Listar o crear items del portafolio del alumno"""
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     user_id = session['user_id']
-    
+
+    if request.method == 'POST':
+        data = request.json or {}
+        titulo = (data.get('titulo') or 'Sin título').strip()
+        descripcion = (data.get('descripcion') or '').strip()
+        cursor.execute("""
+            INSERT INTO portafolio_items (usuario_id, titulo, descripcion, fecha_creacion)
+            VALUES (%s, %s, %s, NOW())
+        """, (user_id, titulo, descripcion))
+        mysql.connection.commit()
+        return jsonify({'success': True, 'id': cursor.lastrowid})
+
     cursor.execute("""
         SELECT id, titulo, descripcion, tipo as tipo, archivo_url as archivo_ruta, 
                fecha_creacion as fecha_subida
@@ -28212,7 +28781,7 @@ def api_portfolio_list():
         WHERE usuario_id = %s 
         ORDER BY fecha_creacion DESC
     """, (user_id,))
-    
+
     items = cursor.fetchall()
     return jsonify(items)
 
@@ -28309,7 +28878,17 @@ def api_alumno_tutorias():
         mysql.connection.commit()
         return jsonify({'success': True, 'id': cursor.lastrowid})
     
-    # GET - Listar citas del alumno
+    # GET - Tutor asignado
+    cursor.execute("""
+        SELECT u.id, u.nombre, u.email, u.telefono, u.foto_perfil
+        FROM tutores_estudiantes te
+        JOIN usuarios u ON te.tutor_id = u.id
+        WHERE te.estudiante_id = %s
+        LIMIT 1
+    """, (user_id,))
+    tutor = cursor.fetchone()
+
+    # Listar citas del alumno
     cursor.execute("""
         SELECT ct.id, ct.fecha_hora, ct.estado, ct.link_reunion, ct.notas as motivo
         FROM citas_tutoria ct
@@ -28317,8 +28896,18 @@ def api_alumno_tutorias():
         ORDER BY ct.fecha_hora DESC
         LIMIT 20
     """, (user_id,))
-    
-    return jsonify(cursor.fetchall())
+    sesiones = cursor.fetchall()
+
+    # Formatear fechas
+    for s in sesiones:
+        if s.get('fecha_hora'):
+            s['fecha'] = s['fecha_hora'].strftime('%d/%m/%Y %H:%M')
+
+    return jsonify({
+        'tutor': tutor if tutor else None,
+        'sesiones': sesiones,
+        'mensaje': 'Aún no tienes un tutor asignado' if not tutor else None
+    })
 
 
 # Alias para compatibilidad con frontend que usa /api/tutor/citas

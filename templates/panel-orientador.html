@@ -70,7 +70,7 @@
         <div id="header-stats" class="w-full flex flex-col items-center pt-8 pb-4 bg-white dark:bg-background-dark">
             <div class="relative mb-3">
                 <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center"
-                    style="background-image: url('https://ui-avatars.com/api/?name={{ nombre }}&background=random');">
+                    style="background-image: url('{{ foto_perfil or avatar_url or ('https://ui-avatars.com/api/?name=' ~ nombre) }}');">
                 </div>
                 <div
                     class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark">
@@ -1045,6 +1045,10 @@
             grid-column: span 2;
         }
 
+        .main-container {
+            padding-bottom: 90px;
+        }
+
         /* ESTILOS PARA HORARIOS */
         .search-container {
             display: flex;
@@ -1116,7 +1120,7 @@
         <div class="nav-container">
             <div class="logo">Edu<span>Platform</span></div>
             <div class="user-info">
-                <div class="user-avatar">{{ iniciales }}</div>
+                <div class="user-avatar" id="orientador-avatar" style="background-image: url('{{ foto_perfil|default('') }}'); background-size: cover; background-position: center;">{{ iniciales }}</div>
                 <div class="user-details">
                     <h3>{{ nombre }}</h3>
                     <p>{{ email }}</p>
@@ -1135,8 +1139,22 @@
             <p>Gestiona reportes, horarios, avisos, justificantes y asistencias de manera eficiente.</p>
         </div>
 
+        <!-- CARD CONFIGURACIÓN DE PERFIL -->
+        <div class="card" id="perfil-card">
+            <div class="card-header">
+                <span class="card-icon">Perfil</span>
+                <h2 class="card-title">Configuración de Perfil</h2>
+            </div>
+            <div class="form-group">
+                <label for="orientador-photo">Subir foto de perfil</label>
+                <input type="file" id="orientador-photo" accept="image/*" />
+            </div>
+            <button id="btn-subir-foto" onclick="uploadOrientadorPhoto()">Subir Foto</button>
+            <div id="upload-foto-msg"></div>
+        </div>
+
         <!-- CARD REPORTES DE CONDUCTA -->
-        <div class="card">
+        <div class="card" id="reportes-card">
             <div class="card-header">
                 <span class="card-icon">Reporte</span>
                 <h2 class="card-title">Reportes de Conducta o Incumplimiento</h2>
@@ -1167,7 +1185,7 @@
         </div>
 
         <!-- CARD HORARIOS DE GRUPOS (100% REAL) -->
-        <div class="card">
+        <div class="card" id="horarios-card">
             <div class="card-header">
                 <span class="card-icon">Horario</span>
                 <h2 class="card-title">Acceso a Horarios de Grupos</h2>
@@ -1182,7 +1200,7 @@
         </div>
 
         <!-- CARD AVISOS Y RECORDATORIOS -->
-        <div class="card">
+        <div class="card" id="avisos-card">
             <div class="card-header">
                 <span class="card-icon">Aviso</span>
                 <h2 class="card-title">Avisos y Recordatorios</h2>
@@ -1214,7 +1232,7 @@
         </div>
 
         <!-- CARD JUSTIFICANTES -->
-        <div class="card">
+        <div class="card" id="justificantes-card">
             <div class="card-header">
                 <span class="card-icon">Justificante</span>
                 <h2 class="card-title">Crear Justificantes</h2>
@@ -1238,7 +1256,7 @@
         </div>
 
         <!-- CARD ASISTENCIAS -->
-        <div class="card full-width">
+        <div class="card full-width" id="asistencias-card">
             <div class="card-header">
                 <span class="card-icon">Asistencia</span>
                 <h2 class="card-title">Sistema de Asistencias</h2>
@@ -1571,7 +1589,78 @@
             });
 
         });
+
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function uploadOrientadorPhoto() {
+            const input = document.getElementById('orientador-photo');
+            const msg = document.getElementById('upload-foto-msg');
+            if (!input || !input.files || !input.files[0]) {
+                if (msg) msg.innerHTML = '<div class="error-msg">Selecciona una imagen</div>';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('photo', input.files[0]);
+
+            fetch('/api/profile/upload-photo', {
+                method: 'POST',
+                body: formData
+            })
+                .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+                .then(({ ok, data }) => {
+                    if (ok && (data.success || data.foto_perfil)) {
+                        const avatar = document.getElementById('orientador-avatar');
+                        if (avatar) {
+                            avatar.style.backgroundImage = `url('${data.foto_perfil}')`;
+                            avatar.textContent = '';
+                        }
+                        if (msg) msg.innerHTML = '<div class="success-msg">Foto actualizada</div>';
+                    } else {
+                        if (msg) msg.innerHTML = `<div class="error-msg">${data.error || 'Error al subir foto'}</div>`;
+                    }
+                })
+                .catch(() => {
+                    if (msg) msg.innerHTML = '<div class="error-msg">Error de conexión</div>';
+                });
+        }
     </script>
+
+    <nav
+        class="fixed bottom-0 left-0 right-0 z-30 max-w-md mx-auto bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg">
+        <div class="flex h-16 items-center justify-between px-1">
+            <button onclick="scrollToSection('header-stats')"
+                class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-primary bg-primary/10 rounded-xl py-1 mx-0.5">
+                <span class="material-symbols-outlined text-[22px]">home</span>
+                <span class="text-[11px] font-semibold">Inicio</span>
+            </button>
+            <button onclick="scrollToSection('perfil-card')"
+                class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                <span class="material-symbols-outlined text-[22px]">person</span>
+                <span class="text-[11px] font-semibold">Perfil</span>
+            </button>
+            <button onclick="scrollToSection('reportes-card')"
+                class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                <span class="material-symbols-outlined text-[22px]">assignment</span>
+                <span class="text-[11px] font-semibold">Reportes</span>
+            </button>
+            <button onclick="scrollToSection('avisos-card')"
+                class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                <span class="material-symbols-outlined text-[22px]">notifications</span>
+                <span class="text-[11px] font-semibold">Avisos</span>
+            </button>
+            <button onclick="scrollToSection('asistencias-card')"
+                class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                <span class="material-symbols-outlined text-[22px]">fact_check</span>
+                <span class="text-[11px] font-semibold">Asistencias</span>
+            </button>
+        </div>
+    </nav>
     <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'9a9e85902ec4c033',t:'MTc2NTA1MjgyMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
 </body>
 

@@ -1,256 +1,473 @@
 {% extends "base.html" %}
 {% block title %}Panel de Tutor | EduPlatform{% endblock %}
-{% block extra_css %}
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-<script src="https://cdn.tailwindcss.com"></script>
+{% block extra_head %}
+<link href="https://fonts.googleapis.com" rel="preconnect" />
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#137fec",
+                    "background-light": "#f6f7f8",
+                    "background-dark": "#101922",
+                    "surface-light": "#FFFFFF",
+                    "surface-dark": "#1A2633",
+                    "text-main-light": "#111418",
+                    "text-main-dark": "#F3F4F6",
+                    "text-sec-light": "#617589",
+                    "text-sec-dark": "#9CA3AF",
+                },
+                fontFamily: {
+                    "display": ["Lexend", "sans-serif"]
+                },
+                borderRadius: {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+                },
+            },
+        },
+    }
+</script>
 <style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        font-family: 'Material Symbols Outlined';
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 {% endblock %}
 {% block content %}
 
-<body class="bg-slate-50 dark:bg-background-dark min-h-screen">
-    <!-- Header con Estadísticas del Tutor -->
-    <header id="header-stats" class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white">
-        <div class="max-w-md mx-auto p-6 pb-8">
-            <!-- Perfil del Tutor -->
-            <div class="flex items-center gap-4 mb-6">
-                <div class="h-16 w-16 rounded-full border-4 border-white shadow-lg bg-cover bg-center" 
-                    style="background-image: url('{{ foto_perfil or avatar_url or \'https://ui-avatars.com/api/?name=\' + nombre }}');"></div>
+<div class="bg-background-light dark:bg-background-dark min-h-screen">
+    <div id="main-app-container" class="relative flex flex-col w-full max-w-md mx-auto bg-white dark:bg-background-dark shadow-2xl min-h-screen overflow-hidden font-display text-slate-900 dark:text-white">
+        <!-- Header con Estadísticas del Tutor -->
+        <header id="header-stats" class="w-full px-5 pt-6 pb-4 bg-white dark:bg-background-dark">
+            <div class="flex items-center gap-3">
+                <div class="h-14 w-14 rounded-full border-2 border-white dark:border-surface-dark shadow-sm bg-cover bg-center"
+                    data-profile-photo
+                    style="background-image: url('{{ foto_perfil or avatar_url or ('https://ui-avatars.com/api/?name=' ~ nombre) }}');"></div>
                 <div class="flex-1">
-                    <h1 class="text-xl font-bold">{{ nombre }}</h1>
-                    <p class="text-sm opacity-90">Tutor Académico</p>
-                    <p class="text-xs opacity-75">{{ estudiantes|length }} estudiante(s) asignado(s)</p>
+                    <h1 class="text-lg font-bold text-slate-900 dark:text-white">{{ nombre }}</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Tutor Académico</p>
+                    <p class="text-xs text-slate-400">{{ estudiantes|length }} estudiante(s) asignado(s)</p>
                 </div>
-                <button onclick="toggleNotifications()" class="p-2 hover:bg-white/20 rounded-full relative">
+                <button onclick="toggleNotifications()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 relative" aria-label="Notificaciones">
                     <span class="material-symbols-outlined">notifications</span>
-                    <span id="notif-badge" class="hidden absolute top-1 right-1 h-3 w-3 bg-red-500 rounded-full"></span>
+                    <span id="notif-badge" class="hidden absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full"></span>
                 </button>
             </div>
 
             <!-- Cards de Estadísticas -->
-            <div class="grid grid-cols-3 gap-3">
-                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                    <p class="text-xs opacity-75 mb-1">Sesiones</p>
-                    <p id="total-sesiones" class="text-2xl font-bold">-</p>
-                    <p class="text-[10px] opacity-75">Este mes</p>
+            <div class="grid grid-cols-3 gap-3 w-full mt-5">
+                <div class="rounded-xl p-3 text-center border border-slate-100 dark:border-slate-800 bg-white dark:bg-surface-dark shadow-sm">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Sesiones</p>
+                    <p id="total-sesiones" class="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+                    <p class="text-[10px] text-slate-400">Este mes</p>
                 </div>
-                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                    <p class="text-xs opacity-75 mb-1">Alertas</p>
-                    <p id="total-alertas" class="text-2xl font-bold">-</p>
-                    <p class="text-[10px] opacity-75">Sin atender</p>
+                <div class="rounded-xl p-3 text-center border border-slate-100 dark:border-slate-800 bg-white dark:bg-surface-dark shadow-sm">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Alertas</p>
+                    <p id="total-alertas" class="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+                    <p class="text-[10px] text-slate-400">Sin atender</p>
                 </div>
-                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
-                    <p class="text-xs opacity-75 mb-1">Citas</p>
-                    <p id="total-citas" class="text-2xl font-bold">-</p>
-                    <p class="text-[10px] opacity-75">Próximas</p>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-md mx-auto bg-white dark:bg-background-dark -mt-4 rounded-t-3xl shadow-xl min-h-screen pb-20 relative">
-        <!-- Vista Dashboard (Principal) -->
-        <div id="dashboard-view" class="p-4 space-y-4">
-            <!-- Mis Estudiantes -->
-            <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-indigo-500">school</span>
-                    Mis Estudiantes
-                </h3>
-                <div id="estudiantes-list" class="space-y-2">
-                    <p class="text-center text-slate-500 text-sm">Cargando estudiantes...</p>
+                <div class="rounded-xl p-3 text-center border border-slate-100 dark:border-slate-800 bg-white dark:bg-surface-dark shadow-sm">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Citas</p>
+                    <p id="total-citas" class="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+                    <p class="text-[10px] text-slate-400">Próximas</p>
                 </div>
             </div>
+        </header>
 
-            <!-- Alertas Recientes -->
-            <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span class="material-symbols-outlined text-orange-500">warning</span>
-                        Alertas Recientes
+        <!-- Main Content -->
+        <main class="relative flex-1 overflow-y-auto no-scrollbar px-4 pb-24 space-y-4">
+            <!-- Vista Dashboard (Principal) -->
+            <div id="dashboard-view" class="space-y-4">
+                <!-- Mis Estudiantes -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">school</span>
+                        Mis estudiantes
                     </h3>
-                    <button onclick="verTodasAlertas()" class="text-xs text-indigo-600 hover:text-indigo-700">Ver todas</button>
+                    <div id="estudiantes-list" class="space-y-2">
+                        <p class="text-center text-slate-500 text-sm">Cargando estudiantes...</p>
+                    </div>
                 </div>
-                <div id="alertas-list" class="space-y-2">
-                    <p class="text-center text-slate-500 text-sm">Cargando alertas...</p>
-                </div>
-            </div>
 
-            <!-- Próximas Sesiones -->
-            <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span class="material-symbols-outlined text-green-500">event</span>
-                        Próximas Sesiones
+                <!-- Alertas Recientes -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-orange-500">warning</span>
+                            Alertas recientes
+                        </h3>
+                        <button onclick="verTodasAlertas()" class="text-xs text-primary hover:text-primary/80">Ver todas</button>
+                    </div>
+                    <div id="alertas-list" class="space-y-2">
+                        <p class="text-center text-slate-500 text-sm">Cargando alertas...</p>
+                    </div>
+                </div>
+
+                <!-- Próximas Sesiones -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-green-500">event</span>
+                            Próximas sesiones
+                        </h3>
+                        <button onclick="agendarSesion()" class="text-xs text-primary hover:text-primary/80">+ Nueva</button>
+                    </div>
+                    <div id="sesiones-list" class="space-y-2">
+                        <p class="text-center text-slate-500 text-sm">Cargando sesiones...</p>
+                    </div>
+                </div>
+
+                <!-- Comunicados -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-blue-500">campaign</span>
+                        Comunicados
                     </h3>
-                    <button onclick="agendarSesion()" class="text-xs text-indigo-600 hover:text-indigo-700">+ Nueva</button>
-                </div>
-                <div id="sesiones-list" class="space-y-2">
-                    <p class="text-center text-slate-500 text-sm">Cargando sesiones...</p>
-                </div>
-            </div>
-
-            <!-- Comunicados -->
-            <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-blue-500">campaign</span>
-                    Comunicados
-                </h3>
-                <div id="comunicados-list" class="space-y-2">
-                    <p class="text-center text-slate-500 text-sm">Cargando comunicados...</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Vista Alertas -->
-        <div id="alertas-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
-            <div class="flex items-center gap-2 mb-2">
-                <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
-                    <span class="material-symbols-outlined">arrow_back</span>
-                </button>
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Alertas</h2>
-            </div>
-            <div id="alertas-container" class="flex flex-col gap-3"></div>
-        </div>
-
-        <!-- Vista Sesiones -->
-        <div id="sesiones-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
-            <div class="flex items-center gap-2 mb-2">
-                <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
-                    <span class="material-symbols-outlined">arrow_back</span>
-                </button>
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Sesiones de Tutoría</h2>
-            </div>
-            <button onclick="agendarSesion()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition mb-4">
-                <span class="material-symbols-outlined inline-block align-middle">add</span>
-                Agendar Nueva Sesión
-            </button>
-            <div id="sesiones-container" class="flex flex-col gap-3"></div>
-        </div>
-
-        <!-- Vista Observaciones -->
-        <div id="observaciones-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
-            <div class="flex items-center gap-2 mb-2">
-                <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
-                    <span class="material-symbols-outlined">arrow_back</span>
-                </button>
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Observaciones</h2>
-            </div>
-            <button onclick="crearObservacion()" class="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition mb-4">
-                <span class="material-symbols-outlined inline-block align-middle">note_add</span>
-                Nueva Observación
-            </button>
-            <div id="observaciones-container" class="flex flex-col gap-3"></div>
-        </div>
-
-        <!-- Vista Reportes -->
-        <div id="reportes-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
-            <div class="flex items-center gap-2 mb-2">
-                <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
-                    <span class="material-symbols-outlined">arrow_back</span>
-                </button>
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Reportes</h2>
-            </div>
-            <button onclick="generarReporteSeguimiento()" class="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition mb-4">
-                <span class="material-symbols-outlined inline-block align-middle">analytics</span>
-                Generar Reporte de Seguimiento
-            </button>
-            <div id="reportes-list" class="flex flex-col gap-3"></div>
-        </div>
-
-        <!-- Vista Perfil -->
-        <div id="perfil-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
-            <div class="flex items-center gap-2 mb-2">
-                <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
-                    <span class="material-symbols-outlined">arrow_back</span>
-                </button>
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mi Perfil</h2>
-            </div>
-            
-            <!-- Información del Tutor -->
-            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="h-20 w-20 rounded-full border-4 border-white shadow-lg bg-cover bg-center"
-                        style="background-image: url('{{ foto_perfil or avatar_url or 'https://ui-avatars.com/api/?name=' + nombre }}');"></div>
-                    <div>
-                        <h3 class="text-xl font-bold">{{ nombre }}</h3>
-                        <p class="text-sm opacity-90">{{ email }}</p>
-                        <p class="text-xs opacity-75">Tutor Académico</p>
+                    <div id="comunicados-list" class="space-y-2">
+                        <p class="text-center text-slate-500 text-sm">Cargando comunicados...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Opciones -->
-            <div class="space-y-2">
-                <a href="/logout" class="flex items-center gap-3 p-3 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
-                    <span class="material-symbols-outlined text-red-500">logout</span>
-                    <span class="font-medium text-slate-900 dark:text-white">Cerrar Sesión</span>
-                </a>
+            <!-- Vista Alertas -->
+            <div id="alertas-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Alertas</h2>
+                </div>
+                <div id="alertas-container" class="flex flex-col gap-3"></div>
             </div>
-        </div>
-    </main>
 
-    <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 z-50">
-        <div class="max-w-md mx-auto flex justify-around items-center h-16 px-2">
-            <button onclick="showPanel('dashboard')" class="nav-btn flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20">
-                <span class="material-symbols-outlined text-xl">home</span>
-                <span class="text-[10px] font-medium">Inicio</span>
-            </button>
-            <button onclick="showPanel('alertas')" class="nav-btn flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800">
-                <span class="material-symbols-outlined text-xl">warning</span>
-                <span class="text-[10px] font-medium">Alertas</span>
-            </button>
-            <button onclick="showPanel('sesiones')" class="nav-btn flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800">
-                <span class="material-symbols-outlined text-xl">event</span>
-                <span class="text-[10px] font-medium">Sesiones</span>
-            </button>
-            <button onclick="showPanel('observaciones')" class="nav-btn flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800">
-                <span class="material-symbols-outlined text-xl">edit_note</span>
-                <span class="text-[10px] font-medium">Notas</span>
-            </button>
-            <button onclick="showPanel('reportes')" class="nav-btn flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800">
-                <span class="material-symbols-outlined text-xl">analytics</span>
-                <span class="text-[10px] font-medium">Reportes</span>
-            </button>
-            <button onclick="showPanel('perfil')" class="nav-btn flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800">
-                <span class="material-symbols-outlined text-xl">person</span>
-                <span class="text-[10px] font-medium">Perfil</span>
-            </button>
-        </div>
-    </nav>
+            <!-- Vista Sesiones -->
+            <div id="sesiones-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Sesiones de tutoría</h2>
+                </div>
+                <button onclick="agendarSesion()" class="w-full py-3 bg-primary text-white rounded-xl font-medium shadow-lg hover:bg-blue-600 transition mb-4">
+                    <span class="material-symbols-outlined inline-block align-middle">add</span>
+                    Agendar nueva sesión
+                </button>
+                <div id="sesiones-container" class="flex flex-col gap-3"></div>
+            </div>
 
-    <script>
-        // --- FUNCIONES DE NAVEGACIÓN ---
-        function showPanel(panelName) {
-            // Ocultar todas las vistas
-            document.querySelectorAll('[id$="-view"]').forEach(v => v.classList.add('hidden'));
-            
-            // Mostrar vista seleccionada
-            const targetView = document.getElementById(panelName + '-view');
-            if (targetView) {
-                targetView.classList.remove('hidden');
+            <!-- Vista Observaciones -->
+            <div id="observaciones-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Observaciones</h2>
+                </div>
+                <button onclick="crearObservacion()" class="w-full py-3 bg-primary text-white rounded-xl font-medium shadow-lg hover:bg-blue-600 transition mb-4">
+                    <span class="material-symbols-outlined inline-block align-middle">note_add</span>
+                    Nueva observación
+                </button>
+                <div id="observaciones-container" class="flex flex-col gap-3"></div>
+            </div>
+
+            <!-- Vista Reportes -->
+            <div id="reportes-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Reportes</h2>
+                </div>
+                <button onclick="generarReporteSeguimiento()" class="w-full py-3 bg-primary text-white rounded-xl font-medium shadow-lg hover:bg-blue-600 transition mb-4">
+                    <span class="material-symbols-outlined inline-block align-middle">analytics</span>
+                    Generar reporte de seguimiento
+                </button>
+                <div id="reportes-list" class="flex flex-col gap-3"></div>
+            </div>
+
+            <!-- Vista Gestión -->
+            <div id="gestion-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Gestión del tutor</h2>
+                </div>
+
+                <!-- Avisos -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-500">notifications</span>
+                            Avisos
+                        </h3>
+                        <button onclick="loadAvisos()" class="text-xs text-primary hover:text-primary/80">Actualizar</button>
+                    </div>
+                    <div id="avisos-list" class="space-y-2"></div>
+                </div>
+
+                <!-- Autorizaciones digitales -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-purple-500">verified</span>
+                            Autorizaciones
+                        </h3>
+                        <button onclick="loadAutorizaciones()" class="text-xs text-primary hover:text-primary/80">Actualizar</button>
+                    </div>
+                    <div id="autorizaciones-list" class="space-y-2"></div>
+                </div>
+
+                <!-- Pagos -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-yellow-500">payments</span>
+                            Pagos
+                        </h3>
+                        <button onclick="loadPagos()" class="text-xs text-primary hover:text-primary/80">Actualizar</button>
+                    </div>
+                    <div id="pagos-list" class="space-y-2"></div>
+                </div>
+
+                <!-- Comunicación -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-emerald-500">chat_bubble</span>
+                            Comunicación
+                        </h3>
+                        <button onclick="crearComunicacion()" class="text-xs text-primary hover:text-primary/80">Nueva</button>
+                    </div>
+                    <div id="comunicaciones-list" class="space-y-2"></div>
+                </div>
+
+                <!-- Seguimiento del estudiante -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined text-slate-500">insights</span>
+                        Seguimiento del estudiante
+                    </h3>
+                    <select id="gestion-alumno-select" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm mb-3">
+                        <option value="">Seleccionar estudiante...</option>
+                    </select>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="verResumenAlumno()" class="py-2 rounded-lg bg-primary text-white text-xs font-semibold">Resumen</button>
+                        <button onclick="verHistorialAcademico()" class="py-2 rounded-lg bg-primary text-white text-xs font-semibold">Historial</button>
+                        <button onclick="verComparacionMetas()" class="py-2 rounded-lg bg-primary text-white text-xs font-semibold">Metas</button>
+                        <button onclick="verCalendarioAlumno()" class="py-2 rounded-lg bg-primary text-white text-xs font-semibold">Calendario</button>
+                        <button onclick="verProgresoEmocional()" class="py-2 rounded-lg bg-primary text-white text-xs font-semibold">Progreso</button>
+                        <button onclick="verSugerencias()" class="py-2 rounded-lg bg-primary text-white text-xs font-semibold">Sugerencias</button>
+                    </div>
+                </div>
+
+                <!-- Justificantes -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined text-red-500">description</span>
+                        Enviar justificante
+                    </h3>
+                    <div class="space-y-2">
+                        <select id="just-alumno" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
+                            <option value="">Seleccionar estudiante...</option>
+                        </select>
+                        <input id="just-fecha" type="date" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm" />
+                        <input id="just-motivo" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm" placeholder="Motivo" />
+                        <input id="just-evidencia" type="file" class="w-full text-sm" />
+                    </div>
+                    <button onclick="enviarJustificante()" class="w-full mt-3 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-blue-600 transition">Enviar justificante</button>
+                </div>
+
+                <!-- Compromisos -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-orange-500">task_alt</span>
+                            Compromisos
+                        </h3>
+                        <button onclick="crearCompromiso()" class="text-xs text-primary hover:text-primary/80">Nuevo</button>
+                    </div>
+                    <div id="compromisos-list" class="space-y-2"></div>
+                </div>
+
+                <!-- Citas -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-indigo-500">event_available</span>
+                            Citas
+                        </h3>
+                        <button onclick="crearCita()" class="text-xs text-primary hover:text-primary/80">Nueva</button>
+                    </div>
+                    <div id="citas-list" class="space-y-2"></div>
+                </div>
+
+                <!-- Preferencias de notificación -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+                        <span class="material-symbols-outlined text-slate-500">tune</span>
+                        Preferencias de notificación
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2 text-sm text-slate-600 dark:text-slate-300">
+                        <label class="flex items-center gap-2"><input id="pref-tareas" type="checkbox" class="rounded border-slate-300"> Tareas</label>
+                        <label class="flex items-center gap-2"><input id="pref-asistencia" type="checkbox" class="rounded border-slate-300"> Asistencia</label>
+                        <label class="flex items-center gap-2"><input id="pref-calificaciones" type="checkbox" class="rounded border-slate-300"> Calificaciones</label>
+                        <label class="flex items-center gap-2"><input id="pref-eventos" type="checkbox" class="rounded border-slate-300"> Eventos</label>
+                        <label class="flex items-center gap-2"><input id="pref-alertas" type="checkbox" class="rounded border-slate-300"> Alertas</label>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <input id="pref-horario-inicio" type="time" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm" />
+                        <input id="pref-horario-fin" type="time" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm" />
+                    </div>
+                    <button onclick="guardarPreferencias()" class="w-full mt-3 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-blue-600 transition">Guardar preferencias</button>
+                </div>
+
+                <!-- Participación -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-green-500">leaderboard</span>
+                            Mi participación
+                        </h3>
+                        <button onclick="loadParticipacion()" class="text-xs text-primary hover:text-primary/80">Actualizar</button>
+                    </div>
+                    <div id="participacion-card" class="text-sm text-slate-600 dark:text-slate-300"></div>
+                </div>
+
+                <!-- Reportes descargables -->
+                <div class="bg-white dark:bg-surface-dark rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-pink-500">description</span>
+                            Reportes descargables
+                        </h3>
+                        <button onclick="solicitarReporteTutor()" class="text-xs text-primary hover:text-primary/80">Solicitar</button>
+                    </div>
+                    <div id="reportes-tutor-list" class="space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- Vista Perfil -->
+            <div id="perfil-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mi perfil</h2>
+                </div>
+
+                <div class="rounded-2xl p-5 bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <div class="h-16 w-16 rounded-full border-2 border-white dark:border-surface-dark shadow-sm bg-cover bg-center"
+                            data-profile-photo
+                            style="background-image: url('{{ foto_perfil or avatar_url or ('https://ui-avatars.com/api/?name=' ~ nombre) }}');"></div>
+                        <div>
+                            <h3 class="text-lg font-bold">{{ nombre }}</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">{{ email }}</p>
+                            <p class="text-xs text-slate-400">Tutor Académico</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-2xl p-5 bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h4 class="text-sm font-semibold text-slate-900 dark:text-white mb-3">Foto de perfil</h4>
+                    <div class="flex items-center gap-3">
+                        <input id="tutor-photo-input" type="file" accept="image/*"
+                            class="flex-1 text-sm text-slate-600 dark:text-slate-300" />
+                        <button type="button" onclick="uploadProfilePhoto('tutor-photo-input')"
+                            class="px-3 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-blue-600 transition">Subir</button>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Formatos permitidos: jpg, png, jpeg, gif, webp.</p>
+                </div>
+
+                <div class="space-y-2">
+                    <a href="/logout" class="flex items-center gap-3 p-3 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                        <span class="material-symbols-outlined text-red-500">logout</span>
+                        <span class="font-medium text-slate-900 dark:text-white">Cerrar sesión</span>
+                    </a>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-0 left-0 right-0 z-50 max-w-md mx-auto bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800">
+            <div class="flex h-16 items-center justify-between px-1">
+                <button data-panel="dashboard" onclick="showPanel('dashboard')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-primary bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">home</span>
+                    <span class="text-[11px] font-semibold">Inicio</span>
+                </button>
+                <button data-panel="alertas" onclick="showPanel('alertas')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">warning</span>
+                    <span class="text-[11px] font-semibold">Alertas</span>
+                </button>
+                <button data-panel="sesiones" onclick="showPanel('sesiones')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">event</span>
+                    <span class="text-[11px] font-semibold">Sesiones</span>
+                </button>
+                <button data-panel="observaciones" onclick="showPanel('observaciones')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">edit_note</span>
+                    <span class="text-[11px] font-semibold">Notas</span>
+                </button>
+                <button data-panel="reportes" onclick="showPanel('reportes')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">analytics</span>
+                    <span class="text-[11px] font-semibold">Reportes</span>
+                </button>
+                <button data-panel="gestion" onclick="showPanel('gestion')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">apps</span>
+                    <span class="text-[11px] font-semibold">Gestión</span>
+                </button>
+                <button data-panel="perfil" onclick="showPanel('perfil')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">person</span>
+                    <span class="text-[11px] font-semibold">Perfil</span>
+                </button>
+            </div>
+        </nav>
+
+        <script>
+            // --- FUNCIONES DE NAVEGACIÓN ---
+            function showPanel(panelName) {
+                // Ocultar todas las vistas
+                document.querySelectorAll('[id$="-view"]').forEach(v => v.classList.add('hidden'));
+
+                // Mostrar vista seleccionada
+                const targetView = document.getElementById(panelName + '-view');
+                if (targetView) {
+                    targetView.classList.remove('hidden');
+                }
+
+                // Actualizar navegación
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.remove('text-primary', 'bg-primary/10', 'dark:bg-primary/20');
+                    btn.classList.add('text-slate-500', 'dark:text-slate-400');
+                });
+                const activeBtn = document.querySelector(`.nav-btn[data-panel="${panelName}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.remove('text-slate-500', 'dark:text-slate-400');
+                    activeBtn.classList.add('text-primary', 'bg-primary/10', 'dark:bg-primary/20');
+                }
+
+                // Cargar datos según panel
+                if (panelName === 'dashboard') loadDashboard();
+                else if (panelName === 'alertas') loadAllAlertas();
+                else if (panelName === 'sesiones') loadAllSesiones();
+                else if (panelName === 'observaciones') loadObservaciones();
+                else if (panelName === 'reportes') loadReportes();
+                else if (panelName === 'gestion') loadGestion();
             }
-            
-            // Actualizar navegación
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('text-indigo-600', 'bg-indigo-50', 'dark:bg-indigo-900/20');
-                btn.classList.add('text-slate-600', 'dark:text-slate-400');
-            });
-            event.currentTarget.classList.remove('text-slate-600', 'dark:text-slate-400');
-            event.currentTarget.classList.add('text-indigo-600', 'bg-indigo-50', 'dark:bg-indigo-900/20');
-            
-            // Cargar datos según panel
-            if (panelName === 'dashboard') loadDashboard();
-            else if (panelName === 'alertas') loadAllAlertas();
-            else if (panelName === 'sesiones') loadAllSesiones();
-            else if (panelName === 'observaciones') loadObservaciones();
-            else if (panelName === 'reportes') loadReportes();
-        }
 
         // --- FUNCIONES DE CARGA ---
         async function loadDashboard() {
@@ -261,6 +478,51 @@
                 loadComunicados(),
                 loadStats()
             ]);
+        }
+
+        function verTodasAlertas() {
+            showPanel('alertas');
+        }
+
+        async function loadGestion() {
+            await Promise.all([
+                loadAvisos(),
+                loadAutorizaciones(),
+                loadPagos(),
+                loadComunicaciones(),
+                loadCompromisos(),
+                loadCitas(),
+                loadPreferencias(),
+                loadParticipacion(),
+                loadReportesTutor(),
+                loadGestionAlumnos()
+            ]);
+        }
+
+        async function loadGestionAlumnos() {
+            try {
+                const res = await fetch('/api/tutor/mis-alumnos');
+                const data = await res.json();
+                const alumnos = data.alumnos || [];
+                const selects = [
+                    document.getElementById('gestion-alumno-select'),
+                    document.getElementById('just-alumno')
+                ];
+                selects.forEach(select => {
+                    if (!select) return;
+                    const current = select.value;
+                    select.innerHTML = '<option value="">Seleccionar estudiante...</option>' +
+                        alumnos.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('');
+                    if (current) select.value = current;
+                });
+            } catch (e) {
+                console.error('Error en loadGestionAlumnos:', e);
+            }
+        }
+
+        function getAlumnoSeleccionado() {
+            const select = document.getElementById('gestion-alumno-select');
+            return select ? select.value : '';
         }
 
         async function loadStats() {
@@ -459,6 +721,906 @@
             } catch (e) {
                 console.error('Error en loadComunicados:', e);
                 list.innerHTML = '<p class="text-center text-red-500 text-sm">Error al cargar comunicados</p>';
+            }
+        }
+
+        // --- GESTIÓN DEL TUTOR ---
+        async function loadAvisos() {
+            const list = document.getElementById('avisos-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/tutor/avisos');
+                const data = await res.json();
+                const avisos = Array.isArray(data) ? data : (data.avisos || []);
+
+                if (!avisos || avisos.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-500 text-sm py-2">No hay avisos</p>';
+                    return;
+                }
+
+                let html = '';
+                avisos.forEach(a => {
+                    const leido = a.leido === 1 || a.leido === true;
+                    html += `
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-slate-900 dark:text-white">${a.titulo || 'Aviso'}</p>
+                                    <p class="text-xs text-slate-500 mt-1">${a.mensaje || a.descripcion || ''}</p>
+                                    <p class="text-xs text-slate-400 mt-1">${a.fecha_envio || a.fecha || ''}</p>
+                                </div>
+                                ${leido ? '<span class="text-xs text-green-600">Leído</span>' : `<button onclick="confirmarAviso(${a.id})" class="text-xs text-primary">Confirmar</button>`}
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } catch (e) {
+                console.error('Error en loadAvisos:', e);
+                list.innerHTML = '<p class="text-center text-red-500 text-sm">Error al cargar avisos</p>';
+            }
+        }
+
+        async function confirmarAviso(id) {
+            try {
+                const res = await fetch(`/api/tutor/avisos/${id}/confirmar`, { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'ok' || data.success) {
+                    showToast('Aviso confirmado', 'success');
+                    loadAvisos();
+                } else {
+                    showToast('No se pudo confirmar el aviso', 'error');
+                }
+            } catch (e) {
+                console.error('Error en confirmarAviso:', e);
+                showToast('Error al confirmar aviso', 'error');
+            }
+        }
+
+        async function loadAutorizaciones() {
+            const list = document.getElementById('autorizaciones-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/tutor/autorizaciones-digitales?pendientes=true');
+                const data = await res.json();
+                const autorizaciones = Array.isArray(data) ? data : (data.autorizaciones || []);
+
+                if (!autorizaciones || autorizaciones.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-500 text-sm py-2">No hay autorizaciones pendientes</p>';
+                    return;
+                }
+
+                let html = '';
+                autorizaciones.forEach(a => {
+                    html += `
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">${a.alumno_nombre || 'Alumno'}</p>
+                            <p class="text-xs text-slate-500 mt-1">${a.motivo || a.descripcion || 'Solicitud de autorización'}</p>
+                            <p class="text-xs text-slate-400 mt-1">${a.fecha_solicitud || ''}</p>
+                            <div class="flex gap-2 mt-2">
+                                <button onclick="firmarAutorizacion(${a.id}, true)" class="text-xs px-2 py-1 rounded-lg bg-green-600 text-white">Autorizar</button>
+                                <button onclick="firmarAutorizacion(${a.id}, false)" class="text-xs px-2 py-1 rounded-lg bg-red-600 text-white">Rechazar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } catch (e) {
+                console.error('Error en loadAutorizaciones:', e);
+                list.innerHTML = '<p class="text-center text-red-500 text-sm">Error al cargar autorizaciones</p>';
+            }
+        }
+
+        async function loadPagos() {
+            const list = document.getElementById('pagos-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/tutor/pagos');
+                const data = await res.json();
+                const pagos = Array.isArray(data) ? data : (data.pagos || []);
+
+                if (!pagos || pagos.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-500 text-sm py-2">No hay pagos</p>';
+                    return;
+                }
+
+                let html = '';
+                pagos.forEach(p => {
+                    const estadoClass = p.estado === 'pagado' ? 'text-green-600' : 'text-orange-600';
+                    html += `
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-slate-900 dark:text-white">${p.concepto || 'Pago'}</p>
+                                    <p class="text-xs text-slate-500 mt-1">Fecha límite: ${p.fecha_limite || 'N/A'}</p>
+                                    <p class="text-xs text-slate-500">Monto: $${p.monto || '0'}</p>
+                                </div>
+                                <span class="text-xs ${estadoClass}">${p.estado || 'pendiente'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } catch (e) {
+                console.error('Error en loadPagos:', e);
+                list.innerHTML = '<p class="text-center text-red-500 text-sm">Error al cargar pagos</p>';
+            }
+        }
+
+        async function firmarAutorizacion(id, autorizado) {
+            const { value: comentario } = await Swal.fire({
+                title: autorizado ? 'Autorizar solicitud' : 'Rechazar solicitud',
+                input: 'textarea',
+                inputLabel: 'Comentario',
+                inputPlaceholder: 'Escribe un comentario (opcional)',
+                showCancelButton: true,
+                confirmButtonText: autorizado ? 'Autorizar' : 'Rechazar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            try {
+                const res = await fetch(`/api/tutor/autorizaciones/${id}/firmar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ autorizado, comentario })
+                });
+                const data = await res.json();
+                if (data.status === 'ok' || data.success) {
+                    showToast('Autorización registrada', 'success');
+                    loadAutorizaciones();
+                } else {
+                    showToast('No se pudo registrar la autorización', 'error');
+                }
+            } catch (e) {
+                console.error('Error en firmarAutorizacion:', e);
+                showToast('Error al firmar autorización', 'error');
+            }
+        }
+
+        async function loadComunicaciones() {
+            const list = document.getElementById('comunicaciones-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/tutor/comunicacion');
+                const data = await res.json();
+                const comunicaciones = Array.isArray(data) ? data : (data.comunicaciones || []);
+
+                if (!comunicaciones || comunicaciones.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-500 text-sm py-2">No hay conversaciones</p>';
+                    return;
+                }
+
+                let html = '';
+                comunicaciones.forEach(c => {
+                    html += `
+                        <button onclick="verMensajes(${c.id})" class="w-full text-left p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">${c.asunto || 'Conversación'}</p>
+                            <p class="text-xs text-slate-500 mt-1">${c.alumno_nombre || ''}</p>
+                            <p class="text-xs text-slate-400 mt-1">${c.fecha_creacion || ''}</p>
+                        </button>
+                    `;
+                });
+                list.innerHTML = html;
+            } catch (e) {
+                console.error('Error en loadComunicaciones:', e);
+                list.innerHTML = '<p class="text-center text-red-500 text-sm">Error al cargar comunicación</p>';
+            }
+        }
+
+        async function crearComunicacion() {
+            const alumnosRes = await fetch('/api/tutor/mis-alumnos');
+            const alumnosData = await alumnosRes.json();
+            const alumnos = alumnosData.alumnos || [];
+
+            const { value: formValues } = await Swal.fire({
+                title: 'Nueva comunicación',
+                html: `
+                    <div class="space-y-3">
+                        <select id="swal-alumno" class="swal2-input">
+                            <option value="">Seleccionar estudiante...</option>
+                            ${alumnos.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('')}
+                        </select>
+                        <input id="swal-asunto" class="swal2-input" placeholder="Asunto" />
+                        <textarea id="swal-mensaje" class="swal2-textarea" placeholder="Mensaje"></textarea>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Enviar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => ({
+                    alumno_id: document.getElementById('swal-alumno').value,
+                    asunto: document.getElementById('swal-asunto').value,
+                    mensaje: document.getElementById('swal-mensaje').value
+                })
+            });
+
+            if (formValues && formValues.alumno_id && formValues.asunto && formValues.mensaje) {
+                try {
+                    const res = await fetch('/api/tutor/comunicacion', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            alumno_id: formValues.alumno_id,
+                            asunto: formValues.asunto,
+                            mensaje: formValues.mensaje,
+                            destinatario_tipo: 'alumno',
+                            destinatario_id: formValues.alumno_id
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'ok' || data.success) {
+                        showToast('Comunicación enviada', 'success');
+                        loadComunicaciones();
+                    } else {
+                        showToast('Error al enviar comunicación', 'error');
+                    }
+                } catch (e) {
+                    console.error('Error en crearComunicacion:', e);
+                    showToast('Error al enviar comunicación', 'error');
+                }
+            }
+        }
+
+        async function verMensajes(id) {
+            try {
+                const res = await fetch(`/api/tutor/comunicacion/${id}/mensajes`);
+                const mensajes = await res.json();
+                const htmlMensajes = (mensajes || []).map(m => `
+                    <div class="text-left p-2 rounded-md ${m.remitente_tipo === 'tutor' ? 'bg-blue-50' : 'bg-slate-100'}">
+                        <p class="text-xs text-slate-500">${m.remitente_tipo === 'tutor' ? 'Tú' : 'Alumno'} • ${m.fecha_envio || ''}</p>
+                        <p class="text-sm text-slate-800">${m.contenido}</p>
+                    </div>
+                `).join('');
+
+                const { value: mensaje } = await Swal.fire({
+                    title: 'Mensajes',
+                    html: `
+                        <div class="space-y-2 max-h-56 overflow-y-auto mb-3">${htmlMensajes || '<p class="text-sm text-slate-500">Sin mensajes</p>'}</div>
+                        <textarea id="swal-respuesta" class="swal2-textarea" placeholder="Escribe un mensaje..."></textarea>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Enviar',
+                    cancelButtonText: 'Cerrar',
+                    preConfirm: () => document.getElementById('swal-respuesta').value
+                });
+
+                if (mensaje) {
+                    await fetch(`/api/tutor/comunicacion/${id}/mensajes`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contenido: mensaje })
+                    });
+                    showToast('Mensaje enviado', 'success');
+                    loadComunicaciones();
+                }
+            } catch (e) {
+                console.error('Error en verMensajes:', e);
+                showToast('Error al cargar mensajes', 'error');
+            }
+        }
+
+        async function loadCompromisos() {
+            const list = document.getElementById('compromisos-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/tutor/compromisos');
+                const data = await res.json();
+                const compromisos = Array.isArray(data) ? data : (data.compromisos || []);
+
+                if (!compromisos || compromisos.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-500 text-sm py-2">No hay compromisos</p>';
+                    return;
+                }
+
+                let html = '';
+                compromisos.forEach(c => {
+                    html += `
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-slate-900 dark:text-white">${c.alumno_nombre || 'Alumno'}</p>
+                                    <p class="text-xs text-slate-500 mt-1">${c.descripcion || ''}</p>
+                                    <p class="text-xs text-slate-400 mt-1">Límite: ${c.fecha_limite || 'N/A'}</p>
+                                </div>
+                                <button onclick="actualizarCompromiso(${c.id})" class="text-xs text-primary">Actualizar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } catch (e) {
+                console.error('Error en loadCompromisos:', e);
+                list.innerHTML = '<p class="text-center text-red-500 text-sm">Error al cargar compromisos</p>';
+            }
+        }
+
+        async function crearCompromiso() {
+            const alumnosRes = await fetch('/api/tutor/mis-alumnos');
+            const alumnosData = await alumnosRes.json();
+            const alumnos = alumnosData.alumnos || [];
+
+            const { value: formValues } = await Swal.fire({
+                title: 'Nuevo compromiso',
+                html: `
+                    <div class="space-y-3">
+                        <select id="swal-alumno" class="swal2-input">
+                            <option value="">Seleccionar estudiante...</option>
+                            ${alumnos.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('')}
+                        </select>
+                        <textarea id="swal-descripcion" class="swal2-textarea" placeholder="Descripción"></textarea>
+                        <input id="swal-fecha" type="date" class="swal2-input" />
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => ({
+                    alumno_id: document.getElementById('swal-alumno').value,
+                    descripcion: document.getElementById('swal-descripcion').value,
+                    fecha_limite: document.getElementById('swal-fecha').value
+                })
+            });
+
+            if (formValues && formValues.alumno_id && formValues.descripcion) {
+                try {
+                    const res = await fetch('/api/tutor/compromisos', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formValues)
+                    });
+                    const data = await res.json();
+                    if (data.status === 'ok' || data.success) {
+                        showToast('Compromiso creado', 'success');
+                        loadCompromisos();
+                    } else {
+                        showToast('Error al crear compromiso', 'error');
+                    }
+                } catch (e) {
+                    console.error('Error en crearCompromiso:', e);
+                    showToast('Error al crear compromiso', 'error');
+                }
+            }
+        }
+
+        async function actualizarCompromiso(id) {
+            const { value: formValues } = await Swal.fire({
+                title: 'Actualizar compromiso',
+                html: `
+                    <div class="space-y-3">
+                        <select id="swal-estado" class="swal2-input">
+                            <option value="pendiente">Pendiente</option>
+                            <option value="en_progreso">En progreso</option>
+                            <option value="cumplido">Cumplido</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                        <textarea id="swal-notas" class="swal2-textarea" placeholder="Notas de seguimiento"></textarea>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => ({
+                    estado: document.getElementById('swal-estado').value,
+                    notas_seguimiento: document.getElementById('swal-notas').value
+                })
+            });
+
+            if (formValues) {
+                try {
+                    const res = await fetch(`/api/tutor/compromisos/${id}/actualizar`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formValues)
+                    });
+                    const data = await res.json();
+                    if (data.status === 'ok' || data.success) {
+                        showToast('Compromiso actualizado', 'success');
+                        loadCompromisos();
+                    } else {
+                        showToast('Error al actualizar compromiso', 'error');
+                    }
+                } catch (e) {
+                    console.error('Error en actualizarCompromiso:', e);
+                    showToast('Error al actualizar compromiso', 'error');
+                }
+            }
+        }
+
+        async function loadCitas() {
+            const list = document.getElementById('citas-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/tutor/citas');
+                const data = await res.json();
+                const citas = Array.isArray(data) ? data : (data.citas || []);
+
+                if (!citas || citas.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-500 text-sm py-2">No hay citas</p>';
+                    return;
+                }
+
+                let html = '';
+                citas.forEach(c => {
+                    html += `
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-slate-900 dark:text-white">${c.alumno_nombre || 'Alumno'}</p>
+                                    <p class="text-xs text-slate-500 mt-1">${c.tipo_cita || ''}</p>
+                                    <p class="text-xs text-slate-400 mt-1">${c.fecha_cita || ''}</p>
+                                </div>
+                                <button onclick="actualizarCita(${c.id})" class="text-xs text-primary">Actualizar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } catch (e) {
+                console.error('Error en loadCitas:', e);
+                list.innerHTML = '<p class="text-center text-red-500 text-sm">Error al cargar citas</p>';
+            }
+        }
+
+        async function crearCita() {
+            const alumnosRes = await fetch('/api/tutor/mis-alumnos');
+            const alumnosData = await alumnosRes.json();
+            const alumnos = alumnosData.alumnos || [];
+
+            const { value: formValues } = await Swal.fire({
+                title: 'Nueva cita',
+                html: `
+                    <div class="space-y-3">
+                        <select id="swal-alumno" class="swal2-input">
+                            <option value="">Seleccionar estudiante...</option>
+                            ${alumnos.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('')}
+                        </select>
+                        <input id="swal-fecha" type="datetime-local" class="swal2-input" />
+                        <input id="swal-tipo" class="swal2-input" placeholder="Tipo de cita" />
+                        <input id="swal-lugar" class="swal2-input" placeholder="Lugar" />
+                        <select id="swal-modalidad" class="swal2-input">
+                            <option value="presencial">Presencial</option>
+                            <option value="virtual">Virtual</option>
+                        </select>
+                        <textarea id="swal-motivo" class="swal2-textarea" placeholder="Motivo"></textarea>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => ({
+                    alumno_id: document.getElementById('swal-alumno').value,
+                    fecha_cita: document.getElementById('swal-fecha').value,
+                    tipo_cita: document.getElementById('swal-tipo').value,
+                    lugar: document.getElementById('swal-lugar').value,
+                    modalidad: document.getElementById('swal-modalidad').value,
+                    motivo: document.getElementById('swal-motivo').value,
+                    con_quien_tipo: 'alumno',
+                    con_quien_id: document.getElementById('swal-alumno').value
+                })
+            });
+
+            if (formValues && formValues.alumno_id && formValues.fecha_cita) {
+                try {
+                    const res = await fetch('/api/tutor/citas', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formValues)
+                    });
+                    const data = await res.json();
+                    if (data.status === 'ok' || data.success) {
+                        showToast('Cita creada', 'success');
+                        loadCitas();
+                    } else {
+                        showToast('Error al crear cita', 'error');
+                    }
+                } catch (e) {
+                    console.error('Error en crearCita:', e);
+                    showToast('Error al crear cita', 'error');
+                }
+            }
+        }
+
+        async function actualizarCita(id) {
+            const { value: formValues } = await Swal.fire({
+                title: 'Actualizar cita',
+                html: `
+                    <div class="space-y-3">
+                        <select id="swal-estado" class="swal2-input">
+                            <option value="programada">Programada</option>
+                            <option value="realizada">Realizada</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                        <textarea id="swal-notas" class="swal2-textarea" placeholder="Notas"></textarea>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => ({
+                    estado: document.getElementById('swal-estado').value,
+                    notas: document.getElementById('swal-notas').value
+                })
+            });
+
+            if (formValues) {
+                try {
+                    const res = await fetch(`/api/tutor/citas/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formValues)
+                    });
+                    const data = await res.json();
+                    if (data.status === 'ok' || data.success) {
+                        showToast('Cita actualizada', 'success');
+                        loadCitas();
+                    } else {
+                        showToast('Error al actualizar cita', 'error');
+                    }
+                } catch (e) {
+                    console.error('Error en actualizarCita:', e);
+                    showToast('Error al actualizar cita', 'error');
+                }
+            }
+        }
+
+        async function loadPreferencias() {
+            try {
+                const res = await fetch('/api/tutor/preferencias-notificacion');
+                const data = await res.json();
+                document.getElementById('pref-tareas').checked = data.notificar_tareas ?? true;
+                document.getElementById('pref-asistencia').checked = data.notificar_asistencia ?? true;
+                document.getElementById('pref-calificaciones').checked = data.notificar_calificaciones ?? true;
+                document.getElementById('pref-eventos').checked = data.notificar_eventos ?? true;
+                document.getElementById('pref-alertas').checked = data.notificar_alertas ?? true;
+                document.getElementById('pref-horario-inicio').value = (data.horario_inicio || '08:00').slice(0,5);
+                document.getElementById('pref-horario-fin').value = (data.horario_fin || '20:00').slice(0,5);
+            } catch (e) {
+                console.error('Error en loadPreferencias:', e);
+            }
+        }
+
+        async function guardarPreferencias() {
+            try {
+                const payload = {
+                    notificar_tareas: document.getElementById('pref-tareas').checked,
+                    notificar_asistencia: document.getElementById('pref-asistencia').checked,
+                    notificar_calificaciones: document.getElementById('pref-calificaciones').checked,
+                    notificar_eventos: document.getElementById('pref-eventos').checked,
+                    notificar_alertas: document.getElementById('pref-alertas').checked,
+                    horario_inicio: document.getElementById('pref-horario-inicio').value,
+                    horario_fin: document.getElementById('pref-horario-fin').value
+                };
+                const res = await fetch('/api/tutor/preferencias-notificacion', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.status === 'ok' || data.success) {
+                    showToast('Preferencias guardadas', 'success');
+                } else {
+                    showToast('No se pudieron guardar las preferencias', 'error');
+                }
+            } catch (e) {
+                console.error('Error en guardarPreferencias:', e);
+                showToast('Error al guardar preferencias', 'error');
+            }
+        }
+
+        async function loadParticipacion() {
+            const card = document.getElementById('participacion-card');
+            card.innerHTML = '<div class="flex justify-center p-2"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/tutor/mi-participacion');
+                const data = await res.json();
+                if (!data || Object.keys(data).length === 0) {
+                    card.innerHTML = '<p class="text-sm text-slate-500">Sin datos de participación.</p>';
+                    return;
+                }
+                card.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2">
+                        <p><strong>Accesos:</strong> ${data.total_accesos ?? 0}</p>
+                        <p><strong>Avisos leídos:</strong> ${data.avisos_leidos ?? 0}</p>
+                        <p><strong>Reuniones:</strong> ${data.reuniones_asistidas ?? 0}</p>
+                        <p><strong>Mensajes:</strong> ${data.mensajes_enviados ?? 0}</p>
+                        <p><strong>Autorizaciones:</strong> ${data.autorizaciones_firmadas ?? 0}</p>
+                        <p><strong>Compromisos:</strong> ${data.compromisos_cumplidos ?? 0}</p>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Nivel: ${data.nivel_participacion || 'N/A'}</p>
+                `;
+            } catch (e) {
+                console.error('Error en loadParticipacion:', e);
+                card.innerHTML = '<p class="text-sm text-red-500">Error al cargar participación</p>';
+            }
+        }
+
+        async function loadReportesTutor() {
+            const list = document.getElementById('reportes-tutor-list');
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const res = await fetch('/api/tutor/reportes');
+                const data = await res.json();
+                const reportes = Array.isArray(data) ? data : (data.reportes || []);
+
+                if (!reportes || reportes.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-500 text-sm py-2">No hay reportes</p>';
+                    return;
+                }
+
+                let html = '';
+                reportes.forEach(r => {
+                    html += `
+                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white">${r.tipo_reporte || 'Reporte'}</p>
+                            <p class="text-xs text-slate-500 mt-1">${r.alumno_nombre || ''}</p>
+                            <p class="text-xs text-slate-400 mt-1">${r.fecha_solicitud || ''}</p>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } catch (e) {
+                console.error('Error en loadReportesTutor:', e);
+                list.innerHTML = '<p class="text-center text-red-500 text-sm">Error al cargar reportes</p>';
+            }
+        }
+
+        async function solicitarReporteTutor() {
+            const alumnosRes = await fetch('/api/tutor/mis-alumnos');
+            const alumnosData = await alumnosRes.json();
+            const alumnos = alumnosData.alumnos || [];
+
+            const { value: formValues } = await Swal.fire({
+                title: 'Solicitar reporte',
+                html: `
+                    <div class="space-y-3">
+                        <select id="swal-alumno" class="swal2-input">
+                            <option value="">Seleccionar estudiante...</option>
+                            ${alumnos.map(a => `<option value="${a.id}">${a.nombre}</option>`).join('')}
+                        </select>
+                        <input id="swal-tipo" class="swal2-input" placeholder="Tipo de reporte" />
+                        <input id="swal-periodo" class="swal2-input" placeholder="Periodo (ej. 2025-1)" />
+                        <select id="swal-formato" class="swal2-input">
+                            <option value="pdf">PDF</option>
+                            <option value="excel">Excel</option>
+                        </select>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Solicitar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => ({
+                    alumno_id: document.getElementById('swal-alumno').value,
+                    tipo_reporte: document.getElementById('swal-tipo').value,
+                    periodo: document.getElementById('swal-periodo').value,
+                    formato: document.getElementById('swal-formato').value
+                })
+            });
+
+            if (formValues && formValues.alumno_id && formValues.tipo_reporte) {
+                try {
+                    const res = await fetch('/api/tutor/reportes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formValues)
+                    });
+                    const data = await res.json();
+                    if (data.status === 'ok' || data.success) {
+                        showToast('Reporte solicitado', 'success');
+                        loadReportesTutor();
+                    } else {
+                        showToast('Error al solicitar reporte', 'error');
+                    }
+                } catch (e) {
+                    console.error('Error en solicitarReporteTutor:', e);
+                    showToast('Error al solicitar reporte', 'error');
+                }
+            }
+        }
+
+        async function verResumenAlumno() {
+            const alumnoId = getAlumnoSeleccionado();
+            if (!alumnoId) return showToast('Selecciona un estudiante', 'warning');
+            try {
+                const res = await fetch(`/api/tutor/resumen-alumno/${alumnoId}`);
+                const data = await res.json();
+                const html = `
+                    <div class="text-left space-y-1">
+                        <p><strong>Promedio:</strong> ${data.promedio_general ?? 'N/A'}</p>
+                        <p><strong>Alertas activas:</strong> ${data.alertas_activas ?? 0}</p>
+                        <p><strong>Nivel de riesgo:</strong> ${data.nivel_riesgo ?? 'N/A'}</p>
+                        <p><strong>Estado emocional:</strong> ${data.estado_emocional ?? 'N/A'}</p>
+                    </div>
+                `;
+                Swal.fire({ title: 'Resumen del alumno', html, confirmButtonText: 'Cerrar' });
+            } catch (e) {
+                console.error('Error en verResumenAlumno:', e);
+                showToast('Error al cargar resumen', 'error');
+            }
+        }
+
+        async function verHistorialAcademico() {
+            const alumnoId = getAlumnoSeleccionado();
+            if (!alumnoId) return showToast('Selecciona un estudiante', 'warning');
+            try {
+                const res = await fetch(`/api/tutor/historial-academico/${alumnoId}`);
+                const data = await res.json();
+                const rows = (data || []).map(i => `
+                    <div class="p-2 rounded-md bg-slate-50">
+                        <p class="text-sm font-semibold">${i.titulo || 'Registro'}</p>
+                        <p class="text-xs text-slate-500">${i.descripcion || ''}</p>
+                        <p class="text-xs text-slate-400">${i.fecha_registro || ''}</p>
+                    </div>
+                `).join('');
+                Swal.fire({
+                    title: 'Historial académico',
+                    html: `<div class="space-y-2 max-h-60 overflow-y-auto">${rows || '<p class="text-sm text-slate-500">Sin historial</p>'}</div>`,
+                    confirmButtonText: 'Cerrar'
+                });
+            } catch (e) {
+                console.error('Error en verHistorialAcademico:', e);
+                showToast('Error al cargar historial', 'error');
+            }
+        }
+
+        async function verComparacionMetas() {
+            const alumnoId = getAlumnoSeleccionado();
+            if (!alumnoId) return showToast('Selecciona un estudiante', 'warning');
+            try {
+                const res = await fetch(`/api/tutor/comparacion-metas/${alumnoId}`);
+                const data = await res.json();
+                const rows = (data || []).map(i => `
+                    <div class="p-2 rounded-md bg-slate-50">
+                        <p class="text-sm font-semibold">${i.metrica || 'Meta'}</p>
+                        <p class="text-xs text-slate-500">Institucional: ${i.meta_institucional ?? 'N/A'}</p>
+                        <p class="text-xs text-slate-500">Alumno: ${i.valor_actual ?? 'N/A'}</p>
+                        <p class="text-xs text-slate-400">${i.fecha_calculo || ''}</p>
+                    </div>
+                `).join('');
+                Swal.fire({
+                    title: 'Comparación de metas',
+                    html: `<div class="space-y-2 max-h-60 overflow-y-auto">${rows || '<p class="text-sm text-slate-500">Sin datos</p>'}</div>`,
+                    confirmButtonText: 'Cerrar'
+                });
+            } catch (e) {
+                console.error('Error en verComparacionMetas:', e);
+                showToast('Error al cargar metas', 'error');
+            }
+        }
+
+        async function verCalendarioAlumno() {
+            const alumnoId = getAlumnoSeleccionado();
+            if (!alumnoId) return showToast('Selecciona un estudiante', 'warning');
+            try {
+                const res = await fetch(`/api/tutor/calendario/${alumnoId}`);
+                const data = await res.json();
+                const rows = (data || []).map(i => `
+                    <div class="p-2 rounded-md bg-slate-50">
+                        <p class="text-sm font-semibold">${i.titulo || 'Evento'}</p>
+                        <p class="text-xs text-slate-500">${i.fecha_inicio || ''} - ${i.fecha_fin || ''}</p>
+                        <p class="text-xs text-slate-400">${i.descripcion || ''}</p>
+                    </div>
+                `).join('');
+                Swal.fire({
+                    title: 'Calendario del alumno',
+                    html: `<div class="space-y-2 max-h-60 overflow-y-auto">${rows || '<p class="text-sm text-slate-500">Sin eventos</p>'}</div>`,
+                    confirmButtonText: 'Cerrar'
+                });
+            } catch (e) {
+                console.error('Error en verCalendarioAlumno:', e);
+                showToast('Error al cargar calendario', 'error');
+            }
+        }
+
+        async function verProgresoEmocional() {
+            const alumnoId = getAlumnoSeleccionado();
+            if (!alumnoId) return showToast('Selecciona un estudiante', 'warning');
+            try {
+                const res = await fetch(`/api/tutor/progreso-emocional/${alumnoId}`);
+                const data = await res.json();
+                const rows = (data || []).map(i => `
+                    <div class="p-2 rounded-md bg-slate-50">
+                        <p class="text-sm font-semibold">${i.estado || 'Registro'}</p>
+                        <p class="text-xs text-slate-500">${i.comentario || ''}</p>
+                        <p class="text-xs text-slate-400">${i.fecha || ''}</p>
+                    </div>
+                `).join('');
+                Swal.fire({
+                    title: 'Progreso emocional',
+                    html: `<div class="space-y-2 max-h-60 overflow-y-auto">${rows || '<p class="text-sm text-slate-500">Sin registros</p>'}</div>`,
+                    confirmButtonText: 'Cerrar'
+                });
+            } catch (e) {
+                console.error('Error en verProgresoEmocional:', e);
+                showToast('Error al cargar progreso', 'error');
+            }
+        }
+
+        async function verSugerencias() {
+            const alumnoId = getAlumnoSeleccionado();
+            if (!alumnoId) return showToast('Selecciona un estudiante', 'warning');
+            try {
+                const res = await fetch(`/api/tutor/sugerencias/${alumnoId}`);
+                const data = await res.json();
+                const sugerencias = Array.isArray(data) ? data : (data.sugerencias || []);
+
+                const html = sugerencias.map(s => `
+                    <div class="p-2 rounded-md bg-slate-50 flex items-center justify-between gap-2">
+                        <div>
+                            <p class="text-sm font-semibold">${s.titulo || 'Sugerencia'}</p>
+                            <p class="text-xs text-slate-500">${s.descripcion || ''}</p>
+                        </div>
+                        <button class="text-xs text-primary" data-sugerencia="${s.id}">Aplicar</button>
+                    </div>
+                `).join('') || '<p class="text-sm text-slate-500">Sin sugerencias</p>';
+
+                Swal.fire({
+                    title: 'Sugerencias de apoyo',
+                    html: `<div id="sugerencias-container" class="space-y-2">${html}</div>`,
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    didOpen: () => {
+                        document.querySelectorAll('#sugerencias-container [data-sugerencia]').forEach(btn => {
+                            btn.addEventListener('click', async () => {
+                                const sugerenciaId = btn.getAttribute('data-sugerencia');
+                                const { value: resultado } = await Swal.fire({
+                                    title: 'Aplicar sugerencia',
+                                    input: 'textarea',
+                                    inputPlaceholder: 'Resultado o notas',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Guardar',
+                                    cancelButtonText: 'Cancelar'
+                                });
+                                if (resultado !== undefined) {
+                                    await fetch(`/api/tutor/sugerencias/${sugerenciaId}/aplicar`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ resultado })
+                                    });
+                                    showToast('Sugerencia aplicada', 'success');
+                                    Swal.close();
+                                }
+                            });
+                        });
+                    }
+                });
+            } catch (e) {
+                console.error('Error en verSugerencias:', e);
+                showToast('Error al cargar sugerencias', 'error');
+            }
+        }
+
+        async function enviarJustificante() {
+            const alumnoId = document.getElementById('just-alumno').value;
+            const fecha = document.getElementById('just-fecha').value;
+            const motivo = document.getElementById('just-motivo').value;
+            const evidencia = document.getElementById('just-evidencia').files[0];
+
+            if (!alumnoId || !fecha || !motivo || !evidencia) {
+                return showToast('Completa todos los campos del justificante', 'warning');
+            }
+
+            const formData = new FormData();
+            formData.append('alumno_id', alumnoId);
+            formData.append('fecha_falta', fecha);
+            formData.append('motivo', motivo);
+            formData.append('evidencia', evidencia);
+
+            try {
+                const res = await fetch('/api/tutor/justificantes', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Justificante enviado', 'success');
+                    document.getElementById('just-motivo').value = '';
+                    document.getElementById('just-evidencia').value = '';
+                } else {
+                    showToast(data.message || 'Error al enviar justificante', 'error');
+                }
+            } catch (e) {
+                console.error('Error en enviarJustificante:', e);
+                showToast('Error al enviar justificante', 'error');
             }
         }
 
@@ -966,6 +2128,41 @@
         }
 
         // Utilidades
+        function setProfilePhoto(url) {
+            document.querySelectorAll('[data-profile-photo]').forEach(el => {
+                el.style.backgroundImage = `url('${url}')`;
+            });
+        }
+
+        async function uploadProfilePhoto(inputId) {
+            const input = document.getElementById(inputId);
+            if (!input || !input.files || !input.files[0]) {
+                showToast('Selecciona una imagen', 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('photo', input.files[0]);
+
+            try {
+                const res = await fetch('/api/profile/upload-photo', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success || data.foto_perfil) {
+                    const foto = data.foto_perfil;
+                    setProfilePhoto(foto);
+                    showToast('Foto actualizada', 'success');
+                } else {
+                    showToast(data.error || 'Error al subir foto', 'error');
+                }
+            } catch (e) {
+                console.error('Error en uploadProfilePhoto:', e);
+                showToast('Error al subir foto', 'error');
+            }
+        }
+
         function showToast(message, type = 'info') {
             const bgColors = {
                 success: 'bg-green-500',
@@ -991,5 +2188,6 @@
             loadDashboard();
         });
     </script>
-</body>
+</div>
+</div>
 {% endblock %}

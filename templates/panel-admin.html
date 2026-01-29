@@ -69,8 +69,8 @@
 
         <div id="header-stats" class="w-full flex flex-col items-center pt-8 pb-4 bg-white dark:bg-background-dark">
             <div class="relative mb-3">
-                <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center"
-                    style="background-image: url('https://ui-avatars.com/api/?name=Admin&background=random');">
+                <div id="admin-avatar" class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center"
+                    style="background-image: url('{{ foto_perfil|default('https://ui-avatars.com/api/?name=Admin&background=random') }}');">
                 </div>
                 <div
                     class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark">
@@ -106,7 +106,7 @@
             </div>
         </div>
 
-        <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6" id="dashboard-view">
+        <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6 pb-24" id="dashboard-view">
             <section class="w-full">
                 <div class="flex items-center justify-between mb-3 px-1">
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white">Métricas rápidas</h3>
@@ -122,6 +122,22 @@
                         <p class="text-xs text-slate-400">Tareas registradas</p>
                         <p class="text-lg font-bold" id="stat-tareas">{{ total_tareas }}</p>
                     </div>
+                </div>
+            </section>
+
+            <section class="w-full">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Configuración de perfil</h3>
+                </div>
+                <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                    <label class="text-sm font-medium text-slate-600 dark:text-slate-300">Subir foto de perfil</label>
+                    <div class="flex items-center gap-3 mt-2">
+                        <input id="admin-photo-input" type="file" accept="image/*" class="flex-1 text-sm" />
+                        <button type="button" onclick="uploadAdminPhoto()"
+                            class="px-3 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-blue-600 transition">Subir</button>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Formatos permitidos: jpg, png, jpeg, gif, webp.</p>
+                    <div id="admin-photo-msg" class="mt-2 text-xs"></div>
                 </div>
             </section>
 
@@ -466,6 +482,34 @@
             const data = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(data.error || 'Error en la solicitud');
             return data;
+        }
+
+        async function uploadAdminPhoto() {
+            const input = document.getElementById('admin-photo-input');
+            const msg = document.getElementById('admin-photo-msg');
+            if (!input || !input.files || !input.files[0]) {
+                if (msg) msg.textContent = 'Selecciona una imagen.';
+                return;
+            }
+            const formData = new FormData();
+            formData.append('photo', input.files[0]);
+
+            try {
+                const res = await fetch('/api/profile/upload-photo', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (res.ok && (data.success || data.foto_perfil)) {
+                    const avatar = document.getElementById('admin-avatar');
+                    if (avatar) avatar.style.backgroundImage = `url('${data.foto_perfil}')`;
+                    if (msg) msg.textContent = 'Foto actualizada.';
+                } else {
+                    if (msg) msg.textContent = data.error || 'Error al subir foto.';
+                }
+            } catch (error) {
+                if (msg) msg.textContent = 'Error de conexión.';
+            }
         }
 
         async function loadMetrics() {
@@ -2059,8 +2103,8 @@
                         {% for teacher in teachers|default([]) %}
                         <div style="border: 1px solid #E8E9EA; border-radius: 12px; padding: 20px;">
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-                                <div
-                                    style="width: 40px; height: 40px; background: {{ teacher.color|default('#8A6BBE') }}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                <div class="teacher-avatar" data-color="{{ teacher.color|default('#8A6BBE') }}"
+                                    style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
                                     {{ teacher.initials|default('??') }}</div>
                                 <div>
                                     <h4 style="font-size: 16px; font-weight: 600; color: #000000;">{{ teacher.name }}
@@ -2092,7 +2136,7 @@
                             </div>
 
                             <button class="action-btn btn-secondary"
-                                onclick="openDetailsModal({{ teacher.teacher_id }})">
+                                onclick="openDetailsModal('{{ teacher.teacher_id }}')">
                                 📊 Ver Detalles
                             </button>
                         </div>
@@ -3186,6 +3230,14 @@
         $(document).ready(function () {
             gestion_usuario();
             cargarHorariosAdmin();
+
+            // Aplicar colores de avatar desde data-color
+            $('.teacher-avatar[data-color]').each(function () {
+                const color = $(this).data('color');
+                if (color) {
+                    $(this).css('background', color);
+                }
+            });
 
             // Move original content into new sections
             // This is a migration trick to avoid rewriting 1000 lines at once.

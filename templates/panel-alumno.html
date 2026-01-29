@@ -80,7 +80,7 @@
             <!-- Profile Section -->
             <div class="relative mb-3">
                 <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center"
-                    style="background-image: url('{{ avatar_url if 'http' in avatar_url else url_for('uploaded_file', filename=avatar_url) if avatar_url else 'https://ui-avatars.com/api/?name=' + nombre + '&background=random' }}');">
+                    data-avatar="{{ avatar_url if 'http' in avatar_url else url_for('uploaded_file', filename=avatar_url) if avatar_url else 'https://ui-avatars.com/api/?name=' + nombre + '&background=random' }}">
                 </div>
                 <div
                     class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark cursor-pointer hover:bg-blue-600 transition">
@@ -88,7 +88,7 @@
                 </div>
             </div>
             <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ nombre }}</h2>
-            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium"><span id="user-level"></span>{{ rango
+            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium"><span id="user-level">{{ rango
                 }}</span> • <span id="xp-val">{{ xp }}</span> XP</p>
 
             <!-- Stats Cards Grid -->
@@ -209,8 +209,8 @@
                     {% for tarea in tareas %}
                     {% set is_pending = not tarea.entregada %}
                     {% set is_late = tarea.vencida %}
-                    <div class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer"
-                        onclick="openAssignment({{ tarea.id }})">
+                    <div class="assignment-item group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer"
+                        data-tarea-id="{{ tarea.id }}">
                         <div class="flex items-start justify-between gap-4">
                             <div class="flex flex-1 flex-col gap-1">
                                 <div class="flex items-center gap-2 mb-1">
@@ -282,6 +282,7 @@
                     { key: 'tutorias', icon: 'support_agent', label: 'Tutorías', action: () => showPanel('tutorias') },
                     { key: 'equipos', icon: 'groups', label: 'Equipos', action: () => showPanel('equipos') },
                     { key: 'community', icon: 'chat_bubble', label: 'Comunidad', action: () => showPanel('community') },
+                    { key: 'more', icon: 'apps', label: 'Más', action: () => showPanel('more') },
                     { key: 'perfil', icon: 'person', label: 'Perfil', action: () => openProfileModal() }
                 ];
 
@@ -370,53 +371,296 @@
         </div>
         <div id="equipos-list" class="flex flex-col gap-3"></div>
     </div>
+
+    <!-- Más funcionalidades View -->
+    <div id="more-view"
+        class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('dashboard')"
+                class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Más</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="showPanel('hoy')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-blue-600">today</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Hoy</p>
+                <p class="text-xs text-slate-500">Agenda diaria</p>
+            </button>
+            <button onclick="showPanel('objetivos')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-purple-600">flag</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Objetivos</p>
+                <p class="text-xs text-slate-500">Metas y progreso</p>
+            </button>
+            <button onclick="showPanel('habitos')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-green-600">check_circle</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Hábitos</p>
+                <p class="text-xs text-slate-500">Check-in diario</p>
+            </button>
+            <button onclick="showPanel('notificaciones')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-orange-600">notifications</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Notificaciones</p>
+                <p class="text-xs text-slate-500">Alertas inteligentes</p>
+            </button>
+            <button onclick="showPanel('recomendaciones')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-indigo-600">lightbulb</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Recomendaciones</p>
+                <p class="text-xs text-slate-500">Estudio guiado</p>
+            </button>
+            <button onclick="showPanel('progreso')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-cyan-600">insights</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Progreso</p>
+                <p class="text-xs text-slate-500">Historial y grupo</p>
+            </button>
+            <button onclick="showPanel('riesgo')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-red-600">health_and_safety</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Riesgo</p>
+                <p class="text-xs text-slate-500">Seguimiento personal</p>
+            </button>
+            <button onclick="showPanel('funciones')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-emerald-600">lock_open</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Funciones</p>
+                <p class="text-xs text-slate-500">Desbloqueos</p>
+            </button>
+            <button onclick="showPanel('recompensas')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-yellow-600">military_tech</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Recompensas</p>
+                <p class="text-xs text-slate-500">Historial</p>
+            </button>
+            <button onclick="showPanel('balance')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-amber-600">account_balance_wallet</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Balance</p>
+                <p class="text-xs text-slate-500">XP y EduCoins</p>
+            </button>
+            <button onclick="showPanel('examenes')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-fuchsia-600">quiz</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Exámenes</p>
+                <p class="text-xs text-slate-500">Disponibles</p>
+            </button>
+            <button onclick="showPanel('encuestas')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-sky-600">fact_check</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Encuestas</p>
+                <p class="text-xs text-slate-500">Pendientes</p>
+            </button>
+            <button onclick="showPanel('feedback')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-lime-600">feedback</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Feedback</p>
+                <p class="text-xs text-slate-500">IA y docentes</p>
+            </button>
+            <button onclick="showPanel('exportaciones')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-teal-600">download</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Exportar</p>
+                <p class="text-xs text-slate-500">Reportes</p>
+            </button>
+            <button onclick="showPanel('ayuda')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-slate-600">help</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Ayuda</p>
+                <p class="text-xs text-slate-500">Guías rápidas</p>
+            </button>
+            <button onclick="showPanel('documentos')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-rose-600">description</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Documentos</p>
+                <p class="text-xs text-slate-500">Constancias/Boletas</p>
+            </button>
+        </div>
+    </div>
+
+    <!-- Subviews de más funcionalidades -->
+    <div id="hoy-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Agenda de Hoy</h2>
+        </div>
+        <div id="hoy-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="objetivos-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Objetivos</h2>
+        </div>
+        <button onclick="crearObjetivo()" class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition">Nuevo objetivo</button>
+        <div id="objetivos-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="habitos-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Hábitos</h2>
+        </div>
+        <div id="habitos-list" class="flex flex-col gap-3"></div>
+        <div id="habitos-rachas" class="text-xs text-slate-500"></div>
+    </div>
+
+    <div id="notificaciones-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Notificaciones</h2>
+        </div>
+        <button onclick="leerTodasNotificaciones()" class="w-full py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Marcar todo como leído</button>
+        <div id="notificaciones-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="recomendaciones-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Recomendaciones</h2>
+        </div>
+        <div id="recomendaciones-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="progreso-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Progreso</h2>
+        </div>
+        <div id="progreso-resumen" class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm"></div>
+        <div id="progreso-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="riesgo-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Riesgo Personal</h2>
+        </div>
+        <div id="riesgo-card" class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm"></div>
+        <div id="riesgo-historial" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="funciones-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Funciones Desbloqueables</h2>
+        </div>
+        <div id="funciones-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="recompensas-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Recompensas</h2>
+        </div>
+        <div id="recompensas-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="balance-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Balance</h2>
+        </div>
+        <div id="balance-card" class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm"></div>
+    </div>
+
+    <div id="examenes-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Exámenes</h2>
+        </div>
+        <a href="/examenes" class="w-full inline-flex items-center justify-center gap-1 py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition">
+            Ir a Exámenes
+            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+        </a>
+        <div id="examenes-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="encuestas-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Encuestas</h2>
+        </div>
+        <div id="encuestas-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="feedback-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Feedback</h2>
+        </div>
+        <div id="feedback-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="exportaciones-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Exportaciones</h2>
+        </div>
+        <button onclick="abrirExportacion()" class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition">Nueva exportación</button>
+        <div id="exportaciones-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="ayuda-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Ayuda</h2>
+        </div>
+        <div class="flex gap-2">
+            <input id="ayuda-seccion" type="text" placeholder="Sección (ej: dashboard)"
+                class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+            <button onclick="loadAyuda()" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Buscar</button>
+        </div>
+        <div id="ayuda-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <div id="documentos-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Documentos</h2>
+        </div>
+        <div class="flex flex-col gap-3">
+            <button onclick="descargarConstancia()" class="w-full py-3 rounded-lg bg-emerald-500 text-white font-bold shadow-lg hover:bg-emerald-600 transition">Generar constancia</button>
+            <button onclick="descargarBoleta()" class="w-full py-3 rounded-lg bg-blue-500 text-white font-bold shadow-lg hover:bg-blue-600 transition">Descargar boleta</button>
+        </div>
+    </div>
     <script>
-        // --- Panel Switching extendido ---
-        function showPanel(panelName) {
-            const dashboard = document.querySelector('main');
-            const header = document.getElementById('header-stats');
-            const courses = document.getElementById('courses-view');
-            const resources = document.getElementById('resources-view');
-            const community = document.getElementById('community-container');
-            const notes = document.getElementById('notes-view');
-            const portfolio = document.getElementById('portfolio-view');
-            const tutorias = document.getElementById('tutorias-view');
-            const equipos = document.getElementById('equipos-view');
-
-            // Ocultar todos
-            dashboard.classList.add('hidden');
-            header.classList.add('hidden');
-            if (courses) courses.classList.add('hidden');
-            if (resources) resources.classList.add('hidden');
-            if (community) community.classList.add('hidden');
-            if (notes) notes.classList.add('hidden');
-            if (portfolio) portfolio.classList.add('hidden');
-            if (tutorias) tutorias.classList.add('hidden');
-            if (equipos) equipos.classList.add('hidden');
-
-            if (panelName === 'subjects') {
-                courses.classList.remove('hidden');
-                loadCourses();
-            } else if (panelName === 'community') {
-                community.classList.remove('hidden');
-                scrollToBottomChat();
-            } else if (panelName === 'notes') {
-                notes.classList.remove('hidden');
-                loadNotes();
-            } else if (panelName === 'portfolio') {
-                portfolio.classList.remove('hidden');
-                loadPortfolio();
-            } else if (panelName === 'tutorias') {
-                tutorias.classList.remove('hidden');
-                loadTutorias();
-            } else if (panelName === 'equipos') {
-                equipos.classList.remove('hidden');
-                loadEquipos();
-            } else {
-                dashboard.classList.remove('hidden');
-                header.classList.remove('hidden');
-            }
-        }
 
         // --- APIs: Notas personales ---
         async function loadNotes() {
@@ -599,8 +843,10 @@
             const list = document.getElementById('portfolio-list');
             list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando portafolio...</span></div>';
             try {
-                const res = await fetch('/api/alumno/portafolio');
-                const data = await res.json();
+            const res = await fetch('/api/alumno/portafolio');
+            const data = await res.json();
+            const itemsRes = await fetch('/api/portfolio');
+            const items = await itemsRes.json();
                 
                 if (data.error) {
                     list.innerHTML = '<p class="text-center text-red-500">Error: ' + data.error + '</p>';
@@ -692,6 +938,43 @@
                             `).join('') || '<p class="text-sm text-slate-500 text-center py-2">Sin materias registradas</p>'}
                         </div>
                     </div>
+
+                    <!-- Evidencias del Portafolio -->
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <span class="material-symbols-outlined text-indigo-500">workspaces</span>
+                                Evidencias
+                            </h4>
+                            <div class="flex gap-2">
+                                <button onclick="openPortfolioItemModal()" class="text-xs text-primary font-medium">+ Texto</button>
+                                <button onclick="openPortfolioUpload()" class="text-xs text-primary font-medium">+ Archivo</button>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            ${(Array.isArray(items) && items.length) ? items.map(item => {
+                                const fileUrl = item.archivo_ruta ? `/uploads/${item.archivo_ruta}` : null;
+                                return `
+                                    <div class="flex items-start justify-between p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                                        <div class="flex-1">
+                                            <p class="font-medium text-sm text-slate-900 dark:text-white">${item.titulo}</p>
+                                            <p class="text-xs text-slate-500">${item.descripcion || item.materia || ''}</p>
+                                            ${item.fecha_subida ? `<p class="text-[10px] text-slate-400">${item.fecha_subida}</p>` : ''}
+                                            ${fileUrl ? `<a href="${fileUrl}" target="_blank" class="text-xs text-blue-600">Ver archivo</a>` : ''}
+                                        </div>
+                                        <div class="flex gap-1">
+                                            <button onclick="openPortfolioItemModal(${item.id}, '${item.titulo.replace(/'/g, "\\'")}', '${(item.descripcion || '').replace(/'/g, "\\'")}')" class="p-1 text-slate-500 hover:text-primary">
+                                                <span class="material-symbols-outlined text-sm">edit</span>
+                                            </button>
+                                            <button onclick="deletePortfolioItem(${item.id})" class="p-1 text-slate-500 hover:text-red-500">
+                                                <span class="material-symbols-outlined text-sm">delete</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('') : '<p class="text-sm text-slate-500 text-center py-2">Sin evidencias aún</p>'}
+                        </div>
+                    </div>
                 `;
                 
                 list.innerHTML = html;
@@ -699,6 +982,115 @@
                 console.error('Error en loadPortfolio:', e);
                 list.innerHTML = '<p class="text-center text-red-500">Error al cargar portafolio.</p>';
             }
+        }
+
+        function openPortfolioItemModal(id = null, titulo = '', descripcion = '') {
+            Swal.fire({
+                title: id ? 'Editar evidencia' : 'Nueva evidencia',
+                html: `
+                    <input id="pf-titulo" type="text" class="swal2-input" placeholder="Título" value="${titulo}" required>
+                    <textarea id="pf-desc" class="swal2-textarea" placeholder="Descripción">${descripcion}</textarea>
+                `,
+                showCancelButton: true,
+                confirmButtonText: id ? 'Guardar' : 'Crear',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const t = document.getElementById('pf-titulo').value.trim();
+                    if (!t) {
+                        Swal.showValidationMessage('Título requerido');
+                        return false;
+                    }
+                    return {
+                        titulo: t,
+                        descripcion: document.getElementById('pf-desc').value.trim()
+                    };
+                }
+            }).then(async (result) => {
+                if (!result.isConfirmed) return;
+                try {
+                    const url = id ? `/api/portfolio/${id}` : '/api/portfolio';
+                    const method = id ? 'PUT' : 'POST';
+                    const res = await fetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(result.value)
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Error al guardar');
+                    showToast('Evidencia guardada', 'success');
+                    loadPortfolio();
+                } catch (e) {
+                    showToast(e.message, 'error');
+                }
+            });
+        }
+
+        function openPortfolioUpload() {
+            Swal.fire({
+                title: 'Subir archivo',
+                html: `
+                    <input id="pf-nombre" type="text" class="swal2-input" placeholder="Nombre del archivo" />
+                    <input id="pf-materia" type="text" class="swal2-input" placeholder="Materia (opcional)" />
+                    <input id="pf-file" type="file" class="swal2-file" />
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Subir',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const file = document.getElementById('pf-file').files[0];
+                    if (!file) {
+                        Swal.showValidationMessage('Selecciona un archivo');
+                        return false;
+                    }
+                    return {
+                        file,
+                        nombre: document.getElementById('pf-nombre').value || file.name,
+                        materia: document.getElementById('pf-materia').value || 'General'
+                    };
+                }
+            }).then(async (result) => {
+                if (!result.isConfirmed) return;
+                try {
+                    const form = new FormData();
+                    form.append('file', result.value.file);
+                    form.append('nombre', result.value.nombre);
+                    form.append('materia', result.value.materia);
+
+                    const res = await fetch('/api/portfolio/upload', {
+                        method: 'POST',
+                        body: form
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Error al subir');
+                    showToast('Archivo subido', 'success');
+                    loadPortfolio();
+                } catch (e) {
+                    showToast(e.message, 'error');
+                }
+            });
+        }
+
+        function deletePortfolioItem(id) {
+            Swal.fire({
+                title: 'Eliminar evidencia',
+                text: 'Esta acción no se puede deshacer',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Eliminar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#ef4444'
+            }).then(async (result) => {
+                if (!result.isConfirmed) return;
+                try {
+                    const res = await fetch(`/api/portfolio/${id}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Error al eliminar');
+                    showToast('Evidencia eliminada', 'success');
+                    loadPortfolio();
+                } catch (e) {
+                    showToast(e.message, 'error');
+                }
+            });
         }
 
         // --- APIs: Tutorías ---
@@ -755,16 +1147,18 @@
                             <div class="space-y-3">
                                 ${data.sesiones.map(sesion => {
                                     const estadoColor = sesion.estado === 'completada' ? 'green' : sesion.estado === 'programada' ? 'blue' : 'slate';
+                                    const tutorNombre = sesion.tutor_nombre || (data.tutor && data.tutor.nombre) || 'Tutor';
+                                    const fechaSesion = sesion.fecha || sesion.fecha_hora || '';
                                     return `
                                         <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
                                             <div class="flex justify-between items-start mb-2">
                                                 <div>
                                                     <p class="font-medium text-sm text-slate-900 dark:text-white">
-                                                        Sesión con ${sesion.tutor_nombre}
+                                                        Sesión con ${tutorNombre}
                                                     </p>
                                                     <p class="text-xs text-slate-500">
                                                         <span class="material-symbols-outlined text-[14px] inline-block align-middle">schedule</span>
-                                                        ${sesion.fecha}
+                                                        ${fechaSesion}
                                                     </p>
                                                 </div>
                                                 <span class="text-xs px-2 py-1 rounded-full bg-${estadoColor}-100 text-${estadoColor}-700 dark:bg-${estadoColor}-900/30 dark:text-${estadoColor}-300">
@@ -772,7 +1166,7 @@
                                                 </span>
                                             </div>
                                             ${sesion.notas ? `<p class="text-xs text-slate-600 dark:text-slate-400 mt-2">${sesion.notas}</p>` : ''}
-                                            <p class="text-xs text-slate-400 mt-1">⏱️ ${sesion.duracion_minutos} minutos</p>
+                                            ${sesion.duracion_minutos ? `<p class="text-xs text-slate-400 mt-1">⏱️ ${sesion.duracion_minutos} minutos</p>` : ''}
                                         </div>
                                     `;
                                 }).join('')}
@@ -800,21 +1194,42 @@
                 title: 'Solicitar Sesión de Tutoría',
                 html: `
                     <input id="swal-fecha" type="date" class="swal2-input" placeholder="Fecha">
+                    <input id="swal-hora" type="time" class="swal2-input" placeholder="Hora">
                     <textarea id="swal-motivo" class="swal2-textarea" placeholder="Motivo de la sesión"></textarea>
                 `,
                 showCancelButton: true,
                 confirmButtonText: 'Solicitar',
                 cancelButtonText: 'Cancelar',
                 preConfirm: () => {
+                    const fecha = document.getElementById('swal-fecha').value;
+                    const hora = document.getElementById('swal-hora').value;
+                    if (!fecha || !hora) {
+                        Swal.showValidationMessage('Fecha y hora son requeridas');
+                        return false;
+                    }
                     return {
-                        fecha: document.getElementById('swal-fecha').value,
-                        motivo: document.getElementById('swal-motivo').value
+                        fecha_hora: `${fecha} ${hora}:00`,
+                        motivo: document.getElementById('swal-motivo').value || 'academico'
                     };
                 }
-            }).then((result) => {
+            }).then(async (result) => {
                 if (result.isConfirmed) {
-                    // Aquí iría la lógica para enviar la solicitud
-                    showToast('Solicitud enviada a tu tutor', 'success');
+                    try {
+                        const res = await fetch('/api/alumno/tutorias', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(result.value)
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            showToast('Solicitud enviada a tu tutor', 'success');
+                            loadTutorias();
+                        } else {
+                            showToast(data.error || 'No se pudo solicitar', 'error');
+                        }
+                    } catch (e) {
+                        showToast('Error de conexión', 'error');
+                    }
                 }
             });
         }
@@ -826,16 +1241,15 @@
             try {
                 const res = await fetch('/api/alumno/equipos');
                 const data = await res.json();
-                
+
                 if (data.error) {
                     list.innerHTML = '<p class="text-center text-red-500">Error: ' + data.error + '</p>';
                     return;
                 }
-                
-                let html = '';
-                
-                // Botón para crear equipo
-                html += `
+
+                const equipos = Array.isArray(data) ? data : (data.equipos || []);
+                equiposCache = equipos;
+                let html = `
                     <div class="flex gap-2 mb-4">
                         <button onclick="crearEquipo()" class="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition">
                             <span class="material-symbols-outlined inline-block align-middle">group_add</span>
@@ -847,9 +1261,8 @@
                         </button>
                     </div>
                 `;
-                
-                // Equipos del alumno
-                if (data.equipos && data.equipos.length > 0) {
+
+                if (equipos.length > 0) {
                     html += `
                         <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm mb-4">
                             <h4 class="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
@@ -857,35 +1270,32 @@
                                 Mis Equipos
                             </h4>
                             <div class="space-y-3">
-                                ${data.equipos.map(equipo => {
-                                    return `
-                                        <div class="p-4 rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700">
-                                            <div class="flex justify-between items-start mb-3">
-                                                <div>
-                                                    <h5 class="font-bold text-slate-900 dark:text-white">${equipo.nombre}</h5>
-                                                    <p class="text-xs text-slate-500 mt-1">${equipo.descripcion || 'Sin descripción'}</p>
-                                                </div>
-                                                <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                                                    ${equipo.cant_miembros || 0} miembros
-                                                </span>
+                                ${equipos.map(equipo => `
+                                    <div class="p-4 rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <h5 class="font-bold text-slate-900 dark:text-white">${equipo.nombre}</h5>
+                                                <p class="text-xs text-slate-500 mt-1">${equipo.descripcion || 'Sin descripción'}</p>
+                                                ${equipo.materia ? `<p class="text-xs text-slate-400">Materia: ${equipo.materia}</p>` : ''}
                                             </div>
-                                            
-                                            ${equipo.codigo_acceso ? `
-                                                <div class="flex items-center gap-2 mb-2 p-2 bg-white/50 dark:bg-slate-950/30 rounded">
-                                                    <span class="material-symbols-outlined text-sm text-slate-500">key</span>
-                                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">Código: ${equipo.codigo_acceso}</span>
-                                                    <button onclick="copiarCodigo('${equipo.codigo_acceso}')" class="ml-auto text-xs text-blue-600 hover:text-blue-700">
-                                                        <span class="material-symbols-outlined text-sm">content_copy</span>
-                                                    </button>
-                                                </div>
-                                            ` : ''}
-                                            
-                                            <button onclick="verDetalleEquipo(${equipo.id})" class="w-full mt-2 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition">
-                                                Ver Detalles
-                                            </button>
+                                            <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                ${equipo.total_miembros || 0} miembros
+                                            </span>
                                         </div>
-                                    `;
-                                }).join('')}
+                                        ${equipo.codigo_acceso ? `
+                                            <div class="flex items-center gap-2 mb-2 p-2 bg-white/50 dark:bg-slate-950/30 rounded">
+                                                <span class="material-symbols-outlined text-sm text-slate-500">key</span>
+                                                <span class="text-xs font-mono text-slate-600 dark:text-slate-400">Código: ${equipo.codigo_acceso}</span>
+                                                <button onclick="copiarCodigo('${equipo.codigo_acceso}')" class="ml-auto text-xs text-blue-600 hover:text-blue-700">
+                                                    <span class="material-symbols-outlined text-sm">content_copy</span>
+                                                </button>
+                                            </div>
+                                        ` : ''}
+                                        <button onclick="verDetalleEquipo(${equipo.id})" class="w-full mt-2 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition">
+                                            Ver Detalles
+                                        </button>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
                     `;
@@ -898,32 +1308,7 @@
                         </div>
                     `;
                 }
-                
-                // Equipos disponibles para unirse
-                if (data.equipos_disponibles && data.equipos_disponibles.length > 0) {
-                    html += `
-                        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
-                            <h4 class="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                                <span class="material-symbols-outlined text-green-500">explore</span>
-                                Equipos Disponibles
-                            </h4>
-                            <div class="space-y-3">
-                                ${data.equipos_disponibles.slice(0, 5).map(equipo => `
-                                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800 flex justify-between items-center">
-                                        <div>
-                                            <p class="font-medium text-sm text-slate-900 dark:text-white">${equipo.nombre}</p>
-                                            <p class="text-xs text-slate-500">${equipo.cant_miembros || 0} miembros</p>
-                                        </div>
-                                        <button onclick="solicitarUnirseEquipo(${equipo.id})" class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded-lg transition">
-                                            Unirse
-                                        </button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                }
-                
+
                 list.innerHTML = html;
             } catch (e) {
                 console.error('Error en loadEquipos:', e);
@@ -957,7 +1342,7 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
-                        const res = await fetch('/api/alumno/equipos/crear', {
+                        const res = await fetch('/api/alumno/equipos', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify(result.value)
@@ -1030,7 +1415,23 @@
         }
         
         function verDetalleEquipo(equipoId) {
-            window.location.href = '/equipos/' + equipoId;
+            const equipo = equiposCache.find(e => e.id === equipoId);
+            if (!equipo) {
+                showToast('No se encontró el equipo', 'error');
+                return;
+            }
+            Swal.fire({
+                title: equipo.nombre,
+                html: `
+                    <div class="text-left space-y-2">
+                        <p><strong>Descripción:</strong> ${equipo.descripcion || 'Sin descripción'}</p>
+                        <p><strong>Materia:</strong> ${equipo.materia || 'N/A'}</p>
+                        <p><strong>Miembros:</strong> ${equipo.total_miembros || 0}</p>
+                        ${equipo.codigo_acceso ? `<p><strong>Código:</strong> ${equipo.codigo_acceso}</p>` : ''}
+                    </div>
+                `,
+                confirmButtonText: 'Cerrar'
+            });
         }
     </script>
     </nav>
@@ -1065,8 +1466,9 @@
                                 materia.promedio }}</span></div>
                     </div>
                 </div>
-                <button onclick="openSubjectDetails({{ materia.id }}, '{{ materia.nombre }}')"
-                    class="ml-2 px-3 py-1 rounded-lg bg-primary text-white text-xs font-bold shadow hover:bg-blue-700 transition flex items-center gap-1">
+                <button
+                    class="subject-item-action ml-2 px-3 py-1 rounded-lg bg-primary text-white text-xs font-bold shadow hover:bg-blue-700 transition flex items-center gap-1"
+                    data-materia-id="{{ materia.id }}" data-materia-nombre="{{ materia.nombre }}">
                     Ver recursos
                     <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                 </button>
@@ -1173,7 +1575,7 @@
                     <div class="relative group cursor-pointer">
                         <div id="profile-preview"
                             class="h-24 w-24 rounded-full border-4 border-slate-100 dark:border-slate-700 bg-cover bg-center"
-                            style="background-image: url('{{ avatar_url if 'http' in avatar_url else url_for('uploaded_file', filename=avatar_url) if avatar_url else 'https://ui-avatars.com/api/?name=' + nombre + '&background=random' }}');">
+                            data-avatar="{{ avatar_url if 'http' in avatar_url else url_for('uploaded_file', filename=avatar_url) if avatar_url else 'https://ui-avatars.com/api/?name=' + nombre + '&background=random' }}">
                         </div>
                         <div
                             class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
@@ -1357,15 +1759,22 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        let socket;
+
         document.addEventListener('DOMContentLoaded', () => {
             console.log('Student Panel Logic Initialized');
 
+            document.querySelectorAll('[data-avatar]').forEach(el => {
+                const url = el.getAttribute('data-avatar');
+                if (url) el.style.backgroundImage = `url('${url}')`;
+            });
+
             // 1. Socket.IO Connection
-            const socket = io();
+            socket = io();
 
             socket.on('connect', () => {
                 console.log('Conectado al servidor SocketIO');
-                socket.emit('room_join', { room: 'grupo_501' });
+                socket.emit('join', { room: 'grupo_501', role: 'student' });
             });
 
             socket.on('notification', (data) => {
@@ -1382,9 +1791,24 @@
                 console.log('Desconectado del servidor');
             });
 
+            document.addEventListener('click', (e) => {
+                const item = e.target.closest('.assignment-item');
+                if (item && item.dataset.tareaId) {
+                    openAssignment(parseInt(item.dataset.tareaId, 10));
+                }
+
+                const subjectBtn = e.target.closest('.subject-item-action');
+                if (subjectBtn && subjectBtn.dataset.materiaId) {
+                    openSubjectDetails(parseInt(subjectBtn.dataset.materiaId, 10), subjectBtn.dataset.materiaNombre || 'Materia');
+                }
+            });
+
             // --- Dashboard Inicio: cargar datos dinámicamente ---
             loadDashboard();
         });
+
+        let tareasCache = [];
+        let equiposCache = [];
 
         async function loadDashboard() {
             await loadStats();
@@ -1531,6 +1955,7 @@
                 const data = await response.json();
                 
                 const tareas = data.tareas || [];
+                tareasCache = tareas;
                 const container = document.getElementById('assignments-container');
 
                 // Header
@@ -1610,7 +2035,37 @@
         }
         
         function verTarea(tareaId) {
-            window.location.href = '/tareas/' + tareaId;
+            const tarea = tareasCache.find(t => t.id === tareaId);
+            if (!tarea) {
+                Swal.fire('Tarea', 'No se pudo cargar el detalle.', 'info');
+                return;
+            }
+            const entregada = !!tarea.entrega_id;
+            Swal.fire({
+                title: tarea.titulo,
+                html: `
+                    <div class="text-left space-y-2">
+                        <p><strong>Materia:</strong> ${tarea.materia || 'N/A'}</p>
+                        <p><strong>Docente:</strong> ${tarea.docente || 'N/A'}</p>
+                        <p><strong>Descripción:</strong> ${tarea.descripcion || 'Sin descripción'}</p>
+                        <p><strong>Vence:</strong> ${tarea.fecha_limite || 'Sin fecha'}</p>
+                        ${tarea.calificacion ? `<p><strong>Calificación:</strong> ${tarea.calificacion}</p>` : ''}
+                        ${tarea.retroalimentacion ? `<p><strong>Retroalimentación:</strong> ${tarea.retroalimentacion}</p>` : ''}
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: entregada ? 'Cerrar' : 'Entregar tarea',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#137fec'
+            }).then((result) => {
+                if (result.isConfirmed && !entregada) {
+                    openUploadModal(tareaId);
+                }
+            });
+        }
+
+        function openAssignment(tareaId) {
+            verTarea(tareaId);
         }
         
         function filtrarTareas(filtro) {
@@ -1629,24 +2084,6 @@
         }
 
         // --- Phase 1: Academic Core Additions ---
-
-        // Panel Switching
-        function showPanel(panelName) {
-            const dashboard = document.querySelector('main');
-            const header = document.getElementById('header-stats');
-            const subjects = document.getElementById('subjects-container');
-
-            if (panelName === 'subjects') {
-                dashboard.classList.add('hidden');
-                header.classList.add('hidden'); // Hide header in subjects view
-                subjects.classList.remove('hidden');
-                loadSubjects();
-            } else {
-                dashboard.classList.remove('hidden');
-                header.classList.remove('hidden');
-                subjects.classList.add('hidden');
-            }
-        }
 
         // Modal Logic
         function openUploadModal(id) {
@@ -1740,37 +2177,53 @@
 
         // 5. Courses & Resources Logic
         async function loadCourses() {
-            let courses = [];
             try {
-                // const res = await fetch('/api/student/subjects');
-                // courses = await res.json();
-                courses = [
-                    { id: 1, name: 'Matemáticas', prof: 'Mr. Anderson', icon: 'calculate', color: 'orange' },
-                    { id: 2, name: 'Historia', prof: 'Mrs. Smith', icon: 'history_edu', color: 'blue' },
-                    { id: 3, name: 'Física', prof: 'Dr. Feynman', icon: 'science', color: 'purple' },
-                    { id: 4, name: 'Literatura', prof: 'Ms. Rowling', icon: 'menu_book', color: 'pink' }
-                ];
-            } catch (e) { console.log(e); }
+                const res = await fetch('/api/alumno/materias');
+                const courses = await res.json();
 
-            const list = document.getElementById('courses-list');
-            list.innerHTML = courses.map(c => `
-            <div onclick="openSubjectDetails(${c.id}, '${c.name}')"
-                class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-3 cursor-pointer hover:shadow-md transition">
-                <div
-                    class="h-10 w-10 rounded-lg bg-gradient-to-br from-${c.color}-400 to-${c.color}-600 flex items-center justify-center text-white shadow-lg shadow-${c.color}-200">
-                    <span class="material-symbols-outlined">${c.icon}</span>
-                </div>
-                <div>
-                    <h3 class="font-bold text-slate-900 dark:text-white truncate">${c.name}</h3>
-                    <p class="text-xs text-slate-500 truncate">${c.prof}</p>
-                </div>
-            </div>
-            `).join('');
+                const list = document.getElementById('subjects-list') || document.getElementById('courses-list');
+                if (!list) return;
+
+                if (!Array.isArray(courses) || courses.length === 0) {
+                    list.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-48 text-slate-400">
+                            <span class="material-symbols-outlined text-5xl mb-2">school</span>
+                            <div class="text-sm">No hay materias registradas</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                list.innerHTML = courses.map(c => `
+                    <div onclick="openSubjectDetails(${c.id}, '${c.nombre}')"
+                        class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 cursor-pointer hover:shadow-md transition">
+                        <div class="flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white shadow-lg">
+                                <span class="material-symbols-outlined">menu_book</span>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900 dark:text-white truncate">${c.nombre}</h3>
+                                <p class="text-xs text-slate-500 truncate">${c.docente || 'Docente'}</p>
+                                ${c.horario ? `<p class="text-[10px] text-slate-400">${c.horario}</p>` : ''}
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined text-slate-400">chevron_right</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+            }
         }
 
+        let currentSubjectId = null;
+        let currentSubjectName = '';
+
         async function openSubjectDetails(courseId, courseName) {
+            currentSubjectId = courseId;
+            currentSubjectName = courseName;
             // Switch to Resources Panel manually
-            document.getElementById('courses-view').classList.add('hidden');
+            const subjectsView = document.getElementById('subjects-container') || document.getElementById('courses-view');
+            if (subjectsView) subjectsView.classList.add('hidden');
             document.getElementById('resources-view').classList.remove('hidden');
             document.getElementById('resource-subject-title').innerText = courseName;
 
@@ -1778,35 +2231,97 @@
             list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Loading...</span></div>';
 
             try {
-                // const res = await fetch(`/api/courses/${courseId}/resources`);
-                // const resources = await res.json();
+                const [resRecursos, resPortfolio] = await Promise.all([
+                    fetch(`/api/alumno/recursos/${courseId}`),
+                    fetch('/api/portfolio')
+                ]);
+                const resources = await resRecursos.json();
+                const portfolioItems = await resPortfolio.json();
+                const savedResourceIds = new Set(
+                    (Array.isArray(portfolioItems) ? portfolioItems : []).map(i => {
+                        const match = (i.descripcion || '').match(/recurso_id:(\d+)/);
+                        return match ? parseInt(match[1], 10) : null;
+                    }).filter(Boolean)
+                );
 
-                // Mock Resources
-                const resources = [
-                    { id: 101, name: 'Guía de Estudio.pdf', type: 'pdf', size: '2.4 MB' },
-                    { id: 102, name: 'Clase Grabada.mp4', type: 'video', size: '150 MB' },
-                    { id: 103, name: 'Ejercicios Resueltos.docx', type: 'doc', size: '500 KB' }
-                ];
+                if (!Array.isArray(resources) || resources.length === 0) {
+                    list.innerHTML = '<p class="text-center text-slate-500">No hay recursos disponibles.</p>';
+                    return;
+                }
 
-                list.innerHTML = resources.map(r => `
+                list.innerHTML = resources.map(r => {
+                    const isSaved = savedResourceIds.has(r.id);
+                    return `
                 <div class="flex items-center justify-between p-3 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-slate-800">
                     <div class="flex items-center gap-3 overflow-hidden">
-                        <div class="h-10 w-10 shrink-0 rounded-lg ${r.type === 'pdf' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'} flex items-center justify-center">
-                            <span class="material-symbols-outlined">${r.type === 'pdf' ? 'picture_as_pdf' : 'description'}</span>
+                        <div class="h-10 w-10 shrink-0 rounded-lg ${r.tipo_archivo === 'documento' ? 'bg-red-100 text-red-500' : 'bg-blue-100 text-blue-500'} flex items-center justify-center">
+                            <span class="material-symbols-outlined">${r.tipo_archivo === 'documento' ? 'picture_as_pdf' : 'description'}</span>
                         </div>
                         <div class="min-w-0">
-                            <h4 class="font-medium text-sm text-slate-900 dark:text-white truncate">${r.name}</h4>
-                            <p class="text-xs text-slate-500">${r.size} • ${r.type.toUpperCase()}</p>
+                            <h4 class="font-medium text-sm text-slate-900 dark:text-white truncate">${r.titulo || r.nombre_archivo}</h4>
+                            <p class="text-xs text-slate-500">${(r.tipo_archivo || 'archivo').toUpperCase()}</p>
                         </div>
                     </div>
-                    <a href="/download/${r.id}" target="_blank" class="p-2 text-slate-400 hover:text-primary transition rounded-full hover:bg-slate-50 dark:hover:bg-slate-800">
-                        <span class="material-symbols-outlined">download</span>
-                    </a>
+                    <div class="flex items-center gap-1">
+                        ${isSaved ? `
+                        <button onclick="removeResourceFromPortfolio(${r.id})" class="p-2 text-slate-400 hover:text-red-500 transition rounded-full hover:bg-slate-50 dark:hover:bg-slate-800" title="Quitar del portafolio">
+                            <span class="material-symbols-outlined">bookmark_remove</span>
+                        </button>
+                        ` : `
+                        <button onclick="saveResourceToPortfolio(${r.id}, '${(r.titulo || r.nombre_archivo || '').replace(/'/g, "\\'")}')" class="p-2 text-slate-400 hover:text-primary transition rounded-full hover:bg-slate-50 dark:hover:bg-slate-800" title="Guardar en portafolio">
+                            <span class="material-symbols-outlined">bookmark_add</span>
+                        </button>
+                        `}
+                        <a href="/descargar-recurso/${r.id}" target="_blank" class="p-2 text-slate-400 hover:text-primary transition rounded-full hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <span class="material-symbols-outlined">download</span>
+                        </a>
+                    </div>
                 </div>
-                `).join('');
+                `;
+                }).join('');
 
             } catch (e) {
                 list.innerHTML = '<p class="text-center text-slate-500">Error cargando recursos.</p>';
+            }
+        }
+
+        async function saveResourceToPortfolio(resourceId, titulo) {
+            try {
+                const body = {
+                    titulo: titulo || 'Recurso guardado',
+                    descripcion: `Recurso guardado (ID ${resourceId}) recurso_id:${resourceId}`
+                };
+                const res = await fetch('/api/portfolio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
+                showToast('Recurso guardado en portafolio', 'success');
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function removeResourceFromPortfolio(resourceId) {
+            try {
+                const res = await fetch('/api/portfolio');
+                const items = await res.json();
+                const item = (Array.isArray(items) ? items : []).find(i => (i.descripcion || '').includes(`recurso_id:${resourceId}`));
+                if (!item) {
+                    showToast('No se encontró en portafolio', 'info');
+                    return;
+                }
+                const del = await fetch(`/api/portfolio/${item.id}`, { method: 'DELETE' });
+                const data = await del.json();
+                if (!del.ok) throw new Error(data.error || 'No se pudo eliminar');
+                showToast('Recurso quitado del portafolio', 'success');
+                if (currentSubjectId) {
+                    openSubjectDetails(currentSubjectId, currentSubjectName || 'Materia');
+                }
+            } catch (e) {
+                showToast(e.message, 'error');
             }
         }
 
@@ -1850,7 +2365,7 @@
             const typingId = addTypingIndicator();
 
             try {
-                const response = await fetch('/api/chat_ai', { // Endpoint Update
+                const response = await fetch('/api/chat/gemini', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: message })
@@ -2073,40 +2588,6 @@
 
 
         // --- Phase 3: Social & Real-time ---
-
-        // Panel Switching Updated
-        function showPanel(panelName) {
-            const dashboard = document.querySelector('main');
-            const header = document.getElementById('header-stats');
-            const courses = document.getElementById('courses-view');
-            const resources = document.getElementById('resources-view');
-            const community = document.getElementById('community-container');
-
-            // Reset all
-            dashboard.classList.add('hidden');
-            header.classList.add('hidden');
-            if (courses) courses.classList.add('hidden');
-            if (resources) resources.classList.add('hidden');
-            community.classList.add('hidden');
-
-            // Restore Main content backup if needed (from Quiz)
-            if (window.originalMainContent && document.querySelector('main').innerHTML !== window.originalMainContent) {
-                restoreDashboard(); // resets main to dashboard state
-                // If we are switching to non-dashboard, hide it again immediately below
-                if (panelName !== 'dashboard') document.querySelector('main').classList.add('hidden');
-            }
-
-            if (panelName === 'subjects') {
-                document.getElementById('courses-view').classList.remove('hidden');
-                loadCourses();
-            } else if (panelName === 'community') {
-                community.classList.remove('hidden');
-                scrollToBottomChat();
-            } else {
-                dashboard.classList.remove('hidden');
-                header.classList.remove('hidden');
-            }
-        }
         // Group Chat Logic
         function sendGroupMessage(e) {
             e.preventDefault();
@@ -2201,6 +2682,740 @@
             }, 4000);
         }
 
+        async function apiGet(url) {
+            const res = await fetch(url, { credentials: 'same-origin' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'Error en la solicitud');
+            return data;
+        }
+
+        async function apiPost(url, body = {}) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || 'Error en la solicitud');
+            return data;
+        }
+
+        async function loadHoy() {
+            const container = document.getElementById('hoy-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const data = await apiGet('/api/alumno/hoy');
+                const agenda = data.agenda || [];
+                const resumen = data.resumen || {};
+                let html = '';
+
+                if (resumen.mensaje_motivacional) {
+                    html += `
+                        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-lg">
+                            <p class="text-sm opacity-90">${resumen.mensaje_motivacional}</p>
+                        </div>
+                    `;
+                }
+
+                if (!agenda.length) {
+                    html += '<div class="p-6 text-center text-slate-500">No hay actividades para hoy.</div>';
+                } else {
+                    html += agenda.map(item => `
+                        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="font-medium text-slate-900 dark:text-white">${item.titulo || 'Actividad'}</p>
+                                    <p class="text-xs text-slate-500">${item.hora_inicio || ''} - ${item.hora_fin || ''}</p>
+                                    <p class="text-xs text-slate-400">${item.descripcion || ''}</p>
+                                </div>
+                                ${item.completado ? '<span class="text-xs text-green-600">Completado</span>' : `
+                                    <button onclick="completarHoy(${item.id})" class="px-2 py-1 text-xs rounded bg-green-500 text-white">Completar</button>
+                                `}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar agenda.</p>';
+            }
+        }
+
+        async function completarHoy(id) {
+            try {
+                await apiPost(`/api/alumno/hoy/completar/${id}`);
+                showToast('Actividad completada', 'success');
+                loadHoy();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function loadObjetivos() {
+            const container = document.getElementById('objetivos-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const objetivos = await apiGet('/api/alumno/objetivos');
+                if (!objetivos.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay objetivos.</div>';
+                    return;
+                }
+                container.innerHTML = objetivos.map(o => {
+                    const meta = o.meta_valor || 100;
+                    const progreso = o.progreso_actual || 0;
+                    const percent = Math.min((progreso / meta) * 100, 100);
+                    return `
+                        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-semibold text-slate-900 dark:text-white">${o.titulo}</p>
+                                    <p class="text-xs text-slate-500">${o.descripcion || ''}</p>
+                                    <p class="text-[10px] text-slate-400">${o.tipo} • ${o.categoria}</p>
+                                </div>
+                                <span class="text-xs text-slate-500">${o.completado ? 'Completado' : 'En progreso'}</span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-2">
+                                <div class="bg-primary h-1.5 rounded-full" style="width: ${percent}%"></div>
+                            </div>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-xs text-slate-500">${progreso}/${meta}</span>
+                                <button onclick="actualizarObjetivo(${o.id}, ${progreso}, ${meta}, ${o.completado ? 'true' : 'false'})" class="text-xs text-primary">Actualizar</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar objetivos.</p>';
+            }
+        }
+
+        function crearObjetivo() {
+            Swal.fire({
+                title: 'Nuevo objetivo',
+                html: `
+                    <input id="obj-titulo" class="swal2-input" placeholder="Título">
+                    <textarea id="obj-desc" class="swal2-textarea" placeholder="Descripción"></textarea>
+                    <select id="obj-tipo" class="swal2-input">
+                        <option value="corto_plazo">Corto plazo</option>
+                        <option value="largo_plazo">Largo plazo</option>
+                    </select>
+                    <input id="obj-meta" type="number" class="swal2-input" placeholder="Meta" value="100">
+                    <input id="obj-fecha" type="date" class="swal2-input">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Crear',
+                preConfirm: () => {
+                    const titulo = document.getElementById('obj-titulo').value;
+                    if (!titulo) {
+                        Swal.showValidationMessage('Título requerido');
+                        return false;
+                    }
+                    return {
+                        titulo,
+                        descripcion: document.getElementById('obj-desc').value,
+                        tipo: document.getElementById('obj-tipo').value,
+                        meta_valor: parseInt(document.getElementById('obj-meta').value || '100', 10),
+                        fecha_limite: document.getElementById('obj-fecha').value
+                    };
+                }
+            }).then(async result => {
+                if (result.isConfirmed) {
+                    try {
+                        await apiPost('/api/alumno/objetivos', result.value);
+                        showToast('Objetivo creado', 'success');
+                        loadObjetivos();
+                    } catch (e) {
+                        showToast(e.message, 'error');
+                    }
+                }
+            });
+        }
+
+        function actualizarObjetivo(id, progreso, meta, completadoActual) {
+            Swal.fire({
+                title: 'Actualizar objetivo',
+                html: `
+                    <input id="obj-progreso" type="number" class="swal2-input" value="${progreso}" min="0" max="${meta}">
+                    <label class="swal2-checkbox"><input id="obj-completado" type="checkbox" ${completadoActual ? 'checked' : ''}> <span>Marcar como completado</span></label>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar'
+            }).then(async result => {
+                if (result.isConfirmed) {
+                    const nuevoProgreso = parseInt(document.getElementById('obj-progreso').value || '0', 10);
+                    const completado = document.getElementById('obj-completado').checked;
+                    try {
+                        const res = await fetch(`/api/alumno/objetivos/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ progreso: nuevoProgreso, completado })
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || 'Error al actualizar');
+                        showToast('Objetivo actualizado', 'success');
+                        loadObjetivos();
+                    } catch (e) {
+                        showToast(e.message, 'error');
+                    }
+                }
+            });
+        }
+
+        async function loadHabitos() {
+            const container = document.getElementById('habitos-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const habitos = await apiGet('/api/alumno/habitos');
+                const rachas = await apiGet('/api/alumno/racha-habitos');
+                document.getElementById('habitos-rachas').textContent = `Racha actual: ${rachas.racha_actual || 0} • Máxima: ${rachas.racha_maxima || 0}`;
+                if (!habitos.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay hábitos activos.</div>';
+                    return;
+                }
+                container.innerHTML = habitos.map(h => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="font-medium text-slate-900 dark:text-white">${h.nombre || h.titulo}</p>
+                            <p class="text-xs text-slate-500">${h.descripcion || ''}</p>
+                        </div>
+                        ${h.completado_hoy ? '<span class="text-xs text-green-600">Completado</span>' : `
+                            <button onclick="checkinHabito(${h.id})" class="px-2 py-1 text-xs rounded bg-green-500 text-white">Check-in</button>
+                        `}
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar hábitos.</p>';
+            }
+        }
+
+        async function checkinHabito(id) {
+            try {
+                await apiPost('/api/alumno/habitos/checkin', { habito_id: id });
+                showToast('¡Hábito registrado!', 'success');
+                loadHabitos();
+                loadStats();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function loadNotificaciones() {
+            const container = document.getElementById('notificaciones-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const notifs = await apiGet('/api/alumno/notificaciones');
+                if (!notifs.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay notificaciones.</div>';
+                    return;
+                }
+                container.innerHTML = notifs.map(n => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-medium text-slate-900 dark:text-white">${n.titulo || n.tipo}</p>
+                                <p class="text-xs text-slate-500">${n.mensaje || n.descripcion || ''}</p>
+                                <p class="text-[10px] text-slate-400">${n.fecha_creacion || ''}</p>
+                            </div>
+                            ${n.leida ? '<span class="text-xs text-slate-400">Leída</span>' : `<button onclick="leerNotificacion(${n.id})" class="text-xs text-primary">Marcar</button>`}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar notificaciones.</p>';
+            }
+        }
+
+        async function leerNotificacion(id) {
+            try {
+                await apiPost(`/api/alumno/notificaciones/${id}/leer`);
+                loadNotificaciones();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function leerTodasNotificaciones() {
+            try {
+                await apiPost('/api/alumno/notificaciones/leer-todas');
+                showToast('Notificaciones marcadas', 'success');
+                loadNotificaciones();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function loadRecomendaciones() {
+            const container = document.getElementById('recomendaciones-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const recs = await apiGet('/api/alumno/recomendaciones');
+                if (!recs.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay recomendaciones.</div>';
+                    return;
+                }
+                container.innerHTML = recs.map(r => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-medium text-slate-900 dark:text-white">${r.titulo || 'Recomendación'}</p>
+                                <p class="text-xs text-slate-500">${r.descripcion || r.mensaje || ''}</p>
+                                <p class="text-[10px] text-slate-400">Prioridad: ${r.prioridad || 'media'}</p>
+                            </div>
+                            <button onclick="aceptarRecomendacion(${r.id})" class="text-xs text-primary">Aceptar</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar recomendaciones.</p>';
+            }
+        }
+
+        async function aceptarRecomendacion(id) {
+            try {
+                await apiPost(`/api/alumno/recomendaciones/${id}/aceptar`);
+                showToast('Recomendación aceptada', 'success');
+                loadRecomendaciones();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function loadProgreso() {
+            const resumen = document.getElementById('progreso-resumen');
+            const list = document.getElementById('progreso-list');
+            resumen.innerHTML = 'Cargando...';
+            list.innerHTML = '';
+            try {
+                const [historial, mensual, comparacion, inactividad] = await Promise.all([
+                    apiGet('/api/alumno/historial-progreso'),
+                    apiGet('/api/alumno/progreso-mensual'),
+                    apiGet('/api/alumno/comparacion-grupo'),
+                    apiGet('/api/alumno/inactividad')
+                ]);
+
+                resumen.innerHTML = `
+                    <p class="text-sm text-slate-600 dark:text-slate-300">Comparación grupo: ${comparacion?.grupo?.promedio_general || 'N/A'}</p>
+                    <p class="text-xs text-slate-500">Tu XP: ${comparacion?.mi_posicion?.xp || 0} • EduCoins: ${comparacion?.mi_posicion?.educoins || 0}</p>
+                    <p class="text-xs text-slate-500">Inactividad: ${inactividad.dias_inactivo || 0} días</p>
+                `;
+
+                if (Array.isArray(historial) && historial.length) {
+                    list.innerHTML += historial.map(h => `
+                        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                            <p class="text-sm text-slate-900 dark:text-white">${h.descripcion || h.tipo || 'Progreso'}</p>
+                            <p class="text-[10px] text-slate-400">${h.fecha || ''}</p>
+                        </div>
+                    `).join('');
+                }
+
+                if (Array.isArray(mensual) && mensual.length) {
+                    list.innerHTML += `
+                        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                            <p class="text-sm font-bold text-slate-900 dark:text-white">Progreso mensual</p>
+                            <div class="mt-2 space-y-1">
+                                ${mensual.slice(0, 6).map(m => `<p class="text-xs text-slate-500">${m.mes}/${m.anio}: ${m.xp || 0} XP</p>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                resumen.innerHTML = '<p class="text-sm text-red-500">Error al cargar progreso.</p>';
+            }
+        }
+
+        async function loadRiesgo() {
+            const card = document.getElementById('riesgo-card');
+            const list = document.getElementById('riesgo-historial');
+            card.innerHTML = 'Cargando...';
+            list.innerHTML = '';
+            try {
+                const riesgo = await apiGet('/api/alumno/riesgo');
+                const historial = await apiGet('/api/alumno/historial-riesgo');
+
+                card.innerHTML = `
+                    <p class="text-sm text-slate-500">Nivel de riesgo</p>
+                    <p class="text-2xl font-bold text-slate-900 dark:text-white">${riesgo.nivel_riesgo || 'bajo'}</p>
+                    <p class="text-xs text-slate-500">${riesgo.explicacion_ia || ''}</p>
+                `;
+
+                if (Array.isArray(historial) && historial.length) {
+                    list.innerHTML = historial.map(h => `
+                        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                            <p class="text-sm text-slate-900 dark:text-white">${h.nivel_riesgo || h.puntuacion_riesgo}</p>
+                            <p class="text-xs text-slate-400">${h.fecha || ''}</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                card.innerHTML = '<p class="text-sm text-red-500">Error al cargar riesgo.</p>';
+            }
+        }
+
+        async function loadFunciones() {
+            const container = document.getElementById('funciones-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const funcs = await apiGet('/api/alumno/funciones');
+                if (!funcs.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay funciones disponibles.</div>';
+                    return;
+                }
+                container.innerHTML = funcs.map(f => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-medium text-slate-900 dark:text-white">${f.nombre || 'Función'}</p>
+                                <p class="text-xs text-slate-500">${f.descripcion || ''}</p>
+                            </div>
+                            ${f.desbloqueada ? '<span class="text-xs text-green-600">Desbloqueada</span>' : `<button onclick="desbloquearFuncion(${f.id})" class="text-xs text-primary">Desbloquear</button>`}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar funciones.</p>';
+            }
+        }
+
+        async function desbloquearFuncion(id) {
+            try {
+                const data = await apiPost(`/api/alumno/funciones/desbloquear/${id}`);
+                if (data.success) {
+                    showToast('Función desbloqueada', 'success');
+                    loadFunciones();
+                } else {
+                    showToast(data.error || 'No se pudo desbloquear', 'error');
+                }
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function loadRecompensas() {
+            const container = document.getElementById('recompensas-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const items = await apiGet('/api/alumno/recompensas');
+                if (!items.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay recompensas.</div>';
+                    return;
+                }
+                container.innerHTML = items.map(i => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${i.titulo || i.descripcion || 'Recompensa'}</p>
+                        <p class="text-xs text-slate-500">${i.fecha || i.fecha_obtencion || ''}</p>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar recompensas.</p>';
+            }
+        }
+
+        async function loadBalance() {
+            const container = document.getElementById('balance-card');
+            container.innerHTML = 'Cargando...';
+            try {
+                const data = await apiGet('/api/alumno/balance');
+                container.innerHTML = `
+                    <p class="text-sm text-slate-500">Rango: ${data.usuario?.rango || 'bronce'}</p>
+                    <p class="text-xl font-bold text-slate-900 dark:text-white">XP: ${data.usuario?.xp || 0}</p>
+                    <p class="text-xl font-bold text-slate-900 dark:text-white">EduCoins: ${data.usuario?.educoins || 0}</p>
+                    <p class="text-xs text-slate-500">Racha: ${data.usuario?.racha || 0}</p>
+                `;
+            } catch (e) {
+                container.innerHTML = '<p class="text-sm text-red-500">Error al cargar balance.</p>';
+            }
+        }
+
+        async function loadExamenes() {
+            const container = document.getElementById('examenes-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const data = await apiGet('/api/alumno/examenes');
+                const examenes = data.examenes || [];
+                if (!examenes.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay exámenes disponibles.</div>';
+                    return;
+                }
+                container.innerHTML = examenes.map(e => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${e.titulo}</p>
+                        <p class="text-xs text-slate-500">${e.materia}</p>
+                        <p class="text-xs text-slate-400">${e.fecha_fin || ''}</p>
+                        <span class="text-xs ${e.presentado ? 'text-green-600' : 'text-orange-600'}">${e.presentado ? 'Presentado' : 'Pendiente'}</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar exámenes.</p>';
+            }
+        }
+
+        async function loadEncuestas() {
+            const container = document.getElementById('encuestas-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const encuestas = await apiGet('/api/alumno/encuestas');
+                if (!encuestas.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay encuestas.</div>';
+                    return;
+                }
+                container.innerHTML = encuestas.map(e => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${e.titulo}</p>
+                        <p class="text-xs text-slate-500">${e.descripcion || ''}</p>
+                        <p class="text-[10px] text-slate-400">${e.fecha_fin || ''}</p>
+                        <span class="text-xs ${e.respondida ? 'text-green-600' : 'text-orange-600'}">${e.respondida ? 'Respondida' : 'Pendiente'}</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar encuestas.</p>';
+            }
+        }
+
+        async function loadFeedback() {
+            const container = document.getElementById('feedback-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const feedbacks = await apiGet('/api/alumno/feedback');
+                if (!feedbacks.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay feedback.</div>';
+                    return;
+                }
+                container.innerHTML = feedbacks.map(f => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${f.titulo || 'Feedback'}</p>
+                        <p class="text-xs text-slate-500">${f.mensaje || f.descripcion || ''}</p>
+                        <p class="text-[10px] text-slate-400">${f.fecha_creacion || ''}</p>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar feedback.</p>';
+            }
+        }
+
+        async function abrirExportacion() {
+            const { value: formValues } = await Swal.fire({
+                title: 'Nueva exportación',
+                html: `
+                    <input id="exp-fecha-inicio" type="date" class="swal2-input">
+                    <input id="exp-fecha-fin" type="date" class="swal2-input">
+                    <select id="exp-formato" class="swal2-input">
+                        <option value="pdf">PDF</option>
+                        <option value="excel">Excel</option>
+                    </select>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Exportar',
+                preConfirm: () => {
+                    const fecha_inicio = document.getElementById('exp-fecha-inicio').value;
+                    const fecha_fin = document.getElementById('exp-fecha-fin').value;
+                    if (!fecha_inicio || !fecha_fin) {
+                        Swal.showValidationMessage('Fechas requeridas');
+                        return false;
+                    }
+                    return {
+                        formato: document.getElementById('exp-formato').value,
+                        fecha_inicio,
+                        fecha_fin,
+                        tipo_exportacion: 'progreso'
+                    };
+                }
+            });
+
+            if (formValues) {
+                try {
+                    await apiPost('/api/alumno/exportar', formValues);
+                    showToast('Exportación solicitada', 'success');
+                    loadExportaciones();
+                } catch (e) {
+                    showToast(e.message, 'error');
+                }
+            }
+        }
+
+        async function loadExportaciones() {
+            const container = document.getElementById('exportaciones-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const exps = await apiGet('/api/alumno/exportaciones');
+                if (!exps.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay exportaciones.</div>';
+                    return;
+                }
+                container.innerHTML = exps.map(e => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm flex justify-between items-center">
+                        <div>
+                            <p class="font-medium text-slate-900 dark:text-white">${e.tipo_exportacion || 'Exportación'}</p>
+                            <p class="text-xs text-slate-500">${e.formato || ''} • ${e.estado || ''}</p>
+                        </div>
+                        <a href="/api/alumno/exportar/descargar/${e.id}" class="text-xs text-primary">Descargar</a>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar exportaciones.</p>';
+            }
+        }
+
+        async function loadAyuda() {
+            const seccion = document.getElementById('ayuda-seccion').value || 'dashboard';
+            const container = document.getElementById('ayuda-list');
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando...</span></div>';
+            try {
+                const ayudas = await apiGet(`/api/alumno/ayuda/${seccion}`);
+                if (!ayudas.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">Sin ayuda para esta sección.</div>';
+                    return;
+                }
+                container.innerHTML = ayudas.map(a => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${a.titulo || 'Ayuda'}</p>
+                        <p class="text-xs text-slate-500">${a.descripcion || ''}</p>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar ayuda.</p>';
+            }
+        }
+
+        function descargarConstancia() {
+            window.open('/api/alumno/generar-constancia', '_blank');
+        }
+
+        function descargarBoleta() {
+            window.open('/api/alumno/boleta-calificaciones', '_blank');
+        }
+
+        function showPanel(panelName) {
+            const dashboard = document.querySelector('main');
+            const header = document.getElementById('header-stats');
+
+            const views = [
+                'notes-view', 'portfolio-view', 'tutorias-view', 'equipos-view',
+                'community-container', 'subjects-container', 'courses-view', 'resources-view', 'more-view',
+                'hoy-view', 'objetivos-view', 'habitos-view', 'notificaciones-view',
+                'recomendaciones-view', 'progreso-view', 'riesgo-view', 'funciones-view',
+                'recompensas-view', 'balance-view', 'examenes-view', 'encuestas-view',
+                'feedback-view', 'exportaciones-view', 'ayuda-view', 'documentos-view'
+            ];
+
+            // Ocultar todo
+            dashboard.classList.add('hidden');
+            header.classList.add('hidden');
+            views.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+
+            if (panelName === 'dashboard') {
+                dashboard.classList.remove('hidden');
+                header.classList.remove('hidden');
+                return;
+            }
+
+            const show = (id) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('hidden');
+            };
+
+            switch (panelName) {
+                case 'subjects':
+                    show('subjects-container');
+                    loadSubjects();
+                    break;
+                case 'resources':
+                    show('resources-view');
+                    break;
+                case 'community':
+                    show('community-container');
+                    scrollToBottomChat();
+                    break;
+                case 'notes':
+                    show('notes-view');
+                    loadNotes();
+                    break;
+                case 'portfolio':
+                    show('portfolio-view');
+                    loadPortfolio();
+                    break;
+                case 'tutorias':
+                    show('tutorias-view');
+                    loadTutorias();
+                    break;
+                case 'equipos':
+                    show('equipos-view');
+                    loadEquipos();
+                    break;
+                case 'more':
+                    show('more-view');
+                    break;
+                case 'hoy':
+                    show('hoy-view');
+                    loadHoy();
+                    break;
+                case 'objetivos':
+                    show('objetivos-view');
+                    loadObjetivos();
+                    break;
+                case 'habitos':
+                    show('habitos-view');
+                    loadHabitos();
+                    break;
+                case 'notificaciones':
+                    show('notificaciones-view');
+                    loadNotificaciones();
+                    break;
+                case 'recomendaciones':
+                    show('recomendaciones-view');
+                    loadRecomendaciones();
+                    break;
+                case 'progreso':
+                    show('progreso-view');
+                    loadProgreso();
+                    break;
+                case 'riesgo':
+                    show('riesgo-view');
+                    loadRiesgo();
+                    break;
+                case 'funciones':
+                    show('funciones-view');
+                    loadFunciones();
+                    break;
+                case 'recompensas':
+                    show('recompensas-view');
+                    loadRecompensas();
+                    break;
+                case 'balance':
+                    show('balance-view');
+                    loadBalance();
+                    break;
+                case 'examenes':
+                    show('examenes-view');
+                    loadExamenes();
+                    break;
+                case 'encuestas':
+                    show('encuestas-view');
+                    loadEncuestas();
+                    break;
+                case 'feedback':
+                    show('feedback-view');
+                    loadFeedback();
+                    break;
+                case 'exportaciones':
+                    show('exportaciones-view');
+                    loadExportaciones();
+                    break;
+                case 'ayuda':
+                    show('ayuda-view');
+                    break;
+                case 'documentos':
+                    show('documentos-view');
+                    break;
+                default:
+                    dashboard.classList.remove('hidden');
+                    header.classList.remove('hidden');
+            }
+        }
+
         // --- Phase 4: Profile & Settings ---
 
         function openProfileModal() {
@@ -2234,32 +3449,60 @@
             }
         }
 
+        function updateAvatarUI(url) {
+            document.getElementById('profile-preview').style.backgroundImage = `url('${url}')`;
+            document.querySelectorAll('[data-avatar]').forEach(el => {
+                el.style.backgroundImage = `url('${url}')`;
+            });
+        }
+
         async function updateProfile(e) {
             e.preventDefault();
-            const formData = new FormData(e.target);
+            const form = e.target;
+            const avatarInput = form.querySelector('input[name="avatar"]');
+            const passwordInput = form.querySelector('input[name="password"]');
 
-            // Basic validation
-            if (!formData.get('password') && !formData.get('avatar').name) {
+            const hasAvatar = avatarInput && avatarInput.files && avatarInput.files[0];
+            const hasPassword = passwordInput && passwordInput.value;
+
+            if (!hasAvatar && !hasPassword) {
                 Swal.fire('Info', 'No has realizado cambios.', 'info');
                 return;
             }
 
             try {
-                const response = await fetch('/api/update_profile', { // Endpoint assumed
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    Swal.fire('¡Éxito!', 'Perfil actualizado correctamente.', 'success');
-                    closeProfileModal();
-                    loadStats(); // Reload header
-                } else {
-                    throw new Error('Failed to update');
+                if (hasAvatar) {
+                    const photoData = new FormData();
+                    photoData.append('photo', avatarInput.files[0]);
+                    const photoRes = await fetch('/api/profile/upload-photo', {
+                        method: 'POST',
+                        body: photoData
+                    });
+                    const photoJson = await photoRes.json();
+                    if (photoRes.ok && (photoJson.success || photoJson.foto_perfil)) {
+                        updateAvatarUI(photoJson.foto_perfil);
+                    } else {
+                        throw new Error(photoJson.error || 'Error al subir foto');
+                    }
                 }
+
+                if (hasPassword) {
+                    const passRes = await fetch('/api/change_password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ new_password: passwordInput.value })
+                    });
+                    if (!passRes.ok) {
+                        throw new Error('Error al cambiar contraseña');
+                    }
+                }
+
+                Swal.fire('¡Éxito!', 'Perfil actualizado correctamente.', 'success');
+                closeProfileModal();
+                loadStats();
             } catch (error) {
                 console.error(error);
-                Swal.fire('Error', 'No se pudo actualizar el perfil.', 'error');
+                Swal.fire('Error', error.message || 'No se pudo actualizar el perfil.', 'error');
             }
         }
 

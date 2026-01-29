@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Materia | {{ materia.nombre if materia else 'Materia' }}</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1A2633",
+                        "text-main-light": "#111418",
+                        "text-main-dark": "#F3F4F6",
+                        "text-sec-light": "#617589",
+                        "text-sec-dark": "#9CA3AF",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased transition-colors duration-200">
+    <div id="main-app-container"
+        class="relative flex flex-col w-full max-w-md mx-auto bg-white dark:bg-background-dark shadow-2xl min-h-screen h-screen overflow-hidden">
+
+        <!-- Header / Materia Overview -->
+        <div id="header-stats" class="w-full flex flex-col items-center pt-8 pb-4 bg-white dark:bg-background-dark">
+            <div class="w-full px-4">
+                <div class="flex items-center gap-3">
+                    <a href="{{ url_for('panel_docente') }}"
+                        class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </a>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ materia.nombre if materia else
+                            'Materia' }}</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ materia.descripcion or 'Sin descripción'
+                            }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
+                <div
+                    class="bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">groups</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Estudiantes</p>
+                    <h3 class="text-2xl font-bold">{{ estudiantes|length if estudiantes else 0 }}</h3>
+                </div>
+                <div
+                    class="bg-gradient-to-br from-emerald-500 to-teal-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">assignment</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Tareas activas</p>
+                    <h3 class="text-2xl font-bold">{{ tareas|length if tareas else 0 }}</h3>
+                </div>
+            </div>
+            <div class="w-full px-4 mt-3">
+                <div
+                    class="bg-gradient-to-br from-violet-500 to-fuchsia-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">folder</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Recursos</p>
+                    <h3 class="text-2xl font-bold">{{ recursos|length if recursos else 0 }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6" id="dashboard-main">
+            <!-- Estudiantes -->
+            <section class="w-full">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Estudiantes</h3>
+                    <span class="text-xs text-primary font-medium">{{ estudiantes|length if estudiantes else 0 }}
+                        total</span>
+                </div>
+                <div class="flex flex-col gap-3">
+                    {% if estudiantes %}
+                    {% for estudiante in estudiantes %}
+                    <div
+                        class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 text-xl font-bold">
+                                {{ estudiante.nombre[:2].upper() if estudiante.nombre else 'EA' }}
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">{{ estudiante.nombre
+                                    }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ estudiante.numero_control }} •
+                                    {{ estudiante.email }}</p>
+                            </div>
+                            <span class="text-xs text-slate-500 dark:text-slate-400">Asistencias: {{
+                                estudiante.asistencias }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="p-6 text-center text-slate-500">
+                        <p>No hay estudiantes inscritos.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Tareas -->
+            <section class="w-full">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Tareas</h3>
+                    <span class="text-xs text-primary font-medium">{{ tareas|length if tareas else 0 }} total</span>
+                </div>
+                <div class="flex flex-col gap-3">
+                    {% if tareas %}
+                    {% for tarea in tareas %}
+                    <div
+                        class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">{{ tarea.titulo }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Vence: {{
+                                    tarea.fecha_vencimiento }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Entregas: {{
+                                    tarea.entregas_count }}</p>
+                            </div>
+                            <div
+                                class="h-12 w-12 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                <span class="material-symbols-outlined">assignment</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="p-6 text-center text-slate-500">
+                        <p>No hay tareas registradas.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Recursos -->
+            <section class="w-full pb-6">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Recursos</h3>
+                    <span class="text-xs text-primary font-medium">{{ recursos|length if recursos else 0 }} total</span>
+                </div>
+                <div class="flex flex-col gap-3">
+                    {% if recursos %}
+                    {% for recurso in recursos %}
+                    <div
+                        class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start gap-3">
+                            <div
+                                class="h-12 w-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                                <span class="material-symbols-outlined">description</span>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">{{ recurso.titulo or
+                                    'Recurso' }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ recurso.descripcion or 'Sin
+                                    descripción' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="p-6 text-center text-slate-500">
+                        <p>No hay recursos disponibles.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

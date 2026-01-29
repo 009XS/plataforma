@@ -1,33 +1,52 @@
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Docente | EduPlatform</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
         tailwind.config = {
+            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 600: '#0284c7', 900: '#0c4a6e' },
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1A2633",
+                        "text-main-light": "#111418",
+                        "text-main-dark": "#F3F4F6",
+                        "text-sec-light": "#617589",
+                        "text-sec-dark": "#9CA3AF",
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#137fec', 600: '#0f6fd6', 900: '#0c4a6e' },
                         dark: { 800: '#1e293b', 900: '#0f172a' }
+                    },
+                    fontFamily: {
+                        display: ["Lexend", "sans-serif"]
                     }
                 }
             }
         }
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Lexend', sans-serif;
+            background: #f6f7f8;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
 
         .nav-item.active {
-            background-color: #0ea5e9;
+            background-color: #137fec;
             color: white;
         }
 
@@ -57,10 +76,14 @@
     </style>
 </head>
 
-<body class="bg-gray-100 text-gray-800 h-screen flex overflow-hidden">
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased transition-colors duration-200 min-h-screen">
+
+    <div id="main-app-container"
+        class="relative flex flex-col w-full max-w-md mx-auto bg-white dark:bg-background-dark shadow-2xl min-h-screen overflow-hidden">
 
     <!-- SIDEBAR -->
-    <aside class="w-64 bg-dark-900 text-white flex flex-col shadow-2xl z-20 fixed md:relative h-full" id="sidebar">
+    <aside class="hidden w-64 bg-dark-900 text-white flex flex-col shadow-2xl z-20 fixed md:relative h-full" id="sidebar">
         <div class="p-6 border-b border-gray-700">
             <h1 class="text-2xl font-bold">Edu<span class="text-brand-500">Platform</span></h1>
         </div>
@@ -132,7 +155,9 @@
             <button onclick="openModalPerfil()"
                 class="flex items-center w-full p-2 hover:bg-dark-800 rounded-lg transition">
                 <div
-                    class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white font-bold mr-3">
+                    id="docente-avatar-mini"
+                    class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-white font-bold mr-3 bg-cover bg-center"
+                    style="background-image: url('{{ foto_perfil|default('') }}');">
                     {{ nombre_docente[0] if nombre_docente else 'D' }}
                 </div>
                 <div class="text-left">
@@ -148,9 +173,9 @@
     </aside>
 
     <!-- MAIN CONTENT -->
-    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+    <div class="flex-1 flex flex-col overflow-hidden">
         <!-- HEADER -->
-        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-20">
+        <header class="bg-white dark:bg-background-dark shadow-sm h-16 flex items-center justify-between px-6 z-20">
             <div class="flex items-center">
                 <button id="mobile-menu-btn" class="lg:hidden mr-4 text-gray-600"><i
                         class="fas fa-bars text-xl"></i></button>
@@ -289,39 +314,7 @@
                                 class="fas fa-sync mr-1"></i>Actualizar</button>
                     </div>
                     <div class="p-4" id="estudiantes-riesgo-list">
-                        <div class="space-y-3">
-                            <div
-                                class="flex items-center justify-between p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center"><i
-                                            class="fas fa-user text-red-600"></i></div>
-                                    <div>
-                                        <p class="font-medium">Roberto Hernández</p>
-                                        <p class="text-xs text-gray-500">3 entregas atrasadas</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-bold">85%
-                                        Riesgo</span>
-                                </div>
-                            </div>
-                            <div
-                                class="flex items-center justify-between p-3 bg-orange-50 rounded-lg border-l-4 border-orange-400">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                                        <i class="fas fa-user text-orange-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-medium">Laura Gómez</p>
-                                        <p class="text-xs text-gray-500">Baja asistencia</p>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold">60%
-                                        Riesgo</span>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="text-center text-gray-400 py-6">Cargando predicciones...</div>
                     </div>
                 </div>
             </section>
@@ -508,18 +501,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-white rounded-xl shadow-sm p-6">
                         <h3 class="font-bold mb-4">Promedio General</h3>
-                        <p class="text-4xl font-bold text-brand-600">8.5</p>
-                        <p class="text-sm text-gray-500 mt-2">De todos tus estudiantes</p>
+                        <p id="stat-promedio" class="text-4xl font-bold text-brand-600">—</p>
+                        <p class="text-sm text-gray-500 mt-2">Calculando...</p>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm p-6">
                         <h3 class="font-bold mb-4">Tasa de Entrega</h3>
-                        <p class="text-4xl font-bold text-green-600">87%</p>
-                        <p class="text-sm text-gray-500 mt-2">Tareas entregadas a tiempo</p>
+                        <p id="stat-entregas" class="text-4xl font-bold text-green-600">—</p>
+                        <p class="text-sm text-gray-500 mt-2">Basado en entregas registradas</p>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm p-6">
                         <h3 class="font-bold mb-4">Asistencia Promedio</h3>
-                        <p class="text-4xl font-bold text-purple-600">92%</p>
-                        <p class="text-sm text-gray-500 mt-2">Este mes</p>
+                        <p id="stat-asistencia" class="text-4xl font-bold text-purple-600">—</p>
+                        <p class="text-sm text-gray-500 mt-2">Calculando...</p>
                     </div>
                 </div>
             </section>
@@ -532,51 +525,7 @@
                             class="fas fa-plus mr-2"></i>Crear Evaluación</button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="evaluaciones-grid">
-                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded">Activo</span>
-                                <h3 class="font-bold text-lg mt-2">Examen Parcial 1</h3>
-                                <p class="text-sm text-gray-500">Programación Orientada a Objetos</p>
-                            </div>
-                            <i class="fas fa-file-alt text-2xl text-indigo-300"></i>
-                        </div>
-                        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
-                            <span><i class="fas fa-clock mr-1"></i> 60 min</span>
-                            <span><i class="fas fa-question-circle mr-1"></i> 20 preguntas</span>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button
-                                class="flex-1 bg-indigo-100 text-indigo-700 py-2 rounded-lg text-sm hover:bg-indigo-200">Editar</button>
-                            <button
-                                class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm hover:bg-gray-200">Resultados</button>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-500">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded">Borrador</span>
-                                <h3 class="font-bold text-lg mt-2">Quiz Semana 5</h3>
-                                <p class="text-sm text-gray-500">Base de Datos</p>
-                            </div>
-                            <i class="fas fa-file-alt text-2xl text-yellow-300"></i>
-                        </div>
-                        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
-                            <span><i class="fas fa-clock mr-1"></i> 30 min</span>
-                            <span><i class="fas fa-question-circle mr-1"></i> 10 preguntas</span>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button
-                                class="flex-1 bg-yellow-100 text-yellow-700 py-2 rounded-lg text-sm hover:bg-yellow-200">Continuar</button>
-                            <button
-                                class="flex-1 bg-green-100 text-green-700 py-2 rounded-lg text-sm hover:bg-green-200">Publicar</button>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm p-6 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400 hover:border-indigo-400 hover:text-indigo-400 cursor-pointer transition"
-                        onclick="openModalEvaluacion()">
-                        <i class="fas fa-plus text-3xl mb-2"></i>
-                        <p class="font-medium">Crear Nueva Evaluación</p>
-                    </div>
+                    <div class="col-span-full text-center py-8 text-gray-400">Cargando evaluaciones...</div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm p-6">
@@ -605,42 +554,7 @@
                 </div>
                 <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div class="divide-y" id="comunicados-list">
-                        <div class="p-6 hover:bg-gray-50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">General</span>
-                                    <h3 class="font-bold text-lg mt-2">Recordatorio Entrega Final</h3>
-                                    <p class="text-sm text-gray-600 mt-1">Se les recuerda que la fecha límite para la
-                                        entrega del proyecto final es el próximo viernes.</p>
-                                    <p class="text-xs text-gray-400 mt-2"><i class="fas fa-clock mr-1"></i> Hace 2 días
-                                    </p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <button class="text-gray-400 hover:text-blue-500"><i
-                                            class="fas fa-edit"></i></button>
-                                    <button class="text-gray-400 hover:text-red-500"><i
-                                            class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="p-6 hover:bg-gray-50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded">Urgente</span>
-                                    <h3 class="font-bold text-lg mt-2">Cambio de Horario</h3>
-                                    <p class="text-sm text-gray-600 mt-1">La clase del jueves se pospone para el viernes
-                                        a las 10:00 AM.</p>
-                                    <p class="text-xs text-gray-400 mt-2"><i class="fas fa-clock mr-1"></i> Hace 5 días
-                                    </p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <button class="text-gray-400 hover:text-blue-500"><i
-                                            class="fas fa-edit"></i></button>
-                                    <button class="text-gray-400 hover:text-red-500"><i
-                                            class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="p-6 text-center text-gray-400">Cargando comunicados...</div>
                     </div>
                 </div>
             </section>
@@ -655,64 +569,17 @@
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 space-y-4">
-                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <span
-                                        class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-bold">Activo</span>
-                                    <h3 class="font-bold text-lg mt-2">Reto Semanal: Algoritmos de Ordenamiento</h3>
-                                    <p class="text-sm text-gray-600 mt-1">Implementa QuickSort en Python y supera los
-                                        tests ocultos.</p>
-                                </div>
-                                <div class="bg-purple-100 p-3 rounded-full text-purple-600">
-                                    <i class="fas fa-trophy text-xl"></i>
-                                </div>
+                        <div id="retos-list" class="space-y-4">
+                            <div class="bg-white rounded-xl shadow-sm p-8 text-center border-2 border-dashed border-gray-300">
+                                <i class="fas fa-code text-4xl text-gray-300 mb-4"></i>
+                                <p class="text-gray-500">Cargando retos...</p>
                             </div>
-                            <div class="mt-4 flex items-center justify-between text-sm">
-                                <span class="text-gray-500"><i class="fas fa-users mr-1"></i> 12 participantes</span>
-                                <span class="text-yellow-500 font-bold"><i class="fas fa-coins mr-1"></i> 500
-                                    EduCoins</span>
-                            </div>
-                        </div>
-                        <div
-                            class="bg-white rounded-xl shadow-sm p-8 text-center border-2 border-dashed border-gray-300">
-                            <i class="fas fa-code text-4xl text-gray-300 mb-4"></i>
-                            <p class="text-gray-500">No hay más retos activos</p>
                         </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm p-6">
                         <h3 class="font-bold mb-4">Ranking Global</h3>
-                        <ul class="space-y-4">
-                            <li class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-yellow-500 font-bold w-6">1</span>
-                                    <div class="nav-item">
-                                        <p class="font-medium text-sm">María García</p>
-                                        <p class="text-xs text-gray-500">2500 XP</p>
-                                    </div>
-                                </div>
-                                <i class="fas fa-medal text-yellow-400"></i>
-                            </li>
-                            <li class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-gray-400 font-bold w-6">2</span>
-                                    <div>
-                                        <p class="font-medium text-sm">Juan Pérez</p>
-                                        <p class="text-xs text-gray-500">2100 XP</p>
-                                    </div>
-                                </div>
-                                <i class="fas fa-medal text-gray-300"></i>
-                            </li>
-                            <li class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-orange-400 font-bold w-6">3</span>
-                                    <div>
-                                        <p class="font-medium text-sm">Carlos López</p>
-                                        <p class="text-xs text-gray-500">1950 XP</p>
-                                    </div>
-                                </div>
-                                <i class="fas fa-medal text-orange-300"></i>
-                            </li>
+                        <ul id="retos-ranking" class="space-y-4">
+                            <li class="text-sm text-gray-400">Cargando ranking...</li>
                         </ul>
                     </div>
                 </div>
@@ -799,7 +666,34 @@
 
             </section>
         </main>
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="fixed bottom-0 left-0 right-0 z-50 max-w-md mx-auto bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800">
+            <div class="flex h-16 items-center justify-between px-1">
+                <button onclick="showSection('dashboard')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-primary bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">home</span>
+                    <span class="text-[11px] font-semibold">Inicio</span>
+                </button>
+                <button onclick="showSection('materias')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">school</span>
+                    <span class="text-[11px] font-semibold">Materias</span>
+                </button>
+                <button onclick="showSection('tareas')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">task</span>
+                    <span class="text-[11px] font-semibold">Tareas</span>
+                </button>
+                <button onclick="showSection('mensajes')" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">chat</span>
+                    <span class="text-[11px] font-semibold">Mensajes</span>
+                </button>
+                <button onclick="openModalPerfil()" class="nav-btn flex flex-1 flex-col items-center justify-center gap-0.5 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[22px]">person</span>
+                    <span class="text-[11px] font-semibold">Perfil</span>
+                </button>
+            </div>
+        </nav>
     </div>
+
+</div>
 
     <!-- MODAL: Lanzar Reto -->
     <div id="modal-reto" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
@@ -995,82 +889,17 @@
                     Recurso</button>
             </form>
         </div>
-        <!-- RETOS CONTENT -->
-        <div id="section-retos" class="content-section hidden h-full flex flex-col">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h3 class="text-2xl font-bold text-gray-800">Retos de Código</h3>
-                    <p class="text-gray-600">Gamificación y desafíos para estudiantes</p>
-                </div>
-                <button onclick="openModalReto()"
-                    class="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-purple-700 shadow-lg transition transform hover:-translate-y-1">
-                    <i class="fas fa-gamepad mr-2"></i> Lanzar Nuevo Reto
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div
-                    class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-white shadow-lg relative overflow-hidden">
-                    <div class="absolute right-0 top-0 h-full w-1/2 bg-white opacity-10 transform skew-x-12"></div>
-                    <h4 class="text-lg font-bold mb-2">Reto Activo</h4>
-                    <p class="text-3xl font-bold mb-1">Algoritmos de Ordenamiento</p>
-                    <p class="text-sm opacity-90 mb-4">Termina en: 2 días 4 horas</p>
-                    <div class="flex items-center space-x-4">
-                        <div class="bg-white/20 rounded-lg px-3 py-1 text-sm font-bold"><i
-                                class="fas fa-users mr-1"></i> 24 Participantes</div>
-                        <div class="bg-yellow-400/20 rounded-lg px-3 py-1 text-sm font-bold text-yellow-300"><i
-                                class="fas fa-coins mr-1"></i> 500 EduCoins</div>
-                    </div>
-                </div>
-
-                <div class="col-span-2 bg-white rounded-xl shadow-sm p-6">
-                    <h4 class="font-bold text-gray-700 mb-4">Ranking Global</h4>
-                    <div class="space-y-3">
-                        <div
-                            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-yellow-400">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-bold">
-                                    1</div>
-                                <span class="font-medium">Ana Martínez</span>
-                            </div>
-                            <span class="font-bold text-indigo-600">2450 XP</span>
-                        </div>
-                        <div
-                            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-gray-300">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold">
-                                    2</div>
-                                <span class="font-medium">Carlos López</span>
-                            </div>
-                            <span class="font-bold text-indigo-600">2100 XP</span>
-                        </div>
-                        <div
-                            class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-orange-300">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    class="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
-                                    3</div>
-                                <span class="font-medium">Lucía Gómez</span>
-                            </div>
-                            <span class="font-bold text-indigo-600">1980 XP</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    </div>
         <!-- CALENDARIO CONTENT -->
         <div id="section-calendario" class="content-section hidden h-full flex flex-col">
             <div class="bg-white rounded-xl shadow-sm p-6 h-full flex flex-col">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-xl font-bold flex items-center"><i
-                            class="fas fa-calendar-alt text-brand-600 mr-2"></i> Enero 2026</h3>
+                            class="fas fa-calendar-alt text-brand-600 mr-2"></i> <span id="calendar-title">Calendario</span></h3>
                     <div class="flex space-x-2">
-                        <button class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-chevron-left"></i></button>
-                        <button class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-chevron-right"></i></button>
-                        <button class="bg-brand-600 text-white px-3 py-1 rounded-lg text-sm">Hoy</button>
+                        <button onclick="changeCalendarMonth(-1)" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-chevron-left"></i></button>
+                        <button onclick="changeCalendarMonth(1)" class="p-2 hover:bg-gray-100 rounded-lg"><i class="fas fa-chevron-right"></i></button>
+                        <button onclick="goToToday()" class="bg-brand-600 text-white px-3 py-1 rounded-lg text-sm">Hoy</button>
                     </div>
                 </div>
 
@@ -1086,24 +915,7 @@
 
                 <div class="grid grid-cols-7 gap-1 flex-1 text-sm bg-gray-200 p-1 rounded-lg overflow-y-auto"
                     id="calendar-grid">
-                    <!-- Calendar Days Generated by JS -->
-                    <!-- Placeholder static content for immediate visual -->
-                    <div class="bg-gray-100 p-2 h-24 rounded text-gray-400">29</div>
-                    <div class="bg-gray-100 p-2 h-24 rounded text-gray-400">30</div>
-                    <div class="bg-gray-100 p-2 h-24 rounded text-gray-400">31</div>
-                    <div class="bg-white p-2 h-24 rounded hover:shadow-md transition cursor-pointer relative">
-                        <span class="font-bold">1</span>
-                    </div>
-                    <div class="bg-white p-2 h-24 rounded hover:shadow-md transition cursor-pointer relative">
-                        <span class="font-bold">2</span>
-                    </div>
-                    <div class="bg-white p-2 h-24 rounded hover:shadow-md transition cursor-pointer relative">
-                        <span class="font-bold">3</span>
-                    </div>
-                    <div class="bg-white p-2 h-24 rounded hover:shadow-md transition cursor-pointer relative">
-                        <span class="font-bold">4</span>
-                    </div>
-                    <!-- ... more days ... -->
+                    <div class="col-span-full text-center text-gray-400 py-8">Cargando calendario...</div>
                 </div>
             </div>
 
@@ -1236,40 +1048,7 @@
                         <div class="bg-white rounded-xl shadow-sm p-4">
                             <h4 class="font-bold mb-3">Próximas Tutorías</h4>
                             <div id="tutorias-list" class="space-y-3">
-                                <div
-                                    class="flex items-center justify-between p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
-                                    <div class="flex items-center space-x-3">
-                                        <div
-                                            class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                                            <i class="fas fa-user text-green-600"></i>
-                                        </div>
-                                        <div>
-                                            <p class="font-medium">Juan Pérez</p>
-                                            <p class="text-xs text-gray-500">Programación Orientada a Objetos</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-bold text-green-600">Hoy 15:00</p>
-                                        <button class="text-xs text-blue-600 hover:underline">Iniciar
-                                            videollamada</button>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                    <div class="flex items-center space-x-3">
-                                        <div
-                                            class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                                            <i class="fas fa-user text-gray-600"></i>
-                                        </div>
-                                        <div>
-                                            <p class="font-medium">María García</p>
-                                            <p class="text-xs text-gray-500">Bases de Datos</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-medium">Mañana 10:00</p>
-                                        <span class="text-xs text-gray-400">Pendiente</span>
-                                    </div>
-                                </div>
+                                <div class="text-center text-gray-400 py-6">Cargando tutorías...</div>
                             </div>
                         </div>
                     </div>
@@ -1277,12 +1056,12 @@
                         <h4 class="font-bold mb-3">Estadísticas</h4>
                         <div class="space-y-4">
                             <div class="text-center p-4 bg-green-50 rounded-lg">
-                                <p class="text-3xl font-bold text-green-600">12</p>
-                                <p class="text-sm text-gray-600">Tutorías este mes</p>
+                                <p id="tutorias-total" class="text-3xl font-bold text-green-600">—</p>
+                                <p class="text-sm text-gray-600">Tutorías programadas</p>
                             </div>
                             <div class="text-center p-4 bg-blue-50 rounded-lg">
-                                <p class="text-3xl font-bold text-blue-600">4.8</p>
-                                <p class="text-sm text-gray-600">Calificación promedio</p>
+                                <p id="tutorias-completadas" class="text-3xl font-bold text-blue-600">—</p>
+                                <p class="text-sm text-gray-600">Tutorías completadas</p>
                             </div>
                         </div>
                     </div>
@@ -1299,85 +1078,8 @@
                             class="bg-blue-100 text-blue-600 px-3 py-1 rounded-lg text-sm hover:bg-blue-200"><i
                                 class="fas fa-sync mr-1"></i> Actualizar</button>
                     </div>
-                    <div id="horario-container" class="overflow-x-auto">
-                        <table class="w-full border-collapse">
-                            <thead>
-                                <tr class="bg-gray-100">
-                                    <th class="border p-2 w-20">Hora</th>
-                                    <th class="border p-2">Lunes</th>
-                                    <th class="border p-2">Martes</th>
-                                    <th class="border p-2">Miércoles</th>
-                                    <th class="border p-2">Jueves</th>
-                                    <th class="border p-2">Viernes</th>
-                                </tr>
-                            </thead>
-                            <tbody id="horario-body">
-                                <tr>
-                                    <td class="border p-2 text-center font-bold text-gray-500">7:00</td>
-                                    <td class="border p-2"></td>
-                                    <td class="border p-2"></td>
-                                    <td class="border p-2"></td>
-                                    <td class="border p-2"></td>
-                                    <td class="border p-2"></td>
-                                </tr>
-                                <tr>
-                                    <td class="border p-2 text-center font-bold text-gray-500">8:00</td>
-                                    <td
-                                        class="border p-2 bg-blue-100 text-blue-800 text-center text-sm font-medium rounded">
-                                        POO - A1</td>
-                                    <td class="border p-2"></td>
-                                    <td
-                                        class="border p-2 bg-blue-100 text-blue-800 text-center text-sm font-medium rounded">
-                                        POO - A1</td>
-                                    <td class="border p-2"></td>
-                                    <td
-                                        class="border p-2 bg-green-100 text-green-800 text-center text-sm font-medium rounded">
-                                        BD - B2</td>
-                                </tr>
-                                <tr>
-                                    <td class="border p-2 text-center font-bold text-gray-500">9:00</td>
-                                    <td
-                                        class="border p-2 bg-blue-100 text-blue-800 text-center text-sm font-medium rounded">
-                                        POO - A1</td>
-                                    <td
-                                        class="border p-2 bg-purple-100 text-purple-800 text-center text-sm font-medium rounded">
-                                        Algoritmos - C3</td>
-                                    <td
-                                        class="border p-2 bg-blue-100 text-blue-800 text-center text-sm font-medium rounded">
-                                        POO - A1</td>
-                                    <td
-                                        class="border p-2 bg-purple-100 text-purple-800 text-center text-sm font-medium rounded">
-                                        Algoritmos - C3</td>
-                                    <td
-                                        class="border p-2 bg-green-100 text-green-800 text-center text-sm font-medium rounded">
-                                        BD - B2</td>
-                                </tr>
-                                <tr>
-                                    <td class="border p-2 text-center font-bold text-gray-500">10:00</td>
-                                    <td class="border p-2"></td>
-                                    <td
-                                        class="border p-2 bg-purple-100 text-purple-800 text-center text-sm font-medium rounded">
-                                        Algoritmos - C3</td>
-                                    <td class="border p-2"></td>
-                                    <td
-                                        class="border p-2 bg-purple-100 text-purple-800 text-center text-sm font-medium rounded">
-                                        Algoritmos - C3</td>
-                                    <td class="border p-2"></td>
-                                </tr>
-                                <tr>
-                                    <td class="border p-2 text-center font-bold text-gray-500">11:00</td>
-                                    <td
-                                        class="border p-2 bg-yellow-100 text-yellow-800 text-center text-sm font-medium rounded">
-                                        Tutoría</td>
-                                    <td class="border p-2"></td>
-                                    <td
-                                        class="border p-2 bg-yellow-100 text-yellow-800 text-center text-sm font-medium rounded">
-                                        Tutoría</td>
-                                    <td class="border p-2"></td>
-                                    <td class="border p-2"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div id="horario-container" class="space-y-3">
+                        <div class="text-center text-gray-400 py-6">Cargando horario...</div>
                     </div>
                 </div>
             </div>
@@ -1449,13 +1151,24 @@
                 <div class="p-6">
                     <div class="flex flex-col items-center mb-6">
                         <div
-                            class="w-24 h-24 rounded-full bg-brand-500 flex items-center justify-center text-white text-4xl font-bold mb-3 border-4 border-white shadow-lg">
+                            id="docente-avatar"
+                            class="w-24 h-24 rounded-full bg-brand-500 flex items-center justify-center text-white text-4xl font-bold mb-3 border-4 border-white shadow-lg bg-cover bg-center"
+                            style="background-image: url('{{ foto_perfil|default('') }}');">
                             {{ nombre_docente[0] if nombre_docente else 'D' }}
                         </div>
                         <h2 class="text-xl font-bold">{{ nombre_docente }}</h2>
                         <p class="text-gray-500">{{ email_docente }}</p>
                         <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold mt-2">Profesor
                             Verificado</span>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Foto de perfil</label>
+                        <div class="flex items-center gap-3">
+                            <input id="docente-photo-input" type="file" accept="image/*" class="flex-1 text-sm">
+                            <button type="button" onclick="uploadDocentePhoto()"
+                                class="bg-brand-600 text-white px-3 py-2 rounded-lg font-bold hover:bg-brand-700">Subir</button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Formatos permitidos: jpg, png, jpeg, gif, webp.</p>
                     </div>
                     <form class="space-y-4">
                         <div>
@@ -1676,6 +1389,40 @@
             function openModalPerfil() { document.getElementById('modal-perfil').classList.remove('hidden'); }
             function openModalQR() { showSection('asistencia'); }
 
+            async function uploadDocentePhoto() {
+                const input = document.getElementById('docente-photo-input');
+                if (!input || !input.files || !input.files[0]) {
+                    Swal.fire('Info', 'Selecciona una imagen.', 'info');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('photo', input.files[0]);
+
+                try {
+                    const res = await fetch('/api/profile/upload-photo', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (res.ok && (data.success || data.foto_perfil)) {
+                        const avatar = document.getElementById('docente-avatar');
+                        const miniAvatar = document.getElementById('docente-avatar-mini');
+                        if (avatar) {
+                            avatar.style.backgroundImage = `url('${data.foto_perfil}')`;
+                            avatar.textContent = '';
+                        }
+                        if (miniAvatar) {
+                            miniAvatar.style.backgroundImage = `url('${data.foto_perfil}')`;
+                            miniAvatar.textContent = '';
+                        }
+                        Swal.fire('¡Listo!', 'Foto de perfil actualizada.', 'success');
+                    } else {
+                        throw new Error(data.error || 'Error al subir foto');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire('Error', 'No se pudo subir la foto.', 'error');
+                }
+            }
+
             function lanzarAulaVirtual() {
                 Swal.fire({
                     title: 'Entrando al Aula Virtual',
@@ -1695,26 +1442,77 @@
                 });
             }
 
-            function initCalendar() {
+            let calendarDate = new Date();
+            let calendarEvents = [];
+
+            async function initCalendar() {
+                await loadCalendarEvents();
+                renderCalendar();
+            }
+
+            async function loadCalendarEvents() {
+                try {
+                    const res = await fetch('/api/eventos-personales');
+                    const data = await res.json();
+                    calendarEvents = Array.isArray(data) ? data : [];
+                } catch (err) {
+                    calendarEvents = [];
+                }
+            }
+
+            function changeCalendarMonth(delta) {
+                calendarDate.setMonth(calendarDate.getMonth() + delta);
+                renderCalendar();
+            }
+
+            function goToToday() {
+                calendarDate = new Date();
+                renderCalendar();
+            }
+
+            function renderCalendar() {
                 const grid = document.getElementById('calendar-grid');
-                if (!grid || grid.children.length > 10) return; // Prevent regenerating if already populated
-                grid.innerHTML = '';
+                const title = document.getElementById('calendar-title');
+                if (!grid) return;
 
-                // Dummy logic for Jan 2026 (starts Thursday)
-                for (let i = 0; i < 4; i++) grid.innerHTML += '<div class="bg-gray-100 p-2 h-24 rounded text-gray-400"></div>';
+                const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                const year = calendarDate.getFullYear();
+                const month = calendarDate.getMonth();
+                if (title) title.textContent = `${monthNames[month]} ${year}`;
 
-                for (let i = 1; i <= 31; i++) {
-                    let events = '';
-                    if (i === 15) events = '<div class="mt-1 text-xs bg-red-100 text-red-600 px-1 rounded truncate font-medium">Examen Parcial</div>';
-                    if (i === 20) events += '<div class="mt-1 text-xs bg-blue-100 text-blue-600 px-1 rounded truncate font-medium">Entrega Proyecto</div>';
-                    if (i === 28) events += '<div class="mt-1 text-xs bg-purple-100 text-purple-600 px-1 rounded truncate font-medium">Reto Código</div>';
+                const firstDay = new Date(year, month, 1);
+                const startDay = firstDay.getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-                    grid.innerHTML += `
-                    <div class="bg-white p-2 h-24 rounded border border-transparent hover:border-brand-300 hover:shadow-md transition cursor-pointer relative group">
-                        <span class="font-bold text-gray-700 block mb-1">${i}</span>
-                        ${events}
+                const today = new Date();
+                const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+                let html = '';
+                for (let i = 0; i < startDay; i++) {
+                    html += '<div class="bg-gray-100 p-2 h-24 rounded text-gray-400"></div>';
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayEvents = calendarEvents.filter(e => {
+                        if (!e.fecha) return false;
+                        const d = new Date(e.fecha);
+                        return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+                    });
+
+                    const isToday = isCurrentMonth && today.getDate() === day;
+                    const eventsHtml = dayEvents.slice(0, 2).map(ev => {
+                        const color = ev.color || '#3b82f6';
+                        return `<div class="mt-1 text-[11px] px-1 rounded truncate font-medium" style="background-color:${color}22;color:${color};">${ev.titulo}</div>`;
+                    }).join('');
+
+                    html += `
+                    <div class="bg-white p-2 h-24 rounded border ${isToday ? 'border-brand-500' : 'border-transparent'} hover:border-brand-300 hover:shadow-md transition cursor-pointer relative">
+                        <span class="font-bold text-gray-700 block mb-1">${day}</span>
+                        ${eventsHtml}
                     </div>`;
                 }
+
+                grid.innerHTML = html || '<div class="col-span-full text-center text-gray-400 py-8">Sin eventos</div>';
             }
 
             let currentEstudianteId = null;
@@ -1736,36 +1534,23 @@
                 const fecha = document.getElementById('tarea-fecha').value.replace('T', ' ') + ':00';
 
                 const formData = new FormData();
-                formData.append('title', document.getElementById('tarea-titulo').value); // Changed to 'title' to match backend
-                formData.append('description', document.getElementById('tarea-desc').value);
+                formData.append('titulo', document.getElementById('tarea-titulo').value);
+                formData.append('descripcion', document.getElementById('tarea-desc').value);
                 formData.append('materia_id', document.getElementById('tarea-materia').value);
-                formData.append('due_date', fecha); // Changed to 'due_date'
-                formData.append('value', document.getElementById('tarea-valor').value); // Changed to 'value'
+                formData.append('fecha_vencimiento', fecha);
+                formData.append('valor_porcentaje', document.getElementById('tarea-valor').value);
 
                 // Adjunto
                 const fileInput = document.getElementById('tarea-archivo');
                 if (fileInput.files.length > 0) {
-                    formData.append('file', fileInput.files[0]);
+                    Array.from(fileInput.files).forEach(file => formData.append('files', file));
                 }
 
                 try {
-                    const res = await fetch('/api/tasks', { // Updated endpoint from refactor if needed, or keep existing if mapped
+                    const res = await fetch('/api/crear-tarea', {
                         method: 'POST',
                         body: formData
                     });
-                    // Note: app.py create_task might need update if it redirects. 
-                    // The previous creating_task in app.py redirected. 
-                    // I need to ensure app.py returns JSON for this to work.
-
-                    // If backend redirects, fetch might follow it.
-                    // Let's assume I fixed app.py to return JSON.
-
-                    if (res.redirected) {
-                        // If it redirects, it's the old behavior. We should prevent that in app.py or handle it here.
-                        // But for now let's hope it returns JSON or we modified it.
-                        // Actually I haven't modified create_task in app.py, I only added get_materia_details.
-                        // I MUST modify app.py create_task to return JSON.
-                    }
 
                     const json = await res.json();
 
@@ -1791,35 +1576,6 @@
             }
 
             // ... (Lanzar Reto skipped, unchanged)
-
-            async function subirRecurso(e) {
-                e.preventDefault();
-                const formData = new FormData();
-                formData.append('title', document.getElementById('recurso-titulo').value);
-                formData.append('description', document.getElementById('recurso-desc').value);
-                formData.append('materia_id', document.getElementById('recurso-materia').value); // Changed name to materia_id to match backend check usually
-                const files = document.getElementById('recurso-files').files;
-                for (let f of files) formData.append('file', f); // Changed 'files' to 'file' as per typical Flask request.files
-
-                try {
-                    const res = await fetch('/api/resources', { method: 'POST', body: formData });
-                    const json = await res.json();
-
-                    if (json.success || !json.error) {
-                        Swal.fire('Éxito', 'Recurso subido correctamente', 'success');
-                        closeModal('modal-recurso');
-
-                        const selectedMateria = document.getElementById('recurso-materia').value;
-                        if (currentMateriaId && currentMateriaId == selectedMateria) {
-                            loadSubjectDetails(currentMateriaId);
-                        } else {
-                            cargarRecursos(); // Reload global list if applicable
-                        }
-                    } else {
-                        Swal.fire('Error', json.error || 'Error', 'error');
-                    }
-                } catch (err) { Swal.fire('Error', 'Error de conexión', 'error'); }
-            }
 
             // Lanzar Reto
             async function lanzarReto(e) {
@@ -1860,19 +1616,20 @@
                 } catch (err) { Swal.fire('Error', 'Error de conexión', 'error'); }
             }
 
-            // Ver Entregas de una Tarea (Simulado)
+            // Ver Entregas de una Tarea
             async function verEntregas(tareaId) {
                 document.getElementById('modal-entregas').classList.remove('hidden');
                 const container = document.getElementById('entregas-content');
                 container.innerHTML = '<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto mb-4"></div>Cargando...</div>';
 
                 try {
-                    // Simulación - En producción usar endpoint real
-                    const entregas = [
-                        { id: 1, estudiante: 'Juan Pérez', fecha: '15/01/2026 14:30', archivo: 'tarea1.pdf', calificacion: null },
-                        { id: 2, estudiante: 'María García', fecha: '15/01/2026 16:45', archivo: 'proyecto.zip', calificacion: 95 },
-                        { id: 3, estudiante: 'Carlos López', fecha: '16/01/2026 09:12', archivo: 'codigo.py', calificacion: null }
-                    ];
+                    const res = await fetch(`/api/docente/tareas/${tareaId}/entregas`);
+                    const entregas = await res.json();
+
+                    if (!Array.isArray(entregas) || entregas.length === 0) {
+                        container.innerHTML = '<div class="text-center py-10 text-gray-400">No hay entregas registradas</div>';
+                        return;
+                    }
 
                     container.innerHTML = `
                     <table class="w-full">
@@ -1889,8 +1646,8 @@
                             ${entregas.map(e => `
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-4 py-4 font-medium">${e.estudiante}</td>
-                                    <td class="px-4 py-4 text-sm text-gray-500">${e.fecha}</td>
-                                    <td class="px-4 py-4"><a href="#" class="text-brand-600 hover:underline"><i class="fas fa-file mr-1"></i>${e.archivo}</a></td>
+                                    <td class="px-4 py-4 text-sm text-gray-500">${e.fecha_entrega || ''}</td>
+                                    <td class="px-4 py-4">${e.archivo_url ? `<a href="${e.archivo_url}" target="_blank" class="text-brand-600 hover:underline"><i class="fas fa-file mr-1"></i>${e.archivo}</a>` : (e.archivo || 'Sin archivo')}</td>
                                     <td class="px-4 py-4 text-center">
                                         ${e.calificacion !== null
                             ? `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">${e.calificacion}</span>`
@@ -1972,9 +1729,9 @@
                 const formData = new FormData();
                 formData.append('title', document.getElementById('recurso-titulo').value);
                 formData.append('description', document.getElementById('recurso-desc').value);
-                formData.append('materia_id', document.getElementById('recurso-materia').value);
+                formData.append('materia', document.getElementById('recurso-materia').value);
                 const files = document.getElementById('recurso-files').files;
-                for (let f of files) formData.append('file', f);
+                for (let f of files) formData.append('files', f);
 
                 try {
                     const res = await fetch('/api/resources', { method: 'POST', body: formData });
@@ -2103,17 +1860,350 @@
                     if (json.success) {
                         Swal.fire('Publicado', 'Comunicado publicado correctamente', 'success');
                         closeModal('modal-comunicado');
+                        cargarComunicados();
                     } else {
                         Swal.fire('Error', json.error || 'Error al publicar', 'error');
                     }
                 } catch (err) { Swal.fire('Error', 'Error de conexión', 'error'); }
             }
 
+            async function cargarComunicados() {
+                const container = document.getElementById('comunicados-list');
+                if (!container) return;
+                container.innerHTML = '<div class="p-6 text-center text-gray-400">Cargando comunicados...</div>';
+                try {
+                    const res = await fetch('/api/announcements');
+                    const comunicados = await res.json();
+                    if (!Array.isArray(comunicados) || comunicados.length === 0) {
+                        container.innerHTML = '<div class="p-6 text-center text-gray-400">No hay comunicados</div>';
+                        return;
+                    }
+
+                    container.innerHTML = comunicados.map(c => {
+                        const safeTitle = (c.title || '').replace(/'/g, "\\'");
+                        const safeContent = (c.content || '').replace(/'/g, "\\'");
+                        return `
+                        <div class="p-6 hover:bg-gray-50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">General</span>
+                                    <h3 class="font-bold text-lg mt-2">${c.title || 'Sin título'}</h3>
+                                    <p class="text-sm text-gray-600 mt-1">${c.content || ''}</p>
+                                    ${c.adjunto_url ? `<a href="${c.adjunto_url}" target="_blank" class="text-xs text-brand-600 hover:underline mt-2 inline-flex items-center"><i class="fas fa-paperclip mr-1"></i>Adjunto</a>` : ''}
+                                    <p class="text-xs text-gray-400 mt-2"><i class="fas fa-clock mr-1"></i> ${c.date ? new Date(c.date).toLocaleString() : ''}</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="editarComunicado(${c.id}, '${safeTitle}', '${safeContent}')" class="text-gray-400 hover:text-blue-500"><i class="fas fa-edit"></i></button>
+                                    <button onclick="eliminarComunicado(${c.id})" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    }).join('');
+                } catch (err) {
+                    container.innerHTML = '<div class="p-6 text-center text-red-400">Error al cargar comunicados</div>';
+                }
+            }
+
+            function editarComunicado(id, titulo, contenido) {
+                Swal.fire({
+                    title: 'Editar comunicado',
+                    html: `
+                        <input id="swal-com-titulo" class="swal2-input" placeholder="Título" value="${titulo}">
+                        <textarea id="swal-com-contenido" class="swal2-textarea" placeholder="Contenido">${contenido}</textarea>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Guardar',
+                    preConfirm: () => ({
+                        title: document.getElementById('swal-com-titulo').value,
+                        content: document.getElementById('swal-com-contenido').value
+                    })
+                }).then(async (result) => {
+                    if (!result.isConfirmed) return;
+                    try {
+                        const res = await fetch(`/api/announcements/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(result.value)
+                        });
+                        const json = await res.json();
+                        if (json.success) {
+                            Swal.fire('Actualizado', 'Comunicado actualizado', 'success');
+                            cargarComunicados();
+                        } else {
+                            Swal.fire('Error', json.error || 'No se pudo actualizar', 'error');
+                        }
+                    } catch (err) {
+                        Swal.fire('Error', 'Error de conexión', 'error');
+                    }
+                });
+            }
+
+            function eliminarComunicado(id) {
+                Swal.fire({
+                    title: '¿Eliminar comunicado?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: 'Eliminar'
+                }).then(async (result) => {
+                    if (!result.isConfirmed) return;
+                    try {
+                        const res = await fetch(`/api/announcements/${id}`, { method: 'DELETE' });
+                        const json = await res.json();
+                        if (json.success) {
+                            Swal.fire('Eliminado', 'Comunicado eliminado', 'success');
+                            cargarComunicados();
+                        } else {
+                            Swal.fire('Error', json.error || 'No se pudo eliminar', 'error');
+                        }
+                    } catch (err) {
+                        Swal.fire('Error', 'Error de conexión', 'error');
+                    }
+                });
+            }
+
+            async function cargarEvaluaciones() {
+                const container = document.getElementById('evaluaciones-grid');
+                if (!container) return;
+                container.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400">Cargando evaluaciones...</div>';
+                try {
+                    const res = await fetch('/api/docente/examenes');
+                    const evaluaciones = await res.json();
+                    if (!Array.isArray(evaluaciones) || evaluaciones.length === 0) {
+                        container.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400">No hay evaluaciones creadas</div>';
+                        return;
+                    }
+
+                    container.innerHTML = evaluaciones.map(ev => {
+                        const safeTitle = (ev.titulo || '').replace(/'/g, "\\'");
+                        const safeDesc = (ev.descripcion || '').replace(/'/g, "\\'");
+                        const fechaFin = ev.fecha_fin || '';
+                        return `
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded">${ev.activo ? 'Activo' : 'Inactivo'}</span>
+                                    <h3 class="font-bold text-lg mt-2">${ev.titulo}</h3>
+                                    <p class="text-sm text-gray-500">${ev.materia || 'Sin materia'}</p>
+                                </div>
+                                <i class="fas fa-file-alt text-2xl text-indigo-300"></i>
+                            </div>
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                                <span><i class="fas fa-clock mr-1"></i> ${ev.tiempo_limite || 0} min</span>
+                                <span><i class="fas fa-users mr-1"></i> ${ev.respuestas_count || 0} respuestas</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="editarExamen(${ev.id}, '${safeTitle}', '${safeDesc}', ${ev.tiempo_limite || 60}, '${fechaFin}')" class="flex-1 bg-indigo-100 text-indigo-700 py-2 rounded-lg text-sm hover:bg-indigo-200">Editar</button>
+                                <button onclick="eliminarExamen(${ev.id})" class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-sm hover:bg-gray-200">Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                    }).join('');
+                } catch (err) {
+                    container.innerHTML = '<div class="col-span-full text-center py-8 text-red-400">Error al cargar evaluaciones</div>';
+                }
+            }
+
+            async function editarExamen(id, titulo, descripcion, tiempoLimite, fechaFin) {
+                Swal.fire({
+                    title: 'Editar evaluación',
+                    html: `
+                        <input id="swal-eval-titulo" class="swal2-input" placeholder="Título" value="${titulo}">
+                        <textarea id="swal-eval-desc" class="swal2-textarea" placeholder="Descripción">${descripcion}</textarea>
+                        <input id="swal-eval-tiempo" type="number" class="swal2-input" placeholder="Tiempo límite (min)" value="${tiempoLimite}">
+                        <input id="swal-eval-fecha" type="datetime-local" class="swal2-input" value="${fechaFin ? fechaFin.replace(' ', 'T') : ''}">
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Guardar',
+                    preConfirm: () => ({
+                        titulo: document.getElementById('swal-eval-titulo').value,
+                        descripcion: document.getElementById('swal-eval-desc').value,
+                        tiempo_limite: parseInt(document.getElementById('swal-eval-tiempo').value, 10) || 60,
+                        fecha_fin: document.getElementById('swal-eval-fecha').value || null
+                    })
+                }).then(async (result) => {
+                    if (!result.isConfirmed) return;
+                    try {
+                        const payload = {
+                            titulo: result.value.titulo,
+                            descripcion: result.value.descripcion,
+                            tiempo_limite: result.value.tiempo_limite,
+                            fecha_fin: result.value.fecha_fin ? result.value.fecha_fin.replace('T', ' ') + ':00' : null
+                        };
+                        const res = await fetch(`/api/docente/examenes/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const json = await res.json();
+                        if (json.success) {
+                            Swal.fire('Actualizada', 'Evaluación actualizada', 'success');
+                            cargarEvaluaciones();
+                        } else {
+                            Swal.fire('Error', json.error || 'No se pudo actualizar', 'error');
+                        }
+                    } catch (err) {
+                        Swal.fire('Error', 'Error de conexión', 'error');
+                    }
+                });
+            }
+
+            async function eliminarExamen(id) {
+                Swal.fire({
+                    title: '¿Eliminar evaluación?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: 'Eliminar'
+                }).then(async (result) => {
+                    if (!result.isConfirmed) return;
+                    try {
+                        const res = await fetch(`/api/docente/examenes/${id}`, { method: 'DELETE' });
+                        const json = await res.json();
+                        if (json.status === 'ok' || json.success) {
+                            Swal.fire('Eliminada', 'Evaluación eliminada', 'success');
+                            cargarEvaluaciones();
+                        } else {
+                            Swal.fire('Error', json.error || 'No se pudo eliminar', 'error');
+                        }
+                    } catch (err) {
+                        Swal.fire('Error', 'Error de conexión', 'error');
+                    }
+                });
+            }
+
+            async function cargarReportesStats() {
+                try {
+                    const res = await fetch('/api/docente/reportes/estadisticas');
+                    const data = await res.json();
+                    const promedio = document.getElementById('stat-promedio');
+                    const entregas = document.getElementById('stat-entregas');
+                    const asistencia = document.getElementById('stat-asistencia');
+                    if (promedio) promedio.textContent = data.promedio_general !== null ? Number(data.promedio_general).toFixed(1) : '—';
+                    if (entregas) entregas.textContent = data.tasa_entrega !== null ? `${Math.round(data.tasa_entrega)}%` : '—';
+                    if (asistencia) asistencia.textContent = data.asistencia_promedio !== null ? `${Math.round(data.asistencia_promedio)}%` : '—';
+                } catch (err) {
+                    const promedio = document.getElementById('stat-promedio');
+                    if (promedio) promedio.textContent = '—';
+                }
+            }
+
+            async function cargarRetos() {
+                const container = document.getElementById('retos-list');
+                if (!container) return;
+                container.innerHTML = '<div class="bg-white rounded-xl shadow-sm p-8 text-center border-2 border-dashed border-gray-300"><i class="fas fa-code text-4xl text-gray-300 mb-4"></i><p class="text-gray-500">Cargando retos...</p></div>';
+                try {
+                    const res = await fetch('/api/docente/retos');
+                    const retos = await res.json();
+                    if (!Array.isArray(retos) || retos.length === 0) {
+                        container.innerHTML = '<div class="bg-white rounded-xl shadow-sm p-8 text-center border-2 border-dashed border-gray-300"><i class="fas fa-code text-4xl text-gray-300 mb-4"></i><p class="text-gray-500">No hay retos activos</p></div>';
+                        return;
+                    }
+                    container.innerHTML = retos.map(r => `
+                        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-bold">${r.activo ? 'Activo' : 'Inactivo'}</span>
+                                    <h3 class="font-bold text-lg mt-2">${r.titulo}</h3>
+                                    <p class="text-sm text-gray-600 mt-1">${r.descripcion || ''}</p>
+                                    <p class="text-xs text-gray-400 mt-2">${r.materia || 'Sin materia'} · Dificultad: ${r.dificultad || 'medio'}</p>
+                                </div>
+                                <div class="bg-purple-100 p-3 rounded-full text-purple-600">
+                                    <i class="fas fa-trophy text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex items-center justify-between text-sm">
+                                <span class="text-gray-500"><i class="fas fa-paper-plane mr-1"></i> ${r.envios || 0} envíos</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (err) {
+                    container.innerHTML = '<div class="bg-white rounded-xl shadow-sm p-8 text-center border-2 border-dashed border-gray-300"><i class="fas fa-code text-4xl text-gray-300 mb-4"></i><p class="text-gray-500">Error al cargar retos</p></div>';
+                }
+            }
+
+            async function cargarRankingRetos() {
+                const container = document.getElementById('retos-ranking');
+                if (!container) return;
+                container.innerHTML = '<li class="text-sm text-gray-400">Cargando ranking...</li>';
+                try {
+                    const res = await fetch('/api/docente/retos/ranking');
+                    const ranking = await res.json();
+                    if (!Array.isArray(ranking) || ranking.length === 0) {
+                        container.innerHTML = '<li class="text-sm text-gray-400">Sin ranking disponible</li>';
+                        return;
+                    }
+                    container.innerHTML = ranking.map((r, idx) => `
+                        <li class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-gray-500 font-bold w-6">${idx + 1}</span>
+                                <div>
+                                    <p class="font-medium text-sm">${r.nombre}</p>
+                                    <p class="text-xs text-gray-500">${r.envios} envíos</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-medal text-yellow-400"></i>
+                        </li>
+                    `).join('');
+                } catch (err) {
+                    container.innerHTML = '<li class="text-sm text-gray-400">Error al cargar ranking</li>';
+                }
+            }
+
             async function crearEvaluacion(e) {
                 e.preventDefault();
-                Swal.fire('Creando...', 'La evaluación está siendo creada', 'info');
-                closeModal('modal-evaluacion');
-                // En producción: enviar datos al backend
+                const titulo = document.getElementById('eval-titulo').value.trim();
+                const materiaId = document.getElementById('eval-materia').value;
+                const descripcion = document.getElementById('eval-descripcion').value.trim();
+                const duracion = parseInt(document.getElementById('eval-duracion').value, 10) || 60;
+                const fechaFin = document.getElementById('eval-fecha').value || null;
+
+                const preguntas = Array.from(document.querySelectorAll('#preguntas-container .pregunta-item')).map((item, idx) => {
+                    const inputs = item.querySelectorAll('input');
+                    const pregunta = inputs[0]?.value?.trim() || '';
+                    const opciones = Array.from(inputs).slice(1).map(i => i.value.trim()).filter(Boolean);
+                    const respuesta_correcta = opciones.length >= 4 ? 3 : Math.max(0, opciones.length - 1);
+                    return {
+                        id: idx + 1,
+                        pregunta,
+                        opciones,
+                        respuesta_correcta
+                    };
+                }).filter(p => p.pregunta && p.opciones.length >= 2);
+
+                if (!titulo || !materiaId || preguntas.length === 0) {
+                    Swal.fire('Error', 'Completa el título, la materia y al menos una pregunta.', 'warning');
+                    return;
+                }
+
+                Swal.fire({ title: 'Creando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+                try {
+                    const res = await fetch('/api/docente/crear-examen', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            materia_id: materiaId,
+                            titulo,
+                            descripcion,
+                            preguntas,
+                            tiempo_limite: duracion,
+                            fecha_inicio: null,
+                            fecha_fin: fechaFin ? fechaFin.replace('T', ' ') + ':00' : null
+                        })
+                    });
+                    const json = await res.json();
+                    if (json.success) {
+                        Swal.fire('Creada', 'Evaluación creada correctamente', 'success');
+                        closeModal('modal-evaluacion');
+                        cargarEvaluaciones();
+                    } else {
+                        Swal.fire('Error', json.error || 'No se pudo crear la evaluación', 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                }
             }
 
             async function generarEvaluacionAI() {
@@ -2131,6 +2221,7 @@
                     });
                     const json = await res.json();
                     Swal.fire('¡Listo!', 'Evaluación generada con IA. Revisa la sección de evaluaciones.', 'success');
+                    cargarEvaluaciones();
                 } catch (err) {
                     Swal.fire('Error', 'Error al generar con IA', 'error');
                 }
@@ -2180,17 +2271,22 @@
                 const list = document.getElementById('notif-list');
                 try {
                     const res = await fetch('/api/notifications');
-                    const notifs = await res.json();
+                    const data = await res.json();
+                    const notifs = Array.isArray(data) ? data : (data.notifications || []);
                     if (!notifs || notifs.length === 0) {
                         list.innerHTML = '<div class="p-4 text-center text-gray-400 text-sm">Sin notificaciones</div>';
                         document.getElementById('notif-badge').classList.add('hidden');
                         return;
                     }
-                    document.getElementById('notif-badge').classList.remove('hidden');
+                    if (data.unread_count && data.unread_count > 0) {
+                        document.getElementById('notif-badge').classList.remove('hidden');
+                    } else {
+                        document.getElementById('notif-badge').classList.add('hidden');
+                    }
                     list.innerHTML = notifs.slice(0, 10).map(n => `
-                    <div class="p-3 hover:bg-gray-50 ${n.leido ? '' : 'bg-blue-50'}">
-                        <p class="text-sm font-medium ${n.leido ? 'text-gray-600' : 'text-gray-800'}">${n.titulo || n.mensaje}</p>
-                        <p class="text-xs text-gray-400">${n.fecha || 'Reciente'}</p>
+                    <div class="p-3 hover:bg-gray-50 ${n.leida ? '' : 'bg-blue-50'}">
+                        <p class="text-sm font-medium ${n.leida ? 'text-gray-600' : 'text-gray-800'}">${n.titulo || n.mensaje}</p>
+                        <p class="text-xs text-gray-400">${n.fecha ? new Date(n.fecha).toLocaleString() : 'Reciente'}</p>
                     </div>
                 `).join('');
                 } catch (err) {
@@ -2199,10 +2295,13 @@
             }
 
             function marcarTodasLeidas() {
-                Swal.fire('Marcadas', 'Todas las notificaciones leídas', 'success');
-                document.getElementById('notif-badge').classList.add('hidden');
-                document.getElementById('notif-dropdown').classList.add('hidden');
-                notifOpen = false;
+                fetch('/api/notifications/read-all', { method: 'PUT' })
+                    .then(() => {
+                        Swal.fire('Marcadas', 'Todas las notificaciones leídas', 'success');
+                        document.getElementById('notif-badge').classList.add('hidden');
+                        document.getElementById('notif-dropdown').classList.add('hidden');
+                        notifOpen = false;
+                    });
             }
 
             // Cerrar dropdown al hacer clic fuera
@@ -2238,36 +2337,26 @@
                     }
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Nota: Este endpoint es para orientadores, pero lo simulamos
-                        Swal.fire('Enviado', 'El reporte ha sido registrado en el sistema.', 'success');
+                        const payload = {
+                            alumno_id: estudianteId,
+                            tipo: result.value.tipo,
+                            descripcion: result.value.descripcion
+                        };
+                        fetch('/api/docente/reportes-conducta', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        }).then(r => r.json()).then(j => {
+                            if (j.success) {
+                                Swal.fire('Enviado', 'El reporte ha sido registrado en el sistema.', 'success');
+                            } else {
+                                Swal.fire('Error', j.error || 'No se pudo registrar el reporte', 'error');
+                            }
+                        }).catch(() => {
+                            Swal.fire('Error', 'Error de conexión', 'error');
+                        });
                     }
                 });
-            }
-
-            // ========== ENTREGAS REALES (Fetch al backend) ==========
-            async function verEntregasReales(tareaId) {
-                document.getElementById('modal-entregas').classList.remove('hidden');
-                const container = document.getElementById('entregas-content');
-                container.innerHTML = '<div class="text-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500 mx-auto mb-4"></div>Cargando...</div>';
-
-                try {
-                    const res = await fetch(`/api/obtener-tarea/${tareaId}`);
-                    const tarea = await res.json();
-                    document.getElementById('entregas-titulo').textContent = tarea.titulo || 'Entregas';
-
-                    // TODO: Cuando exista endpoint de entregas, usar aquí
-                    // Por ahora mostramos info de la tarea
-                    container.innerHTML = `
-                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                        <h4 class="font-bold">${tarea.titulo}</h4>
-                        <p class="text-sm text-gray-600">${tarea.descripcion || 'Sin descripción'}</p>
-                        <p class="text-xs text-gray-400 mt-2">Materia: ${tarea.materia} | Vence: ${tarea.fecha_vencimiento}</p>
-                    </div>
-                    <p class="text-center text-gray-500">Próximamente: lista de entregas de estudiantes</p>
-                `;
-                } catch (err) {
-                    container.innerHTML = '<div class="text-center py-10 text-red-500">Error al cargar tarea</div>';
-                }
             }
 
             // ========== EDITAR TAREA (Fetch y prepopular modal) ==========
@@ -2316,7 +2405,7 @@
                     const res = await fetch('/api/chat/gemini', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ mensaje: pregunta })
+                        body: JSON.stringify({ message: pregunta })
                     });
                     const data = await res.json();
                     document.getElementById(loadingId).remove();
@@ -2325,7 +2414,7 @@
                         <div class="flex items-start space-x-3">
                             <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center"><i class="fas fa-robot text-purple-600"></i></div>
                             <div class="bg-white p-3 rounded-lg shadow-sm max-w-[80%]">
-                                <p class="text-sm whitespace-pre-wrap">${data.respuesta || data.error || 'Sin respuesta'}</p>
+                                <p class="text-sm whitespace-pre-wrap">${data.response || data.error || 'Sin respuesta'}</p>
                             </div>
                         </div>`;
                 } catch (err) {
@@ -2385,44 +2474,127 @@
 
             // ========== TUTORÍAS ==========
             function openModalTutoria() {
+                const materiaOptions = Array.from(document.querySelectorAll('#tarea-materia option'))
+                    .map(o => `<option value="${o.value}">${o.textContent}</option>`)
+                    .join('');
+                const alumnoOptions = (window.estudiantesData || []).map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
                 Swal.fire({
                     title: 'Agendar Nueva Tutoría',
                     html: `
                         <div class="text-left space-y-3">
                             <div><label class="block text-sm font-medium mb-1">Estudiante</label>
-                            <input id="swal-alumno" class="swal2-input w-full" placeholder="Nombre del estudiante"></div>
+                            <select id="swal-alumno" class="swal2-select w-full">
+                                ${alumnoOptions || '<option value="">Sin estudiantes</option>'}
+                            </select></div>
                             <div><label class="block text-sm font-medium mb-1">Materia</label>
                             <select id="swal-materia" class="swal2-select w-full">
-                                <option>Programación</option><option>Bases de Datos</option><option>Algoritmos</option>
+                                ${materiaOptions || '<option value="">Sin materias</option>'}
                             </select></div>
                             <div><label class="block text-sm font-medium mb-1">Fecha y Hora</label>
                             <input type="datetime-local" id="swal-fecha" class="swal2-input w-full"></div>
+                            <div><label class="block text-sm font-medium mb-1">Notas</label>
+                            <textarea id="swal-notas" class="swal2-textarea" placeholder="Tema o notas"></textarea></div>
                         </div>
                     `,
                     showCancelButton: true,
                     confirmButtonText: 'Agendar',
                     preConfirm: () => ({
-                        alumno: document.getElementById('swal-alumno').value,
-                        materia: document.getElementById('swal-materia').value,
-                        fecha: document.getElementById('swal-fecha').value
+                        alumno_id: document.getElementById('swal-alumno').value,
+                        materia_id: document.getElementById('swal-materia').value,
+                        fecha: document.getElementById('swal-fecha').value,
+                        notas: document.getElementById('swal-notas').value
                     })
                 }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Aquí se enviaría a /api/tutor/schedule
-                        Swal.fire('Agendada', 'La tutoría ha sido programada. El estudiante recibirá una notificación.', 'success');
-                    }
+                    if (!result.isConfirmed) return;
+                    crearTutoria(result.value);
                 });
+            }
+
+            async function crearTutoria(payload) {
+                if (!payload.alumno_id || !payload.materia_id || !payload.fecha) {
+                    Swal.fire('Error', 'Completa estudiante, materia y fecha.', 'warning');
+                    return;
+                }
+                const fechaFormateada = payload.fecha.includes('T') ? payload.fecha.replace('T', ' ') + ':00' : payload.fecha;
+                try {
+                    const res = await fetch('/api/docente/tutorias', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...payload, fecha: fechaFormateada })
+                    });
+                    const json = await res.json();
+                    if (json.success) {
+                        Swal.fire('Agendada', 'Tutoría programada correctamente.', 'success');
+                        cargarTutorias();
+                    } else {
+                        Swal.fire('Error', json.error || 'No se pudo agendar', 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                }
             }
 
             // ========== MI HORARIO ==========
             async function cargarMiHorario() {
                 try {
-                    const res = await fetch('/api/schedule');
+                    const res = await fetch('/api/docente/horario');
                     const data = await res.json();
-                    // Actualizar tabla con datos reales si existe el endpoint
-                    Swal.fire('Actualizado', 'Horario sincronizado con el servidor', 'success');
+                    const container = document.getElementById('horario-container');
+                    if (!Array.isArray(data) || data.length === 0) {
+                        container.innerHTML = '<div class="text-center text-gray-400 py-6">No hay horarios registrados</div>';
+                        return;
+                    }
+                    container.innerHTML = data.map(h => `
+                        <div class="bg-gray-50 rounded-lg p-4 border">
+                            <p class="font-semibold text-gray-800">${h.materia}</p>
+                            <p class="text-sm text-gray-500">${h.horario || 'Sin horario'}</p>
+                        </div>
+                    `).join('');
                 } catch (err) {
-                    console.log('Usando horario estático');
+                    const container = document.getElementById('horario-container');
+                    if (container) container.innerHTML = '<div class="text-center text-gray-400 py-6">No se pudo cargar el horario</div>';
+                }
+            }
+
+            async function cargarTutorias() {
+                const list = document.getElementById('tutorias-list');
+                if (!list) return;
+                list.innerHTML = '<div class="text-center text-gray-400 py-6">Cargando tutorías...</div>';
+                try {
+                    const res = await fetch('/api/docente/tutorias');
+                    const tutorias = await res.json();
+                    if (!Array.isArray(tutorias) || tutorias.length === 0) {
+                        list.innerHTML = '<div class="text-center text-gray-400 py-6">No hay tutorías programadas</div>';
+                        document.getElementById('tutorias-total').textContent = '0';
+                        document.getElementById('tutorias-completadas').textContent = '0';
+                        return;
+                    }
+
+                    let completadas = 0;
+                    list.innerHTML = tutorias.map(t => {
+                        if (t.estado === 'completada') completadas += 1;
+                        return `
+                        <div class="flex items-center justify-between p-3 ${t.estado === 'completada' ? 'bg-blue-50 border-l-4 border-blue-500' : 'bg-green-50 border-l-4 border-green-500'} rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-full ${t.estado === 'completada' ? 'bg-blue-100' : 'bg-green-100'} flex items-center justify-center">
+                                    <i class="fas fa-user ${t.estado === 'completada' ? 'text-blue-600' : 'text-green-600'}"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">${t.alumno_nombre}</p>
+                                    <p class="text-xs text-gray-500">${t.materia || 'Sin materia'}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-green-600">${t.fecha}</p>
+                                <span class="text-xs text-gray-400">${t.estado}</span>
+                            </div>
+                        </div>`;
+                    }).join('');
+
+                    document.getElementById('tutorias-total').textContent = `${tutorias.length}`;
+                    document.getElementById('tutorias-completadas').textContent = `${completadas}`;
+                } catch (err) {
+                    list.innerHTML = '<div class="text-center text-gray-400 py-6">No se pudo cargar tutorías</div>';
                 }
             }
 
@@ -2471,21 +2643,17 @@
                 container.innerHTML = '<div class="text-center py-4"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto"></div><p class="text-sm text-gray-400 mt-2">Analizando datos...</p></div>';
 
                 try {
-                    // Endpoint /api/predict/dropout funciona por usuario logueado
-                    // Para docentes, idealmente habría un endpoint que liste todos los estudiantes en riesgo
-                    // Por ahora mostramos datos de demostración + llamada al endpoint
-                    const res = await fetch('/api/predict/dropout');
-                    const data = await res.json();
+                    const res = await fetch('/api/docente/riesgo');
+                    const estudiantes = await res.json();
 
-                    // Datos de demostración mejorados con colores según riesgo
-                    const estudiantes = [
-                        { nombre: 'Roberto Hernández', motivo: '3 entregas atrasadas', riesgo: 85 },
-                        { nombre: 'Laura Gómez', motivo: 'Baja asistencia', riesgo: 60 },
-                        { nombre: 'Carlos Mendoza', motivo: 'Calificaciones bajas', riesgo: 45 }
-                    ];
+                    if (!Array.isArray(estudiantes) || estudiantes.length === 0) {
+                        container.innerHTML = '<p class="text-center text-gray-400 py-4">Sin estudiantes en riesgo</p>';
+                        return;
+                    }
 
                     container.innerHTML = '<div class="space-y-3">' + estudiantes.map(e => {
-                        const colorClass = e.riesgo >= 70 ? 'red' : (e.riesgo >= 50 ? 'orange' : 'yellow');
+                        const riesgoNum = Number(e.probabilidad) || 0;
+                        const colorClass = riesgoNum >= 70 ? 'red' : (riesgoNum >= 50 ? 'orange' : 'yellow');
                         return `
                             <div class="flex items-center justify-between p-3 bg-${colorClass}-50 rounded-lg border-l-4 border-${colorClass}-400">
                                 <div class="flex items-center space-x-3">
@@ -2494,16 +2662,14 @@
                                     </div>
                                     <div>
                                         <p class="font-medium">${e.nombre}</p>
-                                        <p class="text-xs text-gray-500">${e.motivo}</p>
+                                        <p class="text-xs text-gray-500">${e.riesgo || 'Riesgo'} · ${e.motivo || 'Sin detalles'}</p>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="bg-${colorClass}-${e.riesgo >= 70 ? '600' : '500'} text-white text-xs px-2 py-1 rounded-full font-bold">${e.riesgo}% Riesgo</span>
+                                    <span class="bg-${colorClass}-${riesgoNum >= 70 ? '600' : '500'} text-white text-xs px-2 py-1 rounded-full font-bold">${riesgoNum}% Riesgo</span>
                                 </div>
                             </div>`;
                     }).join('') + '</div>';
-
-                    Swal.fire('Actualizado', 'Predicciones de deserción recalculadas', 'info');
                 } catch (err) {
                     container.innerHTML = '<p class="text-center text-gray-400 py-4">No se pudo cargar datos</p>';
                 }
@@ -2538,7 +2704,7 @@
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <span class="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">${t.entregas_count} Entregas</span>
-                                    <button onclick="verEntregasReales(${t.id})" class="text-gray-400 hover:text-brand-600 transition" title="Ver entregas"><i class="fas fa-eye"></i></button>
+                                    <button onclick="verEntregas(${t.id})" class="text-gray-400 hover:text-brand-600 transition" title="Ver entregas"><i class="fas fa-eye"></i></button>
                                     <button onclick="editarTarea(${t.id})" class="text-gray-400 hover:text-blue-600 transition" title="Editar"><i class="fas fa-edit"></i></button>
                                     <button onclick="detectarPlagio(${t.id})" class="text-gray-400 hover:text-purple-600 transition" title="Detectar Plagio"><i class="fas fa-search"></i></button>
                                 </div>
@@ -2638,8 +2804,19 @@
             }
 
             document.addEventListener('DOMContentLoaded', () => {
+                window.estudiantesData = {{ estudiantes|tojson }};
+                window.materiasData = {{ materias|tojson }};
                 cargarRecursos();
-                cargarNotificaciones(); // Cargar notificaciones al inicio
+                cargarNotificaciones();
+                cargarComunicados();
+                cargarEvaluaciones();
+                cargarReportesStats();
+                cargarRetos();
+                cargarRankingRetos();
+                cargarEstudiantesRiesgo();
+                initCalendar();
+                cargarTutorias();
+                cargarMiHorario();
             });
         </script>
 </body>
