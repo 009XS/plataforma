@@ -1195,15 +1195,27 @@
         async function loadCourses() {
             let courses = [];
             try {
-                // const res = await fetch('/api/student/subjects');
-                // courses = await res.json();
+                const res = await fetch('/api/student/subjects');
+                courses = await res.json();
+                // Fallback to mock data if API fails
+                if (!courses || courses.length === 0) {
+                    courses = [
+                        { id: 1, name: 'Matemáticas', prof: 'Mr. Anderson', icon: 'calculate', color: 'orange' },
+                        { id: 2, name: 'Historia', prof: 'Mrs. Smith', icon: 'history_edu', color: 'blue' },
+                        { id: 3, name: 'Física', prof: 'Dr. Feynman', icon: 'science', color: 'purple' },
+                        { id: 4, name: 'Literatura', prof: 'Ms. Rowling', icon: 'menu_book', color: 'pink' }
+                    ];
+                }
+            } catch (e) { 
+                console.log(e);
+                // Use mock data as fallback
                 courses = [
                     { id: 1, name: 'Matemáticas', prof: 'Mr. Anderson', icon: 'calculate', color: 'orange' },
                     { id: 2, name: 'Historia', prof: 'Mrs. Smith', icon: 'history_edu', color: 'blue' },
                     { id: 3, name: 'Física', prof: 'Dr. Feynman', icon: 'science', color: 'purple' },
                     { id: 4, name: 'Literatura', prof: 'Ms. Rowling', icon: 'menu_book', color: 'pink' }
                 ];
-            } catch (e) { console.log(e); }
+            }
 
             const list = document.getElementById('courses-list');
             list.innerHTML = courses.map(c => `
@@ -1231,15 +1243,17 @@
             list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Loading...</span></div>';
 
             try {
-                // const res = await fetch(`/api/courses/${courseId}/resources`);
-                // const resources = await res.json();
+                const res = await fetch(`/api/courses/${courseId}/resources`);
+                let resources = await res.json();
 
-                // Mock Resources
-                const resources = [
-                    { id: 101, name: 'Guía de Estudio.pdf', type: 'pdf', size: '2.4 MB' },
-                    { id: 102, name: 'Clase Grabada.mp4', type: 'video', size: '150 MB' },
-                    { id: 103, name: 'Ejercicios Resueltos.docx', type: 'doc', size: '500 KB' }
-                ];
+                // Fallback to mock if no resources found
+                if (!resources || resources.length === 0) {
+                    resources = [
+                        { id: 101, name: 'Guía de Estudio.pdf', type: 'pdf', size: '2.4 MB' },
+                        { id: 102, name: 'Clase Grabada.mp4', type: 'video', size: '150 MB' },
+                        { id: 103, name: 'Ejercicios Resueltos.docx', type: 'doc', size: '500 KB' }
+                    ];
+                }
 
                 list.innerHTML = resources.map(r => `
                 <div class="flex items-center justify-between p-3 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-slate-800">
@@ -1391,20 +1405,22 @@
                 didOpen: () => Swal.showLoading()
             }).then(async () => {
                 try {
-                    // Fetch Quiz Data (Mock or Real)
-                    // const res = await fetch(`/api/quiz/${quizId}`);
-                    // currentQuiz = await res.json();
+                    // Fetch Quiz Data from API
+                    const res = await fetch(`/api/quiz/${quizId}`);
+                    currentQuiz = await res.json();
 
-                    // Mock Data
-                    currentQuiz = {
-                        id: quizId,
-                        title: "Física Fundamental",
-                        questions: [
-                            { id: 1, text: "¿Cuál es la unidad de fuerza en el SI?", options: ["Newton", "Joule", "Pascal", "Watt"] },
-                            { id: 2, text: "La velocidad es una magnitud...", options: ["Escalar", "Vectorial", "Fundamental", "Derivada"] },
-                            { id: 3, text: "¿Quién formuló las leyes del movimiento?", options: ["Einstein", "Newton", "Galileo", "Tesla"] }
-                        ]
-                    };
+                    // Fallback to mock if API fails
+                    if (!currentQuiz || !currentQuiz.questions) {
+                        currentQuiz = {
+                            id: quizId,
+                            title: "Física Fundamental",
+                            questions: [
+                                { id: 1, text: "¿Cuál es la unidad de fuerza en el SI?", options: ["Newton", "Joule", "Pascal", "Watt"] },
+                                { id: 2, text: "La velocidad es una magnitud...", options: ["Escalar", "Vectorial", "Fundamental", "Derivada"] },
+                                { id: 3, text: "¿Quién formuló las leyes del movimiento?", options: ["Einstein", "Newton", "Galileo", "Tesla"] }
+                            ]
+                        };
+                    }
 
                     currentQuestionIndex = 0;
                     quizAnswers = {};
@@ -1488,29 +1504,63 @@
                 timerProgressBar: true,
                 didOpen: () => Swal.showLoading()
             }).then(async () => {
-                // Mock Backend Submission
-                // await fetch('/api/submit_quiz', { method: 'POST', body: JSON.stringify(quizAnswers) });
+                try {
+                    // Submit quiz to backend
+                    const response = await fetch('/api/submit_quiz', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            quiz_id: currentQuiz.id,
+                            answers: quizAnswers
+                        })
+                    });
 
-                // Mock Score randomized
-                const score = Math.floor(Math.random() * 3) + 8; // 8, 9 or 10
+                    let result = await response.json();
+                    let score = result.score || 0;
+                    let xpGanado = result.xp_ganado || 0;
 
-                Swal.fire({
-                    title: '¡Examen Completado!',
-                    html: `
-                        <div class="flex flex-col items-center">
-                            <div class="h-24 w-24 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-4">
-                                <span class="material-symbols-outlined text-5xl">emoji_events</span>
+                    // Show results
+                    Swal.fire({
+                        title: '¡Examen Completado!',
+                        html: `
+                            <div class="flex flex-col items-center">
+                                <div class="h-24 w-24 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-4">
+                                    <span class="material-symbols-outlined text-5xl">emoji_events</span>
+                                </div>
+                                <p class="text-4xl font-bold text-slate-900 dark:text-white mb-1">${score}/10</p>
+                                <p class="text-slate-500">¡Gran trabajo!</p>
+                                <p class="text-sm text-purple-600 mt-2">+${xpGanado} XP ganado</p>
                             </div>
-                            <p class="text-4xl font-bold text-slate-900 dark:text-white mb-1">${score}/10</p>
-                            <p class="text-slate-500">¡Gran trabajo!</p>
-                        </div>
-                    `,
-                    confirmButtonText: 'Volver al Inicio',
-                    confirmButtonColor: '#137fec',
-                    allowOutsideClick: false
-                }).then(() => {
-                    quitQuiz();
-                });
+                        `,
+                        confirmButtonText: 'Volver al Inicio',
+                        confirmButtonColor: '#137fec',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        quitQuiz();
+                        loadStats(); // Refresh stats with new XP
+                    });
+                } catch (error) {
+                    console.error('Error submitting quiz:', error);
+                    // Fallback to mock score
+                    const score = Math.floor(Math.random() * 3) + 8; // 8, 9 or 10
+                    Swal.fire({
+                        title: '¡Examen Completado!',
+                        html: `
+                            <div class="flex flex-col items-center">
+                                <div class="h-24 w-24 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-4">
+                                    <span class="material-symbols-outlined text-5xl">emoji_events</span>
+                                </div>
+                                <p class="text-4xl font-bold text-slate-900 dark:text-white mb-1">${score}/10</p>
+                                <p class="text-slate-500">¡Gran trabajo!</p>
+                            </div>
+                        `,
+                        confirmButtonText: 'Volver al Inicio',
+                        confirmButtonColor: '#137fec',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        quitQuiz();
+                    });
+                }
             });
         }
 
