@@ -421,43 +421,282 @@
         // --- APIs: Notas personales ---
         async function loadNotes() {
             const list = document.getElementById('notes-list');
-            list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando notas...</span></div>';
             try {
                 const res = await fetch('/api/notes');
                 const notes = await res.json();
-                if (!notes.length) {
-                    list.innerHTML = '<p class="text-center text-slate-500">No tienes notas aún.</p>';
-                    return;
-                }
-                list.innerHTML = notes.map(n => `
-                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
-                            <h4 class="font-bold text-slate-900 dark:text-white">${n.titulo}</h4>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">${n.contenido}</p>
+                
+                // Botón para crear nueva nota
+                let html = `
+                    <button onclick="crearNota()" class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition mb-4">
+                        <span class="material-symbols-outlined inline-block align-middle">add</span>
+                        Nueva Nota
+                    </button>
+                `;
+                
+                if (!notes || notes.length === 0) {
+                    html += `
+                        <div class="bg-slate-100 dark:bg-slate-800 rounded-xl p-8 text-center">
+                            <span class="material-symbols-outlined text-5xl text-slate-400 mb-3">note_add</span>
+                            <p class="text-slate-600 dark:text-slate-400">No tienes notas aún</p>
+                            <p class="text-sm text-slate-500 mt-1">Crea tu primera nota para empezar</p>
                         </div>
-                    `).join('');
+                    `;
+                } else {
+                    html += '<div class="space-y-3">';
+                    notes.forEach(n => {
+                        const colores = ['bg-yellow-100 border-yellow-300', 'bg-blue-100 border-blue-300', 'bg-green-100 border-green-300', 'bg-pink-100 border-pink-300', 'bg-purple-100 border-purple-300'];
+                        const colorAleatorio = colores[n.id % colores.length];
+                        html += `
+                            <div class="p-4 rounded-xl shadow-sm border-l-4 ${colorAleatorio} relative">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="font-bold text-slate-900 dark:text-white pr-16">${n.titulo}</h4>
+                                    <div class="absolute top-3 right-3 flex gap-1">
+                                        <button onclick="editarNota(${n.id})" class="p-1 hover:bg-white/50 rounded" title="Editar">
+                                            <span class="material-symbols-outlined text-sm text-blue-600">edit</span>
+                                        </button>
+                                        <button onclick="eliminarNota(${n.id})" class="p-1 hover:bg-white/50 rounded" title="Eliminar">
+                                            <span class="material-symbols-outlined text-sm text-red-600">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${n.contenido || 'Sin contenido'}</p>
+                                ${n.fecha_creacion ? '<p class="text-xs text-slate-500 mt-2">📅 ' + n.fecha_creacion + '</p>' : ''}
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+                
+                list.innerHTML = html;
             } catch (e) {
+                console.error('Error en loadNotes:', e);
                 list.innerHTML = '<p class="text-center text-red-500">Error al cargar notas.</p>';
             }
+        }
+        
+        function crearNota() {
+            Swal.fire({
+                title: 'Nueva Nota',
+                html: `
+                    <input id="swal-titulo" type="text" class="swal2-input" placeholder="Título de la nota" required>
+                    <textarea id="swal-contenido" class="swal2-textarea" rows="5" placeholder="Contenido de la nota"></textarea>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Crear',
+                cancelButtonText: 'Cancelar',
+                width: '600px',
+                preConfirm: () => {
+                    const titulo = document.getElementById('swal-titulo').value;
+                    const contenido = document.getElementById('swal-contenido').value;
+                    if (!titulo) {
+                        Swal.showValidationMessage('El título es requerido');
+                        return false;
+                    }
+                    return { titulo, contenido };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch('/api/notes', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(result.value)
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            showToast('Nota creada exitosamente', 'success');
+                            loadNotes();
+                        } else {
+                            showToast(data.error || 'Error al crear nota', 'error');
+                        }
+                    } catch (e) {
+                        showToast('Error de conexión', 'error');
+                    }
+                }
+            });
+        }
+        
+        async function editarNota(notaId) {
+            try {
+                // Obtener datos de la nota
+                const res = await fetch('/api/notes/' + notaId);
+                const nota = await res.json();
+                
+                Swal.fire({
+                    title: 'Editar Nota',
+                    html: `
+                        <input id="swal-titulo" type="text" class="swal2-input" placeholder="Título" value="${nota.titulo || ''}" required>
+                        <textarea id="swal-contenido" class="swal2-textarea" rows="5" placeholder="Contenido">${nota.contenido || ''}</textarea>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Guardar',
+                    cancelButtonText: 'Cancelar',
+                    width: '600px',
+                    preConfirm: () => {
+                        const titulo = document.getElementById('swal-titulo').value;
+                        if (!titulo) {
+                            Swal.showValidationMessage('El título es requerido');
+                            return false;
+                        }
+                        return {
+                            titulo: titulo,
+                            contenido: document.getElementById('swal-contenido').value
+                        };
+                    }
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        const updateRes = await fetch('/api/notes/' + notaId, {
+                            method: 'PUT',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(result.value)
+                        });
+                        const data = await updateRes.json();
+                        if (data.success) {
+                            showToast('Nota actualizada', 'success');
+                            loadNotes();
+                        } else {
+                            showToast(data.error || 'Error al actualizar', 'error');
+                        }
+                    }
+                });
+            } catch (e) {
+                showToast('Error al cargar la nota', 'error');
+            }
+        }
+        
+        function eliminarNota(notaId) {
+            Swal.fire({
+                title: '¿Eliminar nota?',
+                text: 'Esta acción no se puede deshacer',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#ef4444'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch('/api/notes/' + notaId, {
+                            method: 'DELETE'
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            showToast('Nota eliminada', 'success');
+                            loadNotes();
+                        } else {
+                            showToast(data.error || 'Error al eliminar', 'error');
+                        }
+                    } catch (e) {
+                        showToast('Error de conexión', 'error');
+                    }
+                }
+            });
         }
 
         // --- APIs: Portafolio ---
         async function loadPortfolio() {
             const list = document.getElementById('portfolio-list');
-            list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando portafolio...</span></div>';
             try {
                 const res = await fetch('/api/alumno/portafolio');
-                const items = await res.json();
-                if (!items || !items.length) {
-                    list.innerHTML = '<p class="text-center text-slate-500">No hay elementos en tu portafolio.</p>';
+                const data = await res.json();
+                
+                if (data.error) {
+                    list.innerHTML = '<p class="text-center text-red-500">Error: ' + data.error + '</p>';
                     return;
                 }
-                list.innerHTML = items.map(i => `
-                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
-                            <h4 class="font-bold text-slate-900 dark:text-white">${i.titulo || i.nombre || 'Elemento'}</h4>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">${i.descripcion || ''}</p>
+                
+                // Construir vista del portafolio
+                let html = `
+                    <!-- Información del Alumno -->
+                    <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="h-16 w-16 rounded-full border-4 border-white shadow-lg bg-cover bg-center"
+                                style="background-image: url('${data.alumno.foto_perfil || data.alumno.avatar_url || 'https://ui-avatars.com/api/?name=' + data.alumno.nombre}');"></div>
+                            <div>
+                                <h3 class="text-xl font-bold">${data.alumno.nombre}</h3>
+                                <p class="text-sm opacity-90">${data.alumno.email}</p>
+                                <p class="text-xs opacity-75">Semestre: ${data.alumno.semestre}</p>
+                            </div>
                         </div>
-                    `).join('');
+                        <div class="grid grid-cols-3 gap-3 mt-4">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold">${data.promedio_general}</p>
+                                <p class="text-xs opacity-75">Promedio</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold">${data.porcentaje_asistencia}%</p>
+                                <p class="text-xs opacity-75">Asistencia</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold">${data.total_entregas}</p>
+                                <p class="text-xs opacity-75">Entregas</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Insignias -->
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <h4 class="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-yellow-500">military_tech</span>
+                            Insignias (${data.insignias.length})
+                        </h4>
+                        <div class="grid grid-cols-4 gap-3">
+                            ${data.insignias.map(ins => `
+                                <div class="flex flex-col items-center gap-1 p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
+                                    <span class="text-2xl">${ins.icono || '🏆'}</span>
+                                    <p class="text-[10px] text-center font-medium text-slate-600 dark:text-slate-400">${ins.nombre}</p>
+                                </div>
+                            `).join('') || '<p class="text-sm text-slate-500 col-span-4 text-center py-2">Sin insignias aún</p>'}
+                        </div>
+                    </div>
+                    
+                    <!-- Historial de Calificaciones -->
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <h4 class="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-500">analytics</span>
+                            Historial de Calificaciones
+                        </h4>
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            ${data.calificaciones.slice(0, 10).map(cal => `
+                                <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                                    <div class="flex-1">
+                                        <p class="font-medium text-sm text-slate-900 dark:text-white">${cal.titulo}</p>
+                                        <p class="text-xs text-slate-500">${cal.materia} • ${cal.fecha_entrega}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-lg font-bold ${cal.calificacion >= 8 ? 'text-green-600' : cal.calificacion >= 6 ? 'text-yellow-600' : 'text-red-600'}">
+                                            ${cal.calificacion}
+                                        </p>
+                                    </div>
+                                </div>
+                            `).join('') || '<p class="text-sm text-slate-500 text-center py-2">Sin calificaciones registradas</p>'}
+                        </div>
+                    </div>
+                    
+                    <!-- Materias -->
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <h4 class="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-purple-500">school</span>
+                            Materias del Semestre
+                        </h4>
+                        <div class="space-y-2">
+                            ${data.materias.map(mat => `
+                                <div class="flex justify-between items-center p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                                    <div>
+                                        <p class="font-medium text-sm text-slate-900 dark:text-white">${mat.nombre}</p>
+                                        <p class="text-xs text-slate-500">Prof. ${mat.docente}</p>
+                                    </div>
+                                </div>
+                            `).join('') || '<p class="text-sm text-slate-500 text-center py-2">Sin materias registradas</p>'}
+                        </div>
+                    </div>
+                `;
+                
+                list.innerHTML = html;
             } catch (e) {
+                console.error('Error en loadPortfolio:', e);
                 list.innerHTML = '<p class="text-center text-red-500">Error al cargar portafolio.</p>';
             }
         }
@@ -465,45 +704,333 @@
         // --- APIs: Tutorías ---
         async function loadTutorias() {
             const list = document.getElementById('tutorias-list');
-            list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando tutorías...</span></div>';
             try {
                 const res = await fetch('/api/alumno/tutorias');
-                const tutorias = await res.json();
-                if (!tutorias.length) {
-                    list.innerHTML = '<p class="text-center text-slate-500">No tienes tutorías asignadas.</p>';
+                const data = await res.json();
+                
+                if (data.error) {
+                    list.innerHTML = '<p class="text-center text-red-500">Error: ' + data.error + '</p>';
                     return;
                 }
-                list.innerHTML = tutorias.map(t => `
-                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
-                            <h4 class="font-bold text-slate-900 dark:text-white">${t.titulo || 'Tutoría'}</h4>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">${t.descripcion || ''}</p>
+                
+                let html = '';
+                
+                // Información del Tutor
+                if (data.tutor) {
+                    html += `
+                        <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+                            <div class="flex items-center gap-4">
+                                <div class="h-16 w-16 rounded-full border-4 border-white shadow-lg bg-cover bg-center"
+                                    style="background-image: url('${data.tutor.foto_perfil || 'https://ui-avatars.com/api/?name=' + data.tutor.nombre}');"></div>
+                                <div>
+                                    <p class="text-sm opacity-75">Tu Tutor Asignado</p>
+                                    <h3 class="text-xl font-bold">${data.tutor.nombre}</h3>
+                                    <p class="text-sm opacity-90">${data.tutor.email}</p>
+                                    ${data.tutor.telefono ? '<p class="text-xs opacity-75">📞 ' + data.tutor.telefono + '</p>' : ''}
+                                </div>
+                            </div>
+                            <button onclick="solicitarTutoria()" class="mt-4 w-full py-2 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition">
+                                📝 Solicitar Nueva Sesión
+                            </button>
                         </div>
-                    `).join('');
+                    `;
+                } else {
+                    html += `
+                        <div class="bg-slate-100 dark:bg-slate-800 rounded-xl p-6 text-center">
+                            <span class="material-symbols-outlined text-5xl text-slate-400 mb-2">support_agent</span>
+                            <p class="text-slate-600 dark:text-slate-400">${data.mensaje || 'Aún no tienes un tutor asignado'}</p>
+                        </div>
+                    `;
+                }
+                
+                // Sesiones de Tutoría
+                if (data.sesiones && data.sesiones.length > 0) {
+                    html += `
+                        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                            <h4 class="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-indigo-500">event</span>
+                                Sesiones de Tutoría
+                            </h4>
+                            <div class="space-y-3">
+                                ${data.sesiones.map(sesion => {
+                                    const estadoColor = sesion.estado === 'completada' ? 'green' : sesion.estado === 'programada' ? 'blue' : 'slate';
+                                    return `
+                                        <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800">
+                                            <div class="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <p class="font-medium text-sm text-slate-900 dark:text-white">
+                                                        Sesión con ${sesion.tutor_nombre}
+                                                    </p>
+                                                    <p class="text-xs text-slate-500">
+                                                        <span class="material-symbols-outlined text-[14px] inline-block align-middle">schedule</span>
+                                                        ${sesion.fecha}
+                                                    </p>
+                                                </div>
+                                                <span class="text-xs px-2 py-1 rounded-full bg-${estadoColor}-100 text-${estadoColor}-700 dark:bg-${estadoColor}-900/30 dark:text-${estadoColor}-300">
+                                                    ${sesion.estado}
+                                                </span>
+                                            </div>
+                                            ${sesion.notas ? `<p class="text-xs text-slate-600 dark:text-slate-400 mt-2">${sesion.notas}</p>` : ''}
+                                            <p class="text-xs text-slate-400 mt-1">⏱️ ${sesion.duracion_minutos} minutos</p>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="bg-white dark:bg-surface-dark rounded-xl p-6 text-center border border-dashed border-slate-200 dark:border-slate-700">
+                            <span class="material-symbols-outlined text-3xl text-slate-400 mb-2">event_busy</span>
+                            <p class="text-sm text-slate-500">No tienes sesiones programadas</p>
+                        </div>
+                    `;
+                }
+                
+                list.innerHTML = html;
             } catch (e) {
+                console.error('Error en loadTutorias:', e);
                 list.innerHTML = '<p class="text-center text-red-500">Error al cargar tutorías.</p>';
             }
+        }
+        
+        function solicitarTutoria() {
+            Swal.fire({
+                title: 'Solicitar Sesión de Tutoría',
+                html: `
+                    <input id="swal-fecha" type="date" class="swal2-input" placeholder="Fecha">
+                    <textarea id="swal-motivo" class="swal2-textarea" placeholder="Motivo de la sesión"></textarea>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Solicitar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    return {
+                        fecha: document.getElementById('swal-fecha').value,
+                        motivo: document.getElementById('swal-motivo').value
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Aquí iría la lógica para enviar la solicitud
+                    showToast('Solicitud enviada a tu tutor', 'success');
+                }
+            });
         }
 
         // --- APIs: Equipos ---
         async function loadEquipos() {
             const list = document.getElementById('equipos-list');
-            list.innerHTML = '<div class="flex justify-center p-4"><span class="loader">Cargando...</span></div>';
+            list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando equipos...</span></div>';
             try {
                 const res = await fetch('/api/alumno/equipos');
-                const equipos = await res.json();
-                if (!equipos.length) {
-                    list.innerHTML = '<p class="text-center text-slate-500">No perteneces a ningún equipo.</p>';
+                const data = await res.json();
+                
+                if (data.error) {
+                    list.innerHTML = '<p class="text-center text-red-500">Error: ' + data.error + '</p>';
                     return;
                 }
-                list.innerHTML = equipos.map(eq => `
-                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-2">
-                            <h4 class="font-bold text-slate-900 dark:text-white">${eq.nombre || 'Equipo'}</h4>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">${eq.descripcion || ''}</p>
+                
+                let html = '';
+                
+                // Botón para crear equipo
+                html += `
+                    <div class="flex gap-2 mb-4">
+                        <button onclick="crearEquipo()" class="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition">
+                            <span class="material-symbols-outlined inline-block align-middle">group_add</span>
+                            Crear Equipo
+                        </button>
+                        <button onclick="unirseEquipo()" class="flex-1 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition">
+                            <span class="material-symbols-outlined inline-block align-middle">login</span>
+                            Unirse con Código
+                        </button>
+                    </div>
+                `;
+                
+                // Equipos del alumno
+                if (data.equipos && data.equipos.length > 0) {
+                    html += `
+                        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm mb-4">
+                            <h4 class="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-blue-500">groups</span>
+                                Mis Equipos
+                            </h4>
+                            <div class="space-y-3">
+                                ${data.equipos.map(equipo => {
+                                    return `
+                                        <div class="p-4 rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700">
+                                            <div class="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h5 class="font-bold text-slate-900 dark:text-white">${equipo.nombre}</h5>
+                                                    <p class="text-xs text-slate-500 mt-1">${equipo.descripcion || 'Sin descripción'}</p>
+                                                </div>
+                                                <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                    ${equipo.cant_miembros || 0} miembros
+                                                </span>
+                                            </div>
+                                            
+                                            ${equipo.codigo_acceso ? `
+                                                <div class="flex items-center gap-2 mb-2 p-2 bg-white/50 dark:bg-slate-950/30 rounded">
+                                                    <span class="material-symbols-outlined text-sm text-slate-500">key</span>
+                                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">Código: ${equipo.codigo_acceso}</span>
+                                                    <button onclick="copiarCodigo('${equipo.codigo_acceso}')" class="ml-auto text-xs text-blue-600 hover:text-blue-700">
+                                                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                                                    </button>
+                                                </div>
+                                            ` : ''}
+                                            
+                                            <button onclick="verDetalleEquipo(${equipo.id})" class="w-full mt-2 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition">
+                                                Ver Detalles
+                                            </button>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
                         </div>
-                    `).join('');
+                    `;
+                } else {
+                    html += `
+                        <div class="bg-slate-100 dark:bg-slate-800 rounded-xl p-8 text-center mb-4">
+                            <span class="material-symbols-outlined text-5xl text-slate-400 mb-3">groups_3</span>
+                            <p class="text-slate-600 dark:text-slate-400">Aún no perteneces a ningún equipo</p>
+                            <p class="text-sm text-slate-500 mt-1">Crea uno o únete con un código</p>
+                        </div>
+                    `;
+                }
+                
+                // Equipos disponibles para unirse
+                if (data.equipos_disponibles && data.equipos_disponibles.length > 0) {
+                    html += `
+                        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                            <h4 class="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-green-500">explore</span>
+                                Equipos Disponibles
+                            </h4>
+                            <div class="space-y-3">
+                                ${data.equipos_disponibles.slice(0, 5).map(equipo => `
+                                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800 flex justify-between items-center">
+                                        <div>
+                                            <p class="font-medium text-sm text-slate-900 dark:text-white">${equipo.nombre}</p>
+                                            <p class="text-xs text-slate-500">${equipo.cant_miembros || 0} miembros</p>
+                                        </div>
+                                        <button onclick="solicitarUnirseEquipo(${equipo.id})" class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded-lg transition">
+                                            Unirse
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                list.innerHTML = html;
             } catch (e) {
+                console.error('Error en loadEquipos:', e);
                 list.innerHTML = '<p class="text-center text-red-500">Error al cargar equipos.</p>';
             }
+        }
+        
+        function crearEquipo() {
+            Swal.fire({
+                title: 'Crear Nuevo Equipo',
+                html: `
+                    <input id="swal-nombre" type="text" class="swal2-input" placeholder="Nombre del equipo" required>
+                    <textarea id="swal-desc" class="swal2-textarea" placeholder="Descripción (opcional)"></textarea>
+                    <input id="swal-max" type="number" class="swal2-input" placeholder="Máximo de miembros" min="2" max="20" value="5">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Crear',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const nombre = document.getElementById('swal-nombre').value;
+                    if (!nombre) {
+                        Swal.showValidationMessage('El nombre es requerido');
+                        return false;
+                    }
+                    return {
+                        nombre: nombre,
+                        descripcion: document.getElementById('swal-desc').value,
+                        max_miembros: document.getElementById('swal-max').value
+                    };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch('/api/alumno/equipos/crear', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(result.value)
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            showToast(data.message || 'Equipo creado exitosamente', 'success');
+                            loadEquipos();
+                        } else {
+                            showToast(data.error || 'Error al crear equipo', 'error');
+                        }
+                    } catch (e) {
+                        showToast('Error de conexión', 'error');
+                    }
+                }
+            });
+        }
+        
+        function unirseEquipo() {
+            Swal.fire({
+                title: 'Unirse a Equipo',
+                input: 'text',
+                inputLabel: 'Ingresa el código del equipo',
+                inputPlaceholder: 'Ej: ABC123',
+                showCancelButton: true,
+                confirmButtonText: 'Unirse',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed && result.value) {
+                    try {
+                        const res = await fetch('/api/alumno/equipos/unirse', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ codigo: result.value })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            showToast(data.message || 'Te uniste al equipo', 'success');
+                            loadEquipos();
+                        } else {
+                            showToast(data.error || 'Código inválido', 'error');
+                        }
+                    } catch (e) {
+                        showToast('Error de conexión', 'error');
+                    }
+                }
+            });
+        }
+        
+        async function solicitarUnirseEquipo(equipoId) {
+            try {
+                const res = await fetch('/api/alumno/equipos/' + equipoId + '/unirse', {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message || 'Te uniste al equipo', 'success');
+                    loadEquipos();
+                } else {
+                    showToast(data.error || 'No se pudo unir', 'error');
+                }
+            } catch (e) {
+                showToast('Error de conexión', 'error');
+            }
+        }
+        
+        function copiarCodigo(codigo) {
+            navigator.clipboard.writeText(codigo);
+            showToast('Código copiado: ' + codigo, 'success');
+        }
+        
+        function verDetalleEquipo(equipoId) {
+            window.location.href = '/equipos/' + equipoId;
         }
     </script>
     </nav>
@@ -999,25 +1526,26 @@
 
         async function loadAssignments() {
             try {
-                const response = await fetch('/api/assignments');
-                if (!response.ok) throw new Error('Failed to fetch assignments');
-                const assignments = await response.json();
-
+                const response = await fetch('/api/alumno/tareas');
+                if (!response.ok) throw new Error('Error al obtener tareas');
+                const data = await response.json();
+                
+                const tareas = data.tareas || [];
                 const container = document.getElementById('assignments-container');
 
-                // Header reused
+                // Header
                 let html = `
                         <div class="flex items-center justify-between mb-3 px-1">
-                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Assignments</h3>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Tareas</h3>
                             <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
-                                <button class="px-2 py-0.5 text-xs font-medium rounded-md bg-white dark:bg-surface-dark shadow-sm text-slate-900 dark:text-white">To Do</button>
-                                <button class="px-2 py-0.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Done</button>
+                                <button onclick="filtrarTareas('pendientes')" class="filtro-tareas px-2 py-0.5 text-xs font-medium rounded-md bg-white dark:bg-surface-dark shadow-sm text-slate-900 dark:text-white" data-filtro="pendientes">Pendientes</button>
+                                <button onclick="filtrarTareas('completadas')" class="filtro-tareas px-2 py-0.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" data-filtro="completadas">Completadas</button>
                             </div>
                         </div>
                         <div class="flex flex-col gap-3">
                     `;
 
-                if (!assignments || assignments.length === 0) {
+                if (!tareas || tareas.length === 0) {
                     html += `
                             <div class="flex flex-col items-center justify-center py-8 text-center bg-white dark:bg-surface-dark rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                                 <span class="material-symbols-outlined text-4xl text-green-500 mb-2">check_circle</span>
@@ -1026,31 +1554,36 @@
                             </div>
                          `;
                 } else {
-                    assignments.forEach(task => {
-                        // Style Logic based on status/subject
-                        const isPending = task.status === 'Pending';
-                        const badgeBg = isPending ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-blue-100 dark:bg-blue-900/30';
-                        const badgeText = isPending ? 'text-orange-700 dark:text-orange-300' : 'text-blue-700 dark:text-blue-300';
-
-                        // Image / Icon placeholder
-                        // Using a consistent placeholder logic or random colors for thumb
+                    tareas.forEach(task => {
+                        // Determinar estado
+                        const isPending = !task.fecha_entrega_alumno;
+                        const badgeBg = isPending ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-green-100 dark:bg-green-900/30';
+                        const badgeText = isPending ? 'text-orange-700 dark:text-orange-300' : 'text-green-700 dark:text-green-300';
+                        const estadoTexto = isPending ? 'Pendiente' : 'Entregada';
+                        
+                        // Fecha de vencimiento
+                        const fechaVencimiento = task.fecha_limite || 'Sin fecha';
+                        const esUrgente = task.dias_restantes !== undefined && task.dias_restantes <= 2;
 
                         html += `
-                            <div class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer" onclick="openAssignment(${task.id})">
+                            <div class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer ${esUrgente && isPending ? 'ring-red-300 dark:ring-red-800' : ''}" onclick="verTarea(${task.id})">
                                 <div class="flex items-start justify-between gap-4">
                                     <div class="flex flex-1 flex-col gap-1">
                                         <div class="flex items-center gap-2 mb-1">
                                             <span class="inline-flex items-center rounded-full ${badgeBg} px-2.5 py-0.5 text-xs font-medium ${badgeText}">
-                                                ${task.status}
+                                                ${estadoTexto}
                                             </span>
+                                            ${esUrgente && isPending ? '<span class="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">Urgente</span>' : ''}
                                             <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
-                                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">${task.subject}</span>
+                                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">${task.materia || 'Sin materia'}</span>
                                         </div>
-                                        <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">${task.title}</h3>
+                                        <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">${task.titulo}</h3>
                                         <div class="mt-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                                             <span class="material-symbols-outlined text-[18px]">event</span>
-                                            <p class="text-sm">Due ${task.due_date}</p>
+                                            <p class="text-sm">Vence: ${fechaVencimiento}</p>
+                                            ${task.dias_restantes !== undefined ? '<span class="text-xs">(' + task.dias_restantes + ' días)</span>' : ''}
                                         </div>
+                                        ${task.calificacion ? '<div class="mt-1 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-green-600">grade</span><p class="text-sm font-bold text-green-600">Calificación: ' + task.calificacion + '</p></div>' : ''}
                                     </div>
                                     <div class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300">
                                          <span class="material-symbols-outlined text-[32px]">description</span>
@@ -1063,8 +1596,8 @@
 
                 html += `
                         </div>
-                        <button class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
-                            View All Assignments
+                        <button onclick="window.location.href='/tareas'" class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
+                            Ver Todas las Tareas
                             <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
                         </button>
                     `;
@@ -1075,10 +1608,24 @@
                 console.error('Error loading assignments:', error);
             }
         }
-        });
-        // Helper for interactivity
-        function openAssignment(id) {
-            openUploadModal(id);
+        
+        function verTarea(tareaId) {
+            window.location.href = '/tareas/' + tareaId;
+        }
+        
+        function filtrarTareas(filtro) {
+            // Actualizar estilos de botones
+            document.querySelectorAll('.filtro-tareas').forEach(btn => {
+                if (btn.dataset.filtro === filtro) {
+                    btn.classList.add('bg-white', 'dark:bg-surface-dark', 'shadow-sm', 'text-slate-900', 'dark:text-white');
+                    btn.classList.remove('text-slate-500', 'dark:text-slate-400');
+                } else {
+                    btn.classList.remove('bg-white', 'dark:bg-surface-dark', 'shadow-sm', 'text-slate-900', 'dark:text-white');
+                    btn.classList.add('text-slate-500', 'dark:text-slate-400');
+                }
+            });
+            // Recargar tareas con filtro (aquí se puede implementar lógica de filtrado)
+            loadAssignments();
         }
 
         // --- Phase 1: Academic Core Additions ---

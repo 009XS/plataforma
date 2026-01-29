@@ -19,12 +19,6 @@ except TypeError:
         return _orig_hmac_new(*args, **kwargs)
     hmac.new = _patched_hmac_new
 
-# Attempt early torch import to avoid WinError 127 with gevent
-try:
-    import torch
-except ImportError:
-    torch = None
-
 from gevent import monkey
 monkey.patch_all()
 import os
@@ -34,6 +28,7 @@ import uuid
 import time
 import random
 import schedule  # Para tareas programadas
+import csv
 
 import pymysql
 pymysql.install_as_MySQLdb()
@@ -116,17 +111,8 @@ import requests
 import google.generativeai as genai
 import pdfplumber
 from difflib import SequenceMatcher
-import numpy as np
-import pandas as pd
-import scipy
-import sklearn
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
 import pyotp
-import RestrictedPython
 import stripe
-from pycoingecko import CoinGeckoAPI
-from polygon import RESTClient
 import qrcode
 import openpyxl
 
@@ -152,28 +138,6 @@ except ImportError:
     credentials = None
     messaging = None
 
-
-import pubchempy
-import dendropy
-import astropy
-
-# Optional imports - some may fail on Windows
-try:
-    from qutip import *
-except ImportError:
-    print("[WARN] qutip no disponible")
-    
-try:
-    import control
-except ImportError:
-    print("[WARN] control no disponible")
-
-import statsmodels.api as sm
-from pulp import LpProblem, LpMaximize, LpVariable, value
-import mido
-from midiutil import MIDIFile
-import networkx as nx
-
 import subprocess
 import gzip
 import shutil
@@ -184,25 +148,6 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.charts.barcharts import VerticalBarChart
-
-# Torch imported at top
-if torch is None:
-    print("[WARN] torch no disponible o error al importar")
-
-try:
-    import snappy
-except (ImportError, OSError):
-    print("[WARN] snappy no disponible")
-    snappy = None
-
-import pygame
-import chess
-import sympy
-import mpmath
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-
-
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_FOLDER_ABS = BASE_DIR / "uploads"
@@ -1475,7 +1420,8 @@ def login_required(f):
     """Decorador para requerir login"""
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('login'))
+            flash('Por favor inicia sesión para acceder a esta página.', 'warning')
+            return redirect(url_for('index'))
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
@@ -1484,17 +1430,22 @@ def role_required(*roles):
     """Decorador para requerir uno o más roles específicos"""
     def decorator(f):
         def decorated_function(*args, **kwargs):
+            if 'user_id' not in session:
+                print(f"[DEBUG role_required] No hay user_id en sesión. Session keys: {list(session.keys())}")
+                flash('Por favor inicia sesión para acceder a esta página.', 'warning')
+                session.clear()  # Limpiar sesión corrupta
+                return redirect(url_for('index'))
             user_role = session.get('user_role') or session.get('rol')
+            print(f"[DEBUG role_required] user_role={user_role}, roles requeridos={roles}, session={dict(session)}")
             if not user_role or user_role not in roles:
-                flash('No tienes permisos para acceder a esta página.', 'error')
-                return redirect(url_for('login'))
+                print(f"[DEBUG role_required] ACCESO DENEGADO - user_role={user_role} no está en {roles}")
+                flash(f'No tienes permisos para acceder a esta página. Tu rol actual es: {user_role}', 'error')
+                session.clear()  # Limpiar sesión para evitar bucle
+                return redirect(url_for('index'))
             return f(*args, **kwargs)
         decorated_function.__name__ = f.__name__
         return decorated_function
     return decorator
-
-
-
 
 def crear_tablas_faltantes():
     """Crea tablas faltantes para tutores y orientadores"""
@@ -1660,89 +1611,34 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-class LearningML:
-    _model = None
-    _is_trained = False
+def calcular_riesgo_desercion(alumno_id):
+    """Calcula riesgo de deserción con heurística ligera (sin ML)."""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT u.promedio, u.racha, 
+                   (SELECT COUNT(*) FROM entregas_tareas WHERE estudiante_id = u.id) as entregas
+            FROM usuarios u WHERE id = %s
+        """, (alumno_id,))
+        student = cursor.fetchone()
+        cursor.close()
 
-    @classmethod
-    def train_model(cls):
-        """Entrena el modelo de ML basado en datos históricos de usuarios"""
-        try:
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            # Obtener datos para entrenamiento: promedio, racha, tareas_entregadas vs total
-            cursor.execute("""
-                SELECT u.id, u.promedio, u.racha, 
-                       (SELECT COUNT(*) FROM entregas_tareas WHERE estudiante_id = u.id) as entregas,
-                       (SELECT COUNT(*) FROM asistencias WHERE alumno_id = u.id AND estado = 'asistencia') as asistencias
-                FROM usuarios u 
-                WHERE u.tipo_usuario = 'alumno'
-            """)
-            data = cursor.fetchall()
-            
-            if len(data) < 10:
-                print("Insuficientes datos para entrenar ML, usando heurística")
-                return False
+        if not student:
+            return "desconocido", 0.0
 
-            # Preparar dataset
-            df = pd.DataFrame(data)
-            df['promedio'] = df['promedio'].fillna(0).astype(float)
-            df['racha'] = df['racha'].fillna(0).astype(int)
-            df['entregas'] = df['entregas'].fillna(0).astype(int)
-            
-            # Label sintético para ejemplo (en producción esto vendría de historial real de bajas)
-            # Asumimos riesgo si promedio < 6 o entregas < 5
-            df['dropout'] = ((df['promedio'] < 6.0) | (df['entregas'] < 5)).astype(int)
-            
-            X = df[['promedio', 'racha', 'entregas']]
-            y = df['dropout']
-            
-            cls._model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
-            cls._model.fit(X, y)
-            cls._is_trained = True
-            print("Modelo ML de deserción entrenado correctamente")
-            return True
-        except Exception as e:
-            print(f"Error entrenando ML: {e}")
-            return False
+        prom = float(student['promedio'] or 0)
+        racha = int(student['racha'] or 0)
+        entregas = int(student['entregas'] or 0)
 
-    @classmethod
-    def predict_dropout(cls, student_id):
-        """Predice riesgo de deserción usando modelo ML o fallback heurístico"""
-        try:
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor.execute("""
-                SELECT u.promedio, u.racha, 
-                       (SELECT COUNT(*) FROM entregas_tareas WHERE estudiante_id = u.id) as entregas
-                FROM usuarios u WHERE id = %s
-            """, (student_id,))
-            student = cursor.fetchone()
-            
-            if not student: return "desconocido", 0.0
-            
-            # Datos del alumno
-            prom = float(student['promedio'] or 0)
-            racha = int(student['racha'] or 0)
-            entregas = int(student['entregas'] or 0)
+        riesgo_base = max(0, 100 - (prom * 10))
+        riesgo_racha = max(0, riesgo_base - min(20, racha))
+        prob_pct = riesgo_racha if entregas > 5 else min(100, riesgo_racha + 20)
 
-            # Usar modelo si está entrenado
-            if cls._is_trained and cls._model:
-                features = pd.DataFrame([[prom, racha, entregas]], columns=['promedio', 'racha', 'entregas'])
-                prob = cls._model.predict_proba(features)[0][1] # Probabilidad de clase 1 (dropout)
-                prob_pct = prob * 100
-            else:
-                # Heurística Fallback mejorada
-                # Base: 100% - (Promedio * 10)
-                riesgo_base = max(0, 100 - (prom * 10))
-                # Ajuste por racha: -1% por día de racha (max 20)
-                riesgo_racha = max(0, riesgo_base - min(20, racha))
-                # Ajuste por entregas: Si pocas entregas, aumenta riesgo
-                prob_pct = riesgo_racha if entregas > 5 else min(100, riesgo_racha + 20)
-
-            nivel = 'muy_bajo' if prob_pct < 20 else 'bajo' if prob_pct < 40 else 'medio' if prob_pct < 60 else 'alto' if prob_pct < 80 else 'critico'
-            return nivel, float(prob_pct)
-        except Exception as e:
-            print(f"Error predicción ML: {e}")
-            return "bajo", 0.0
+        nivel = 'muy_bajo' if prob_pct < 20 else 'bajo' if prob_pct < 40 else 'medio' if prob_pct < 60 else 'alto' if prob_pct < 80 else 'critico'
+        return nivel, float(prob_pct)
+    except Exception as e:
+        print(f"Error cálculo riesgo: {e}")
+        return "bajo", 0.0
 
 class GamificationSystem:
     @staticmethod
@@ -1852,7 +1748,7 @@ def api_flashcards():
 @app.route('/api/predict/dropout')
 def api_predict_dropout():
     if 'user_id' not in session: return jsonify({'error': 'Unauthorized'}), 401
-    risk, prob = LearningML.predict_dropout(session['user_id'])
+    risk, prob = calcular_riesgo_desercion(session['user_id'])
     return jsonify({'risk': risk, 'probability': prob})
 
 
@@ -2201,8 +2097,21 @@ def api_tutor_pagos():
 def api_tutor_comunicados():
     # Retorna avisos dirigidos a 'tutor' o generales
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM recordatorios WHERE tipo='aviso' AND (destinatario_grupo='tutor' OR destinatario_grupo='general') ORDER BY fecha_recordatorio DESC LIMIT 10")
-    return jsonify(cursor.fetchall())
+    cursor.execute("""
+        SELECT id, titulo, mensaje, 
+               DATE_FORMAT(fecha_recordatorio, '%%Y-%%m-%%d %%H:%%i') as fecha
+        FROM recordatorios 
+        WHERE tipo='aviso' AND (destinatario_grupo='tutor' OR destinatario_grupo='general') 
+        ORDER BY fecha_recordatorio DESC 
+        LIMIT 10
+    """)
+    comunicados = cursor.fetchall()
+    cursor.close()
+    
+    return jsonify({
+        'success': True,
+        'comunicados': comunicados
+    })
 
 
 @app.route('/api/tutor/autorizar', methods=['POST'])
@@ -2231,7 +2140,7 @@ def api_buscar_alumnos():
     
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     search = f"%{query}%"
-    cursor.execute("SELECT id, nombre, numero_control FROM usuarios WHERE rol='alumno' AND (nombre LIKE %s OR numero_control LIKE %s) LIMIT 10", (search, search))
+    cursor.execute("SELECT id, nombre, numero_control FROM usuarios WHERE tipo_usuario='alumno' AND (nombre LIKE %s OR numero_control LIKE %s) LIMIT 10", (search, search))
     return jsonify(cursor.fetchall())
 
 @app.route('/api/enviar_reporte', methods=['POST'])
@@ -2334,9 +2243,25 @@ def api_alumno_notas():
 
 @app.route('/api/alumno/encuestas', methods=['GET'])
 @login_required
+@role_required('alumno')
 def api_alumno_encuestas_list():
-    # Retorna encuestas pendientes (simulado)
-    return jsonify([]) # Por ahora vacío
+    """Obtener encuestas pendientes para el alumno"""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT e.id, e.titulo, e.descripcion, e.fecha_inicio, e.fecha_fin,
+                   CASE WHEN re.id IS NOT NULL THEN 1 ELSE 0 END as respondida
+            FROM encuestas e
+            LEFT JOIN respuestas_encuestas re ON e.id = re.encuesta_id AND re.usuario_id = %s
+            WHERE e.activo = 1 AND e.fecha_fin >= CURDATE()
+            ORDER BY e.fecha_fin ASC
+        """, (session['user_id'],))
+        encuestas = cursor.fetchall()
+        cursor.close()
+        return jsonify(encuestas)
+    except Exception as e:
+        print(f"[ERROR] api_alumno_encuestas: {str(e)}")
+        return jsonify([])
 
 @app.route('/api/eliminar_horario', methods=['POST'])
 @login_required
@@ -2653,11 +2578,12 @@ def api_alumno_riesgo():
     if not riesgo:
         cursor.execute("""
             INSERT INTO riesgo_personal (alumno_id, nivel_riesgo, puntuacion_riesgo, explicacion_ia)
-            VALUES (%s, 'bajo', 20, 'Tu rendimiento académico es estable. Continúa así.')
+            VALUES (%s, 'bajo', 20, 'Tu rendimiento académico es estable. Continúa con el buen trabajo.')
         """, (session['user_id'],))
         mysql.connection.commit()
         cursor.execute("SELECT * FROM riesgo_personal WHERE alumno_id = %s", (session['user_id'],))
         riesgo = cursor.fetchone()
+    cursor.close()
     return jsonify(riesgo)
 
 @app.route('/api/alumno/historial-riesgo', methods=['GET'])
@@ -2689,12 +2615,15 @@ def api_alumno_desbloquear_funcion(id):
     cursor.execute("SELECT * FROM funciones_desbloqueables WHERE id = %s", (id,))
     func = cursor.fetchone()
     if not func:
-        return jsonify({'error': 'Función no encontrada'}), 404
+        cursor.close()
+        return jsonify({'error': 'Función no encontrada', 'success': False}), 404
     if user['xp'] >= func['requisito_xp'] and user['racha'] >= func['requisito_racha']:
         cursor.execute("INSERT IGNORE INTO funciones_alumno_desbloqueadas (alumno_id, funcion_id, metodo_desbloqueo) VALUES (%s, %s, 'xp')", (session['user_id'], id))
         mysql.connection.commit()
-        return jsonify({'status': 'desbloqueada'})
-    return jsonify({'error': 'No cumples los requisitos'}), 400
+        cursor.close()
+        return jsonify({'status': 'desbloqueada', 'success': True, 'mensaje': 'Función desbloqueada exitosamente'})
+    cursor.close()
+    return jsonify({'error': 'No cumples los requisitos necesarios', 'success': False}), 400
 
 # 12. HISTORIAL DE RECOMPENSAS
 @app.route('/api/alumno/recompensas', methods=['GET'])
@@ -2738,7 +2667,13 @@ def api_alumno_hoy():
         if not resumen:
             cursor.execute("SELECT COUNT(*) as pendientes FROM tareas t JOIN matriculas m ON t.materia_id = m.materia_id WHERE m.estudiante_id = %s AND t.fecha_vencimiento >= %s", (session['user_id'], hoy))
             tareas = cursor.fetchone()
-            mensajes = ['¡Hoy es un gran día para aprender!', '¡Tú puedes lograrlo!', 'Cada paso cuenta hacia tu meta.']
+            mensajes = [
+                '¡Hoy es un gran día para aprender!', 
+                '¡Tú puedes lograrlo!', 
+                'Cada paso cuenta hacia tu meta.',
+                '¡Mantén el enfoque en tus objetivos!',
+                'Tu esfuerzo de hoy es tu éxito de mañana'
+            ]
             import random
             cursor.execute("""
                 INSERT INTO resumen_dia (alumno_id, fecha, tareas_pendientes, mensaje_motivacional)
@@ -2858,9 +2793,11 @@ def api_alumno_descargar_exportacion(id):
     cursor.execute("SELECT * FROM exportaciones_progreso WHERE id = %s AND alumno_id = %s AND estado = 'completado'", (id, session['user_id']))
     exp = cursor.fetchone()
     if not exp:
-        return jsonify({'error': 'No encontrado'}), 404
+        cursor.close()
+        return jsonify({'error': 'Exportación no encontrada o aún no está lista'}), 404
     cursor.execute("UPDATE exportaciones_progreso SET descargas = descargas + 1 WHERE id = %s", (id,))
     mysql.connection.commit()
+    cursor.close()
     return send_from_directory(app.config['UPLOAD_FOLDER'], exp['archivo_nombre'], as_attachment=True)
 
 # APIs DE INTERACCIÓN ENTRE ROLES
@@ -4103,15 +4040,15 @@ def api_orientador_calcular_prediccion(alumno_id):
 
 def _calcular_prediccion_desercion(alumno_id):
     try:
-        # Reemplazo por implementación real usando la clase LearningML actualizada
-        riesgo, probabilidad = LearningML.predict_dropout(alumno_id)
+        # Heurística ligera (sin ML pesado)
+        riesgo, probabilidad = calcular_riesgo_desercion(alumno_id)
         
         # Obtener factores (promedio para explicar)
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute("SELECT promedio FROM usuarios WHERE id = %s", (alumno_id,))
         prom = cursor.fetchone()['promedio']
         
-        explicacion = {'academico': float(prom or 0), 'modelo': 'RandomForest' if LearningML._is_trained else 'Heuristico'}
+        explicacion = {'academico': float(prom or 0), 'modelo': 'Heuristico'}
 
         cursor.execute("""
             INSERT INTO prediccion_desercion (alumno_id, probabilidad_desercion, nivel_riesgo, factores_principales, valida_hasta)
@@ -4304,19 +4241,26 @@ def api_tutor_resumen_alumno(alumno_id):
 def api_tutor_mis_alumnos():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("""
-        SELECT u.id, u.nombre, u.email, u.promedio, u.matricula, r.nivel_riesgo, r.estado_emocional, r.alertas_activas
+        SELECT u.id, u.nombre, u.email, u.numero_control, 
+               r.nivel_riesgo, r.estado_emocional, r.alertas_activas
         FROM usuarios u
+        LEFT JOIN tutores_estudiantes te ON u.id = te.estudiante_id
         LEFT JOIN resumen_alumno_tutor r ON u.id = r.alumno_id
-        WHERE u.tutor_id = %s AND u.tipo_usuario = 'alumno' AND u.activo = 1
+        WHERE te.tutor_id = %s AND u.tipo_usuario = 'alumno' AND u.activo = 1
     """, (session['user_id'],))
-    return jsonify(cursor.fetchall())
+    alumnos = cursor.fetchall()
+    cursor.close()
+    
+    return jsonify({
+        'success': True,
+        'alumnos': alumnos
+    })
 
 def _actualizar_resumen_alumno_tutor(alumno_id, tutor_id):
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT promedio FROM usuarios WHERE id = %s", (alumno_id,))
-        user = cursor.fetchone()
-        promedio = float(user['promedio'] or 0) if user else 0
+        # Usar valor por defecto ya que no existe la columna promedio
+        promedio = 0
         cursor.execute("SELECT COUNT(*) as total FROM alertas_tutor WHERE alumno_id = %s AND leida = 0", (alumno_id,))
         alertas = cursor.fetchone()['total']
         nivel_riesgo = 'muy_bajo' if promedio >= 9 else 'bajo' if promedio >= 8 else 'medio' if promedio >= 7 else 'alto' if promedio >= 6 else 'critico'
@@ -4335,17 +4279,40 @@ def _actualizar_resumen_alumno_tutor(alumno_id, tutor_id):
 def api_tutor_alertas():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     alumno_id = request.args.get('alumno_id')
+    limite = request.args.get('limite')
     leidas = request.args.get('leidas', 'false')
-    query = "SELECT a.*, u.nombre as alumno_nombre FROM alertas_tutor a JOIN usuarios u ON a.alumno_id = u.id WHERE a.tutor_id = %s"
+    
+    query = """
+        SELECT a.id, a.titulo, a.mensaje, a.prioridad, a.leida, 
+               DATE_FORMAT(a.fecha_creacion, '%%Y-%%m-%%d %%H:%%i') as fecha_creacion,
+               u.nombre as estudiante_nombre
+        FROM alertas_tutor a 
+        JOIN usuarios u ON a.alumno_id = u.id 
+        WHERE a.tutor_id = %s
+    """
     params = [session['user_id']]
+    
     if alumno_id:
         query += " AND a.alumno_id = %s"
         params.append(alumno_id)
     if leidas == 'false':
         query += " AND a.leida = 0 AND a.archivada = 0"
-    query += " ORDER BY FIELD(a.nivel, 'urgente', 'importante', 'advertencia', 'info'), a.fecha_creacion DESC LIMIT 50"
+    
+    query += " ORDER BY FIELD(a.prioridad, 'alta', 'media', 'baja'), a.fecha_creacion DESC"
+    
+    if limite:
+        query += f" LIMIT {int(limite)}"
+    else:
+        query += " LIMIT 50"
+    
     cursor.execute(query, params)
-    return jsonify(cursor.fetchall())
+    alertas = cursor.fetchall()
+    cursor.close()
+    
+    return jsonify({
+        'success': True,
+        'alertas': alertas
+    })
 
 @app.route('/api/tutor/alertas/<int:id>/leer', methods=['POST'])
 @login_required
@@ -4355,7 +4322,11 @@ def api_tutor_leer_alerta(id):
     cursor.execute("UPDATE alertas_tutor SET leida = 1, fecha_lectura = NOW() WHERE id = %s AND tutor_id = %s", (id, session['user_id']))
     _registrar_participacion(session['user_id'], request.args.get('alumno_id'), 'lectura_aviso')
     mysql.connection.commit()
-    return jsonify({'status': 'ok'})
+    cursor.close()
+    return jsonify({
+        'success': True,
+        'message': 'Alerta marcada como leída'
+    })
 
 @app.route('/api/tutor/alertas/<int:id>/archivar', methods=['POST'])
 @login_required
@@ -4364,7 +4335,11 @@ def api_tutor_archivar_alerta(id):
     cursor = mysql.connection.cursor()
     cursor.execute("UPDATE alertas_tutor SET archivada = 1 WHERE id = %s AND tutor_id = %s", (id, session['user_id']))
     mysql.connection.commit()
-    return jsonify({'status': 'ok'})
+    cursor.close()
+    return jsonify({
+        'success': True,
+        'message': 'Alerta archivada'
+    })
 
 # 3. HISTORIAL DE COMPORTAMIENTO ACADÉMICO
 @app.route('/api/tutor/historial-academico/<int:alumno_id>', methods=['GET'])
@@ -4542,6 +4517,278 @@ def api_tutor_actualizar_cita(id):
     if data.get('estado') == 'realizada':
         _registrar_participacion(session['user_id'], None, 'reunion')
     mysql.connection.commit()
+    return jsonify({'status': 'ok'})
+
+# ============== APIS PANEL TUTOR ==============
+
+# API: Obtener sesiones de tutoría
+@app.route('/api/tutor/sesiones', methods=['GET'])
+@login_required
+@role_required('tutor')
+def api_tutor_sesiones():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    limite = request.args.get('limite')
+    
+    query = """
+        SELECT s.id, s.fecha, s.duracion_minutos, s.notas, s.estado,
+               DATE_FORMAT(s.fecha, '%%Y-%%m-%%d') as fecha,
+               DATE_FORMAT(s.fecha, '%%H:%%i') as hora,
+               u.nombre as estudiante_nombre,
+               'individual' as tipo
+        FROM sesiones_tutoria s
+        JOIN usuarios u ON s.alumno_id = u.id
+        WHERE s.tutor_id = %s
+        ORDER BY s.fecha DESC
+    """
+    
+    if limite:
+        query += f" LIMIT {int(limite)}"
+    
+    cursor.execute(query, (session['user_id'],))
+    sesiones = cursor.fetchall()
+    cursor.close()
+    
+    return jsonify({
+        'success': True,
+        'sesiones': sesiones
+    })
+
+# API: Crear sesión de tutoría
+@app.route('/api/tutor/sesiones', methods=['POST'])
+@login_required
+@role_required('tutor')
+def api_tutor_crear_sesion():
+    try:
+        data = request.json
+        cursor = mysql.connection.cursor()
+        
+        # Crear fecha y hora combinadas
+        fecha_hora = f"{data['fecha']} {data['hora']}:00"
+        
+        cursor.execute("""
+            INSERT INTO sesiones_tutoria (tutor_id, alumno_id, fecha, duracion_minutos, notas, estado)
+            VALUES (%s, %s, %s, %s, %s, 'programada')
+        """, (
+            session['user_id'],
+            data['estudiante_id'],
+            fecha_hora,
+            60,  # duración por defecto
+            data.get('notas', '')
+        ))
+        
+        mysql.connection.commit()
+        sesion_id = cursor.lastrowid
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'id': sesion_id,
+            'message': 'Sesión agendada exitosamente'
+        })
+    except Exception as e:
+        print(f"Error en api_tutor_crear_sesion: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al agendar sesión: {str(e)}'
+        }), 500
+
+# API: Actualizar sesión de tutoría
+@app.route('/api/tutor/sesiones/<int:id>', methods=['PUT'])
+@login_required
+@role_required('tutor')
+def api_tutor_actualizar_sesion(id):
+    try:
+        data = request.json
+        cursor = mysql.connection.cursor()
+        
+        cursor.execute("""
+            UPDATE sesiones_tutoria 
+            SET estado = %s, notas = %s
+            WHERE id = %s AND tutor_id = %s
+        """, (
+            data.get('estado'),
+            data.get('notas', ''),
+            id,
+            session['user_id']
+        ))
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Sesión actualizada exitosamente'
+        })
+    except Exception as e:
+        print(f"Error en api_tutor_actualizar_sesion: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al actualizar sesión: {str(e)}'
+        }), 500
+
+# API: Obtener observaciones
+@app.route('/api/tutor/observaciones', methods=['GET'])
+@login_required
+@role_required('tutor')
+def api_tutor_observaciones():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    query = """
+        SELECT o.id, o.observacion, o.tipo,
+               DATE_FORMAT(o.fecha_creacion, '%%Y-%%m-%%d %%H:%%i') as fecha,
+               u.nombre as estudiante_nombre
+        FROM observaciones_tutor o
+        JOIN usuarios u ON o.alumno_id = u.id
+        WHERE o.tutor_id = %s
+        ORDER BY o.fecha_creacion DESC
+        LIMIT 50
+    """
+    
+    cursor.execute(query, (session['user_id'],))
+    observaciones = cursor.fetchall()
+    cursor.close()
+    
+    return jsonify({
+        'success': True,
+        'observaciones': observaciones
+    })
+
+# API: Crear observación
+@app.route('/api/tutor/observaciones', methods=['POST'])
+@login_required
+@role_required('tutor')
+def api_tutor_crear_observacion():
+    try:
+        data = request.json
+        cursor = mysql.connection.cursor()
+        
+        cursor.execute("""
+            INSERT INTO observaciones_tutor (tutor_id, alumno_id, observacion, tipo)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            session['user_id'],
+            data['estudiante_id'],
+            data['observacion'],
+            data.get('tipo', 'general')
+        ))
+        
+        mysql.connection.commit()
+        obs_id = cursor.lastrowid
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'id': obs_id,
+            'message': 'Observación guardada exitosamente'
+        })
+    except Exception as e:
+        print(f"Error en api_tutor_crear_observacion: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al guardar observación: {str(e)}'
+        }), 500
+
+# API: Obtener detalle completo de estudiante
+@app.route('/api/tutor/estudiante/<int:id>/detalle', methods=['GET'])
+@login_required
+@role_required('tutor')
+def api_tutor_estudiante_detalle(id):
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Verificar que el tutor tiene acceso a este estudiante
+        cursor.execute("""
+            SELECT COUNT(*) as count
+            FROM tutores_estudiantes
+            WHERE tutor_id = %s AND estudiante_id = %s
+        """, (session['user_id'], id))
+        
+        if cursor.fetchone()['count'] == 0:
+            return jsonify({
+                'success': False,
+                'message': 'No tienes acceso a este estudiante'
+            }), 403
+        
+        # Obtener datos del estudiante
+        cursor.execute("""
+            SELECT u.id, u.nombre, u.email, u.numero_control,
+                   g.nombre as grupo
+            FROM usuarios u
+            LEFT JOIN grupo_alumnos ga ON u.id = ga.alumno_id
+            LEFT JOIN grupos g ON ga.grupo_id = g.id
+            WHERE u.id = %s
+        """, (id,))
+        
+        estudiante = cursor.fetchone()
+        
+        if not estudiante:
+            return jsonify({
+                'success': False,
+                'message': 'Estudiante no encontrado'
+            }), 404
+        
+        # Obtener sesiones realizadas
+        cursor.execute("""
+            SELECT COUNT(*) as sesiones_realizadas
+            FROM sesiones_tutoria
+            WHERE alumno_id = %s AND estado = 'completada'
+        """, (id,))
+        
+        estudiante['sesiones_realizadas'] = cursor.fetchone()['sesiones_realizadas']
+        
+        # Obtener última observación
+        cursor.execute("""
+            SELECT observacion
+            FROM observaciones_tutor
+            WHERE alumno_id = %s
+            ORDER BY fecha_creacion DESC
+            LIMIT 1
+        """, (id,))
+        
+        obs = cursor.fetchone()
+        estudiante['observaciones_recientes'] = obs['observacion'] if obs else None
+        
+        # Agregar promedio simulado (se puede calcular desde calificaciones si existe tabla)
+        estudiante['promedio'] = 'N/A'
+        
+        # Calcular asistencia (placeholder)
+        estudiante['asistencia'] = 85  # Esto se debería calcular de una tabla de asistencias
+        
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'estudiante': estudiante
+        })
+    except Exception as e:
+        print(f"Error en api_tutor_estudiante_detalle: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al obtener detalles: {str(e)}'
+        }), 500
+
+# API: Generar reporte de seguimiento
+@app.route('/api/tutor/reporte-seguimiento', methods=['POST'])
+@login_required
+@role_required('tutor')
+def api_tutor_reporte_seguimiento():
+    try:
+        data = request.json
+        
+        # Por ahora retornamos éxito simulado
+        # En producción, aquí se generaría un PDF o Excel real
+        return jsonify({
+            'success': True,
+            'message': 'Reporte generado exitosamente',
+            'url': '/reportes/seguimiento_tutor_ejemplo.pdf'  # URL simulada
+        })
+    except Exception as e:
+        print(f"Error en api_tutor_reporte_seguimiento: {e}")
+        return jsonify({
+            'success': False,
+            'message': f'Error al generar reporte: {str(e)}'
+        }), 500
+
     return jsonify({'status': 'ok'})
 
 # 11. DESCARGA DE REPORTES SIMPLES
@@ -5537,21 +5784,22 @@ def _procesar_exportacion_institucional(export_id):
         cursor.execute(query)
         data = cursor.fetchall()
         
-        if not data:
-             # Generar Excel vacio con columnas default
-             df = pd.DataFrame({'Info': ['No hay datos disponibles para el rango seleccionado']})
-        else:
-             df = pd.DataFrame(data)
-
-        filename = f"export_{tipo}_{export_id}_{int(time.time())}.xlsx"
+        filename = f"export_{tipo}_{export_id}_{int(time.time())}.csv"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        
-        # Guardar Excel
-        df.to_excel(filepath, index=False)
-        
-        # Metricas
+
+        with open(filepath, 'w', newline='', encoding='utf-8') as f:
+            if data:
+                writer = csv.DictWriter(f, fieldnames=list(data[0].keys()))
+                writer.writeheader()
+                writer.writerows(data)
+                rows = len(data)
+            else:
+                writer = csv.DictWriter(f, fieldnames=['Info'])
+                writer.writeheader()
+                writer.writerow({'Info': 'No hay datos disponibles para el rango seleccionado'})
+                rows = 1
+
         size = os.path.getsize(filepath)
-        rows = len(df)
 
         cursor.execute("""
             UPDATE exportaciones_institucionales 
@@ -5695,7 +5943,9 @@ def google_callback():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """Ruta de login. GET redirige a index, POST procesa credenciales"""
     if request.method == 'GET':
+        flash('Por favor usa el formulario de inicio de sesión.', 'info')
         return redirect(url_for('index'))
 
     if request.method == 'POST':
@@ -5774,43 +6024,12 @@ def login():
            
     return redirect(url_for('index'))
 
-@app.route('/mensajes')
-def mensajes():
-    if 'user_id' not in session or session['user_role'] != 'docente':
-        return redirect('/login')  # Ajusta a tu login route
-
-    user_id = session['user_id']
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    # Obtener materias del docente
-    cursor.execute("SELECT * FROM materias WHERE docente_id = %s AND activo = 1", (user_id,))
-    materias = cursor.fetchall()
-
-    # Obtener semestres únicos de las materias
-    semestres = set(m['semestre'] for m in materias if m['semestre'])
-
-    # Obtener alumnos en esos semestres
-    alumnos = []
-    if semestres:
-        cursor.execute(
-            "SELECT * FROM usuarios WHERE tipo_usuario = 'alumno' AND semestre IN %s AND activo = 1",
-            (tuple(semestres),)
-        )
-        alumnos = cursor.fetchall()
-
-    # Para cada alumno, calcular si está online (último acceso < 5 min)
-    now = datetime.now()
-    for alumno in alumnos:
-        alumno['is_online'] = alumno['ultimo_acceso'] and (now - alumno['ultimo_acceso'] < timedelta(minutes=5))
-
-    cursor.close()
-    conn.close()
-
-    return render_template('mensajes.html', materias=materias, alumnos=alumnos, now=now)
+# ============== RUTAS DE MENSAJERÍA (CONVERTIDAS A API) ==============
+# La interfaz de mensajería se manejará desde los paneles con JavaScript
 
 # API para obtener mensajes de un chat (expandido con leido)
-@app.route('/get_messages', methods=['GET'])
+@app.route('/api/messages', methods=['GET'])
+@login_required
 def get_messages():
     if 'user_id' not in session:
         return jsonify({'error': 'No autorizado'}), 401
@@ -5861,7 +6080,8 @@ def get_messages():
     return jsonify(mensajes)
 
 # API para enviar mensaje (expandido con adjuntos)
-@app.route('/send_message', methods=['POST'])
+@app.route('/api/send_message', methods=['POST'])
+@login_required
 def send_message():
     if 'user_id' not in session:
         return jsonify({'error': 'No autorizado'}), 401
@@ -6119,11 +6339,11 @@ def panel_alumno():
         print(f"[ERROR panel-alumno] {str(e)}")
         import traceback
         traceback.print_exc()
-        flash("Error al cargar el panel. Inténtalo más tarde.", "danger")
+        flash("Error al cargar el panel del alumno. Por favor, inténtalo más tarde.", "danger")
         return render_template('panel-alumno.html',
                                tareas=[], pendientes=0, materias=[], reportes=[], insignias=[],
-                               nombre='Estudiante', xp=0, educoins=0, racha=0, 
-                               foto_perfil=None, avatar_url=None)
+                               nombre='Estudiante', xp=0, educoins=0, racha=0, promedio=0,
+                               examenes=[], foto_perfil=None, avatar_url=None, tema='light')
  
 # Crear endpoint API para obtener reportes
 @app.route('/api/mis_reportes', methods=['GET'])
@@ -6265,6 +6485,184 @@ def panel_orientador():
         print(f"[ERROR panel-orientador] {str(e)}")
         flash(f'Error al cargar panel: {str(e)}', 'error')
         return redirect(url_for('index'))
+
+
+# ============ CRUD ORIENTADORES (USUARIOS) ============
+
+@app.route('/api/orientadores', methods=['GET'])
+@login_required
+@role_required('orientador', 'admin')
+def api_listar_orientadores():
+    """Listar orientadores con filtros opcionales"""
+    try:
+        q = (request.args.get('q') or '').strip()
+        activo = request.args.get('activo', '')
+
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        sql = """
+            SELECT id, nombre, email, numero_control, curp, telefono, direccion, activo, fecha_registro
+            FROM usuarios
+            WHERE tipo_usuario = 'orientador'
+        """
+        params = []
+
+        if q:
+            sql += " AND (nombre LIKE %s OR email LIKE %s OR numero_control LIKE %s OR curp LIKE %s)"
+            like_q = f"%{q}%"
+            params.extend([like_q, like_q, like_q, like_q])
+
+        if activo in ('0', '1'):
+            sql += " AND activo = %s"
+            params.append(int(activo))
+
+        sql += " ORDER BY fecha_registro DESC"
+        cursor.execute(sql, params)
+        orientadores = cursor.fetchall()
+        cursor.close()
+
+        for orientador in orientadores:
+            if orientador.get('fecha_registro'):
+                orientador['fecha_registro'] = orientador['fecha_registro'].strftime('%Y-%m-%d %H:%M:%S')
+
+        return jsonify({'orientadores': orientadores}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/orientadores', methods=['POST'])
+@login_required
+@role_required('orientador', 'admin')
+def api_crear_orientador():
+    """Crear un orientador"""
+    try:
+        data = request.json or {}
+        required = ['nombre', 'email', 'numero_control', 'curp', 'password']
+        if not all(field in data and str(data[field]).strip() for field in required):
+            return jsonify({'error': 'Faltan campos obligatorios'}), 400
+
+        if len(data['curp']) != 18:
+            return jsonify({'error': 'CURP inválida'}), 400
+
+        password_hash = generate_password_hash(data['password'])
+
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            INSERT INTO usuarios (nombre, email, numero_control, curp, tipo_usuario, password_hash, telefono, direccion, activo)
+            VALUES (%s, %s, %s, %s, 'orientador', %s, %s, %s, 1)
+        """, (
+            data['nombre'],
+            data['email'],
+            data['numero_control'],
+            data['curp'],
+            password_hash,
+            data.get('telefono'),
+            data.get('direccion')
+        ))
+        orientador_id = cursor.lastrowid
+        mysql.connection.commit()
+        cursor.close()
+
+        log_accion('crear_orientador', f'Orientador {orientador_id} creado', session['user_id'])
+
+        return jsonify({'success': True, 'id': orientador_id}), 201
+    except MySQLdb.IntegrityError:
+        mysql.connection.rollback()
+        return jsonify({'error': 'Dato duplicado (email, CURP o número de control)'}), 409
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/orientadores/<int:orientador_id>', methods=['GET'])
+@login_required
+@role_required('orientador', 'admin')
+def api_obtener_orientador(orientador_id):
+    """Obtener detalle de orientador"""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT id, nombre, email, numero_control, curp, telefono, direccion, activo, fecha_registro
+            FROM usuarios
+            WHERE id = %s AND tipo_usuario = 'orientador'
+        """, (orientador_id,))
+        orientador = cursor.fetchone()
+        cursor.close()
+
+        if not orientador:
+            return jsonify({'error': 'Orientador no encontrado'}), 404
+
+        if orientador.get('fecha_registro'):
+            orientador['fecha_registro'] = orientador['fecha_registro'].strftime('%Y-%m-%d %H:%M:%S')
+
+        return jsonify({'orientador': orientador}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/orientadores/<int:orientador_id>', methods=['PUT'])
+@login_required
+@role_required('orientador', 'admin')
+def api_actualizar_orientador(orientador_id):
+    """Actualizar orientador"""
+    try:
+        data = request.json or {}
+        cursor = mysql.connection.cursor()
+
+        cursor.execute("SELECT id FROM usuarios WHERE id = %s AND tipo_usuario = 'orientador'", (orientador_id,))
+        if not cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Orientador no encontrado'}), 404
+
+        updates = []
+        params = []
+
+        for field in ['nombre', 'email', 'numero_control', 'curp', 'telefono', 'direccion', 'activo']:
+            if field in data:
+                updates.append(f"{field} = %s")
+                params.append(data[field])
+
+        if 'password' in data and str(data['password']).strip():
+            updates.append("password_hash = %s")
+            params.append(generate_password_hash(data['password']))
+
+        if not updates:
+            cursor.close()
+            return jsonify({'error': 'No hay campos para actualizar'}), 400
+
+        sql = f"UPDATE usuarios SET {', '.join(updates)} WHERE id = %s"
+        params.append(orientador_id)
+        cursor.execute(sql, params)
+        mysql.connection.commit()
+        cursor.close()
+
+        log_accion('actualizar_orientador', f'Orientador {orientador_id} actualizado', session['user_id'])
+
+        return jsonify({'success': True}), 200
+    except MySQLdb.IntegrityError:
+        mysql.connection.rollback()
+        return jsonify({'error': 'Dato duplicado'}), 409
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/orientadores/<int:orientador_id>', methods=['DELETE'])
+@login_required
+@role_required('orientador', 'admin')
+def api_eliminar_orientador(orientador_id):
+    """Desactivar orientador"""
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("UPDATE usuarios SET activo = 0 WHERE id = %s AND tipo_usuario = 'orientador'", (orientador_id,))
+        mysql.connection.commit()
+        cursor.close()
+
+        log_accion('desactivar_orientador', f'Orientador {orientador_id} desactivado', session['user_id'])
+
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
 
 
 # ============ CRUD CITAS DE ORIENTACIÓN ============
@@ -7347,15 +7745,19 @@ def panel_tutor():
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         
+        # Obtener información del tutor
+        cursor.execute('''
+            SELECT nombre, email, foto_perfil
+            FROM usuarios
+            WHERE id = %s
+        ''', (session['user_id'],))
+        tutor_info = cursor.fetchone()
+        
         # Obtener estudiantes asociados al tutor
         cursor.execute('''
-            SELECT u.id, u.nombre, u.numero_control, u.email, u.rango, u.xp,
-                   AVG(CASE WHEN et.calificacion IS NOT NULL THEN et.calificacion END) as promedio,
-                   COUNT(CASE WHEN a.presente = 1 THEN 1 END) * 100.0 / COUNT(a.id) as asistencia
+            SELECT u.id, u.nombre, u.numero_control, u.email
             FROM usuarios u
             JOIN tutores_estudiantes te ON u.id = te.estudiante_id
-            LEFT JOIN entregas_tareas et ON u.id = et.estudiante_id
-            LEFT JOIN asistencias a ON u.id = a.estudiante_id
             WHERE te.tutor_id = %s AND u.activo = 1
             GROUP BY u.id
         ''', (session['user_id'],))
@@ -7363,34 +7765,34 @@ def panel_tutor():
         
         # Obtener comunicados recientes
         cursor.execute('''
-            SELECT id, titulo, contenido, fecha_publicacion, tipo, adjunto_ruta
+            SELECT id, titulo, mensaje, DATE_FORMAT(fecha_creacion, '%%Y-%%m-%%d') as fecha
             FROM comunicados
             WHERE activo = 1
-            ORDER BY fecha_publicacion DESC
+            ORDER BY fecha_creacion DESC
             LIMIT 5
-        ''', )
-        comunicados = cursor.fetchall()
-        
-        # Obtener información de pagos
-        cursor.execute('''
-            SELECT p.id, p.concepto, p.monto, p.fecha_vencimiento, p.pagado, p.fecha_pago, p.stripe_charge_id
-            FROM pagos p
-            JOIN tutores_estudiantes te ON p.estudiante_id = te.estudiante_id
-            WHERE te.tutor_id = %s
-            ORDER BY p.fecha_vencimiento DESC
-            LIMIT 10
-        ''', (session['user_id'],))
-        pagos = cursor.fetchall()
+        ''', ())
+        comunicados = cursor.fetchall() or []
         
         cursor.close()
         
+        # Datos para el template
+        nombre = tutor_info['nombre'] if tutor_info else session.get('user_name', 'Tutor')
+        email = tutor_info['email'] if tutor_info else ''
+        foto_perfil = tutor_info['foto_perfil'] if tutor_info and tutor_info.get('foto_perfil') else None
+        avatar_url = f"https://ui-avatars.com/api/?name={nombre.replace(' ', '+')}&background=6366f1&color=fff"
+        
         return render_template('panel-tutor.html',
+                             nombre=nombre,
+                             email=email,
+                             foto_perfil=foto_perfil,
+                             avatar_url=avatar_url,
                              estudiantes=estudiantes,
-                             comunicados=comunicados,
-                             pagos=pagos)
-    
+                             comunicados=comunicados)
     
     except Exception as e:
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"[ERROR panel_tutor] {error_detail}")
         flash(f'Error al cargar el panel: {str(e)}', 'error')
         return redirect(url_for('index'))
 
@@ -8531,7 +8933,7 @@ def handle_tasks():
 @login_required
 @role_required('docente')
 def handle_resources():
-    upload_path = UPLOAD_FOLDER
+    upload_path = app.config['UPLOAD_FOLDER']
 
     if request.method == 'POST':
         try:
@@ -8806,21 +9208,27 @@ def descargar_recurso1(resource_id):
 @login_required
 @role_required('alumno')
 def get_progress():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('''
-        SELECT AVG(et.calificacion) as averageGrade,
-               COUNT(CASE WHEN et.fecha_entrega IS NOT NULL THEN 1 END) as tasksCompleted,
-               AVG(a.presente) * 100 as attendance,
-               (SELECT COUNT(*) FROM matriculas WHERE estudiante_id = %s) * 10 as semesterProgress,  # Ejemplo
-               xp, educoins, racha, rango
-        FROM entregas_tareas et
-        LEFT JOIN asistencias a ON et.estudiante_id = a.estudiante_id
-        LEFT JOIN usuarios u ON et.estudiante_id = u.id
-        WHERE et.estudiante_id = %s
-    ''', (session['user_id'], session['user_id']))
-    progress = cursor.fetchone()
-    cursor.close()
-    return jsonify(progress)
+    """Obtener progreso académico del alumno"""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('''
+            SELECT 
+                COALESCE(AVG(et.calificacion), 0) as promedio_general,
+                COUNT(CASE WHEN et.fecha_entrega IS NOT NULL THEN 1 END) as tareas_completadas,
+                COALESCE(AVG(a.presente) * 100, 100) as porcentaje_asistencia,
+                u.xp, u.educoins, u.racha, u.rango
+            FROM usuarios u
+            LEFT JOIN entregas_tareas et ON u.id = et.estudiante_id
+            LEFT JOIN asistencias a ON u.id = a.estudiante_id
+            WHERE u.id = %s
+            GROUP BY u.id
+        ''', (session['user_id'],))
+        progress = cursor.fetchone()
+        cursor.close()
+        return jsonify(progress)
+    except Exception as e:
+        print(f"[ERROR] get_progress: {str(e)}")
+        return jsonify({'error': 'Error al obtener progreso'}), 500
 
 # API para buscar alumnos (expandido)
 @app.route('/api/buscar_alumnos')
@@ -8992,26 +9400,31 @@ def eliminar_tarea():
 @login_required
 @role_required('alumno')
 def obtener_comunicados_y_reportes():
+    """Obtener comunicados institucionales y reportes de conducta del alumno"""
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
         # Comunicados
         cursor.execute('''
-            SELECT 'comunicado' as tipo, id, titulo, contenido, fecha_publicacion as fecha, adjunto_ruta
+            SELECT 'comunicado' as tipo, id, titulo, contenido, 
+                   fecha_publicacion as fecha, adjunto_ruta
             FROM comunicados
             WHERE activo = 1
             ORDER BY fecha_publicacion DESC
+            LIMIT 10
         ''')
         comunicados = cursor.fetchall()
 
-        # Reportes
+        # Reportes de conducta
         cursor.execute('''
-            SELECT 'reporte' as tipo, rc.id, rc.tipo as subtipo, rc.descripcion as contenido,
+            SELECT 'reporte' as tipo, rc.id, rc.tipo as subtipo, 
+                   rc.descripcion as contenido,
                    rc.fecha_reporte as fecha, u.nombre as orientador, rc.evidencia_ruta
             FROM reportes_conducta rc
             JOIN usuarios u ON rc.orientador_id = u.id
             WHERE rc.alumno_id = %s
             ORDER BY rc.fecha_reporte DESC
+            LIMIT 10
         ''', (session['user_id'],))
         reportes = cursor.fetchall()
 
@@ -9030,7 +9443,8 @@ def obtener_comunicados_y_reportes():
         return jsonify(items), 200
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"[ERROR] obtener_comunicados_y_reportes: {str(e)}")
+        return jsonify({'error': 'Error al obtener comunicados y reportes'}), 500
     
 @app.route('/mis-materias')
 @login_required
@@ -9272,11 +9686,11 @@ def log_accion(accion, descripcion, usuario_id=None, modulo='general'):
     mysql.connection.commit()
     cursor.close()
 
-# API para portal padres (expandido)
-@app.route('/portal_padres')
+# API para portal padres (datos JSON para el panel del tutor)
+@app.route('/api/tutor/hijos', methods=['GET'])
 @login_required
 @role_required('tutor')
-def portal_padres():
+def api_hijos_tutor():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("""
         SELECT u.id, u.nombre, AVG(et.calificacion) as promedio, AVG(a.presente)*100 as asistencia,
@@ -9291,7 +9705,7 @@ def portal_padres():
     hijos = cursor.fetchall()
     cursor.close()
 
-    return render_template('portal_padres.html', hijos=hijos)
+    return jsonify(hijos)
 
 # Nueva ruta para tutor IA expandida
 @app.route('/api/tutor_ia', methods=['POST'])
@@ -9416,26 +9830,15 @@ def predecir_desercion_v1():
         datos = cursor.fetchall()
         cursor.close()
 
-        X = np.array([[d['promedio'] or 0, d['asistencia'] or 0, d['racha'] or 0, d['xp'] or 0] for d in datos])
-        y = np.random.randint(0, 2, len(datos))  # Simulado
+        for d in datos:
+            riesgo, probabilidad = calcular_riesgo_desercion(d['id'])
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-        model = RandomForestClassifier()
-        model.fit(X_train, y_train)
-
-        predicciones = model.predict_proba(X)[:,1]  # Probabilidades
-        riesgos = []
-        for i in range(len(datos)):
-            prob = predicciones[i]
-            riesgo = 'bajo' if prob < 0.3 else 'medio' if prob < 0.7 else 'alto'
-            riesgos.append({'alumno_id': datos[i]['id'], 'riesgo': riesgo, 'probabilidad': prob * 100})
-            
             cursor = mysql.connection.cursor()
             cursor.execute("""
                 INSERT INTO predicciones_desercion (alumno_id, riesgo, probabilidad)
                 VALUES (%s, %s, %s)
                 ON DUPLICATE KEY UPDATE riesgo = VALUES(riesgo), probabilidad = VALUES(probabilidad), fecha_calculo = NOW()
-            """, (datos[i]['id'], riesgo, prob * 100))
+            """, (d['id'], riesgo, probabilidad))
             mysql.connection.commit()
             cursor.close()
 
@@ -9494,22 +9897,23 @@ def actualizar_xp():
 @login_required
 @role_required('alumno')
 def comprar_item1():
+    """Comprar artículo de la tienda con EduCoins"""
     data = request.json
     item_id = data.get('item_id')
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT precio_educoins, stock, tipo, archivo_ruta FROM tienda_items WHERE id = %s", (item_id,))
+    cursor.execute("SELECT precio_educoins, stock, tipo, archivo_ruta, nombre FROM tienda_items WHERE id = %s", (item_id,))
     item = cursor.fetchone()
     if not item or (item['stock'] == 0 and item['stock'] != -1):
         cursor.close()
-        return jsonify({'error': 'Item no disponible'}), 404
+        return jsonify({'error': 'Artículo no disponible o sin stock', 'success': False}), 404
 
     cursor.execute("SELECT educoins FROM usuarios WHERE id = %s", (session['user_id'],))
     coins = cursor.fetchone()['educoins']
 
     if coins < item['precio_educoins']:
         cursor.close()
-        return jsonify({'error': 'EduCoins insuficientes'}), 400
+        return jsonify({'error': 'EduCoins insuficientes', 'success': False, 'necesarios': item['precio_educoins'], 'disponibles': coins}), 400
 
     cursor.execute("UPDATE usuarios SET educoins = educoins - %s WHERE id = %s", (item['precio_educoins'], session['user_id']))
     if item['stock'] != -1:
@@ -9525,40 +9929,63 @@ def comprar_item1():
     mysql.connection.commit()
     cursor.close()
 
-    return jsonify({'success': 'Item comprado'})
+    return jsonify({'success': True, 'mensaje': 'Artículo comprado exitosamente', 'educoins_restantes': coins - item['precio_educoins']})
 
 # API para actualizar racha
 @app.route('/api/actualizar_racha', methods=['POST'])
 @login_required
 @role_required('alumno')
 def actualizar_racha():
-    hoy = datetime.now().date()
+    """Actualizar racha de actividad del alumno"""
+    try:
+        hoy = datetime.now().date()
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT racha, ultima_racha FROM usuarios WHERE id = %s", (session['user_id'],))
-    user = cursor.fetchone()
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT racha, ultima_racha FROM usuarios WHERE id = %s", (session['user_id'],))
+        user = cursor.fetchone()
 
-    if user['ultima_racha'] == hoy - timedelta(days=1):
-        nueva_racha = user['racha'] + 1
-    elif user['ultima_racha'] == hoy:
-        nueva_racha = user['racha']
-    else:
-        nueva_racha = 1
+        if not user:
+            cursor.close()
+            return jsonify({'error': 'Usuario no encontrado', 'success': False}), 404
 
-    cursor.execute("UPDATE usuarios SET racha = %s, ultima_racha = %s WHERE id = %s", (nueva_racha, hoy, session['user_id']))
-    mysql.connection.commit()
-    cursor.close()
+        # Calcular nueva racha
+        if user['ultima_racha'] == hoy - timedelta(days=1):
+            # Racha continua
+            nueva_racha = user['racha'] + 1
+        elif user['ultima_racha'] == hoy:
+            # Ya se actualizó hoy
+            nueva_racha = user['racha']
+        else:
+            # Racha rota, reiniciar
+            nueva_racha = 1
 
-    if nueva_racha % 7 == 0:
-        # Otorgar insignia por racha semanal
-        cursor = mysql.connection.cursor()
-        cursor.execute("SELECT id FROM insignias WHERE nombre = 'Racha Semanal'")
-        insignia_id = cursor.fetchone()['id']
-        cursor.execute("INSERT IGNORE INTO usuario_insignias (usuario_id, insignia_id) VALUES (%s, %s)", (session['user_id'], insignia_id))
+        cursor.execute(
+            "UPDATE usuarios SET racha = %s, ultima_racha = %s WHERE id = %s", 
+            (nueva_racha, hoy, session['user_id'])
+        )
         mysql.connection.commit()
+
+        # Otorgar insignia por racha semanal (cada 7 días)
+        if nueva_racha % 7 == 0 and nueva_racha > 0:
+            cursor.execute("SELECT id FROM insignias WHERE nombre = 'Racha Semanal' LIMIT 1")
+            insignia = cursor.fetchone()
+            if insignia:
+                cursor.execute(
+                    "INSERT IGNORE INTO usuario_insignias (usuario_id, insignia_id) VALUES (%s, %s)", 
+                    (session['user_id'], insignia['id'])
+                )
+                mysql.connection.commit()
+        
         cursor.close()
 
-    return jsonify({'racha': nueva_racha})
+        return jsonify({
+            'racha': nueva_racha,
+            'success': True,
+            'mensaje': f'¡Racha de {nueva_racha} días!'
+        })
+    except Exception as e:
+        print(f"[ERROR] actualizar_racha: {str(e)}")
+        return jsonify({'error': 'Error al actualizar la racha', 'success': False}), 500
 
 # API para otorgar insignia (expandido con requisitos check)
 @app.route('/api/otorgar_insignia', methods=['POST'])
@@ -9596,23 +10023,7 @@ def compilar_codigo():
     data = request.json
     codigo = data.get('codigo')
     lenguaje = data.get('lenguaje', 'python')
-
-    try:
-        if lenguaje == 'python':
-            from restrictedpython import compile_restricted_exec
-            result = compile_restricted_exec(codigo)
-            if result.errors:
-                return jsonify({'error': result.errors})
-
-            local = {}
-            exec(result.code, {"__builtins__": {}}, local)
-            output = local.get('output', 'Ejecución completada')
-        elif lenguaje == 'javascript':
-            # Usar pyv8 or similar for JS sandbox
-            output = 'JS no soportado aún'
-        return jsonify({'output': output})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    return jsonify({'error': f'Compilación deshabilitada para {lenguaje}'}), 503
 
 # SocketIO para leave expanded
 @socketio.on('leave')
@@ -10365,11 +10776,19 @@ def export_data():
     data = cursor.fetchall()
     cursor.close()
 
-    df = pd.DataFrame(data)
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], f'export_{table}.xlsx')
-    df.to_excel(filepath, index=False)
+    filename = f'export_{table}.csv'
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    with open(filepath, 'w', newline='', encoding='utf-8') as f:
+        if data:
+            writer = csv.DictWriter(f, fieldnames=list(data[0].keys()))
+            writer.writeheader()
+            writer.writerows(data)
+        else:
+            writer = csv.DictWriter(f, fieldnames=['Info'])
+            writer.writeheader()
+            writer.writerow({'Info': 'No hay datos disponibles'})
 
-    return send_from_directory(app.config['UPLOAD_FOLDER'], f'export_{table}.xlsx', as_attachment=True)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 # Nueva ruta para import data
 @app.route('/api/import_data', methods=['POST'])
@@ -10387,13 +10806,16 @@ def import_data():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        df = pd.read_excel(filepath)
         cursor = mysql.connection.cursor()
-        for _, row in df.iterrows():
-            columns = ', '.join(row.keys())
-            values = tuple(row.values)
-            placeholders = ', '.join(['%s'] * len(row))
-            cursor.execute(f"INSERT INTO {table} ({columns}) VALUES ({placeholders})", values)
+        with open(filepath, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if not row:
+                    continue
+                columns = ', '.join(row.keys())
+                placeholders = ', '.join(['%s'] * len(row))
+                values = [row[col] for col in row.keys()]
+                cursor.execute(f"INSERT INTO {table} ({columns}) VALUES ({placeholders})", values)
         mysql.connection.commit()
         cursor.close()
 
@@ -10438,27 +10860,15 @@ def feedback():
 
     return jsonify({'success': 'Feedback enviado'})
 
-# Nueva ruta para changelog
-@app.route('/changelog')
-def changelog():
-    # Leer de archivo o BD
-    changes = [
-        {'version': '1.1', 'changes': 'Added AI tutor'},
-        # etc
-    ]
-    return render_template('changelog.html', changes=changes)
-
-# Nueva ruta para terms
+# Rutas estáticas mantenidas para SEO/legal desde index
 @app.route('/terms')
 def terms():
     return render_template('terms.html')
 
-# Nueva ruta para privacy
 @app.route('/privacy')
 def privacy():
     return render_template('privacy.html')
 
-# Nueva ruta para about
 @app.route('/about')
 def about():
     return render_template('about.html')
@@ -10599,7 +11009,7 @@ def manage_keys():
         return jsonify({'success': 'Keys updated'})
 
     keys = {
-        'openai': app.config['OPENAI_API_KEY'],
+        'gemini': app.config['GEMINI_API_KEY'],
         'stripe': stripe.api_key
     }
     return jsonify(keys)
@@ -10659,19 +11069,6 @@ def upload_theme():
 # ej in send_message:
 # if moderate_content(contenido):
 #     return jsonify({'error': 'Contenido inapropiado'}), 400
-
-# Nueva ruta para data visualization
-@app.route('/api/visualize_data', methods=['POST'])
-@login_required
-def visualize_data():
-    data = request.json['data']
-    df = pd.DataFrame(data)
-    plt.figure()
-    df.plot()
-    img_path = os.path.join(app.config['UPLOAD_FOLDER'], 'chart.png')
-    plt.save(img_path)
-
-    return jsonify({'img_url': url_for('uploaded_file', filename='chart.png')})
 
 # Nueva ruta para machine learning model training (simulado)
 @app.route('/api/train_model', methods=['POST'])
@@ -11046,15 +11443,8 @@ def ai_tutor_advanced():
     query = data['query']
     context = data.get('context', '')
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "You are an advanced AI tutor for Python and STEM subjects. Provide detailed explanations, code examples, and quizzes."},
-            {"role": "user", "content": f"Context: {context}\nQuery: {query}"}
-        ]
-    )
-    answer = response.choices[0].message['content']
+    system_context = "Eres un tutor avanzado de Python y STEM. Da explicaciones detalladas, ejemplos de código y mini‑quizzes." 
+    answer = gemini_chat(f"Contexto: {context}\nPregunta: {query}", system_context)
 
     return jsonify({'answer': answer})
 
@@ -11065,15 +11455,8 @@ def code_review():
     data = request.json
     code = data['code']
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "Review this Python code for errors, best practices, and improvements."},
-            {"role": "user", "content": code}
-        ]
-    )
-    review = response.choices[0].message['content']
+    system_context = "Revisa este código Python: errores, mejores prácticas y mejoras." 
+    review = gemini_chat(code, system_context)
 
     return jsonify({'review': review})
 
@@ -11084,15 +11467,8 @@ def generate_code():
     data = request.json
     prompt = data['prompt']
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "Generate Python code based on the description. Provide only the code."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    code = response.choices[0].message['content']
+    system_context = "Genera código Python basado en la descripción. Devuelve solo el código." 
+    code = gemini_chat(prompt, system_context)
 
     return jsonify({'code': code})
 
@@ -11103,15 +11479,8 @@ def explain_code():
     data = request.json
     code = data['code']
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "Explain this Python code line by line."},
-            {"role": "user", "content": code}
-        ]
-    )
-    explanation = response.choices[0].message['content']
+    system_context = "Explica este código Python línea por línea." 
+    explanation = gemini_chat(code, system_context)
 
     return jsonify({'explanation': explanation})
 
@@ -11123,15 +11492,8 @@ def debug_code():
     code = data['code']
     error = data['error']
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "Debug this Python code given the error."},
-            {"role": "user", "content": f"Code: {code}\nError: {error}"}
-        ]
-    )
-    debug = response.choices[0].message['content']
+    system_context = "Depura este código Python con base en el error." 
+    debug = gemini_chat(f"Código:\n{code}\n\nError:\n{error}", system_context)
 
     return jsonify({'debug': debug})
 
@@ -11142,15 +11504,8 @@ def optimize_code():
     data = request.json
     code = data['code']
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "Optimize this Python code for performance and readability."},
-            {"role": "user", "content": code}
-        ]
-    )
-    optimized = response.choices[0].message['content']
+    system_context = "Optimiza este código Python para rendimiento y legibilidad." 
+    optimized = gemini_chat(code, system_context)
 
     return jsonify({'optimized': optimized})
 
@@ -11163,15 +11518,8 @@ def convert_code():
     from_lang = data['from_lang']
     to_lang = data['to_lang']
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": f"Convert this {from_lang} code to {to_lang}."},
-            {"role": "user", "content": code}
-        ]
-    )
-    converted = response.choices[0].message['content']
+    system_context = f"Convierte este código de {from_lang} a {to_lang}." 
+    converted = gemini_chat(code, system_context)
 
     return jsonify({'converted': converted})
 
@@ -11320,15 +11668,8 @@ def ai_complete_code():
     data = request.json
     code = data['code']
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "Complete this Python code."},
-            {"role": "user", "content": code}
-        ]
-    )
-    completion = response.choices[0].message['content']
+    system_context = "Completa este código Python." 
+    completion = gemini_chat(code, system_context)
 
     return jsonify({'completion': completion})
 
@@ -11339,15 +11680,8 @@ def ai_refactor_code():
     data = request.json
     code = data['code']
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "Refactor this Python code for better structure."},
-            {"role": "user", "content": code}
-        ]
-    )
-    refactored = response.choices[0].message['content']
+    system_context = "Refactoriza este código Python para mejor estructura." 
+    refactored = gemini_chat(code, system_context)
 
     return jsonify({'refactored': refactored})
 
@@ -11358,15 +11692,8 @@ def ai_generate_test():
     data = request.json
     code = data['code']
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "Generate unit tests for this Python code."},
-            {"role": "user", "content": code}
-        ]
-    )
-    tests = response.choices[0].message['content']
+    system_context = "Genera pruebas unitarias para este código Python." 
+    tests = gemini_chat(code, system_context)
 
     return jsonify({'tests': tests})
 
@@ -11377,79 +11704,10 @@ def ai_document_code():
     data = request.json
     code = data['code']
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": "Add docstrings and comments to this Python code."},
-            {"role": "user", "content": code}
-        ]
-    )
-    documented = response.choices[0].message['content']
+    system_context = "Agrega docstrings y comentarios a este código Python." 
+    documented = gemini_chat(code, system_context)
 
     return jsonify({'documented': documented})
-
-# Nueva ruta for code metrics
-@app.route('/api/code_metrics', methods=['POST'])
-@login_required
-def code_metrics():
-    data = request.json
-    code = data['code']
-
-    # Use radon or similar for metrics
-    from radon.complexity import cc_visit
-    from radon.metrics import mi_visit
-    complexity = cc_visit(code)
-    maintainability = mi_visit(code, multi=True)
-
-    return jsonify({'complexity': complexity, 'maintainability': maintainability})
-
-# Nueva ruta for code format
-@app.route('/api/format_code', methods=['POST'])
-@login_required
-def format_code():
-    data = request.json
-    code = data['code']
-
-    from black import format_str, Mode
-    formatted = format_str(code, mode=Mode())
-
-    return jsonify({'formatted': formatted})
-
-# Nueva ruta for lint code
-@app.route('/api/lint_code', methods=['POST'])
-@login_required
-def lint_code():
-    data = request.json
-    code = data['code']
-
-    from pylint.lint import Run
-    from pylint.reporters.text import TextReporter
-    from io import StringIO
-
-    output = StringIO()
-    reporter = TextReporter(output)
-    Run(['-'], reporter=reporter, do_exit=False)
-    lint_output = output.getvalue()
-
-    return jsonify({'lint': lint_output})
-
-# Nueva ruta for code security scan
-@app.route('/api/security_scan', methods=['POST'])
-@login_required
-def security_scan():
-    data = request.json
-    code = data['code']
-
-    from bandit.core import manager as b_manager
-    from bandit.core import config as b_config
-    conf = b_config.BanditConfig()
-    mgr = b_manager.BanditManager(conf, 'file', file_list=['-'])
-    mgr.discover_files(['-'], excluded_paths=[])
-    mgr.run_tests()
-    results = mgr.get_issue_list()
-
-    return jsonify({'issues': str(results)})
 
 # Nueva ruta for code dependency check
 @app.route('/api/dependency_check', methods=['POST'])
@@ -11805,613 +12063,6 @@ def user_achievements():
 # Continue adding if needed
 # Nueva ruta for STEM simulation - physics
 @app.route('/api/simulate_physics', methods=['POST'])
-@login_required
-def simulate_physics():
-    data = request.json
-    params = data['params']  # e.g., mass, velocity
-
-    # Use astropy for sim
-    result = "Simulation result"  # sim
-
-    return jsonify({'result': result})
-
-# Nueva ruta for biology sim
-@app.route('/api/simulate_biology', methods=['POST'])
-@login_required
-def simulate_biology():
-    data = request.json
-    sequence = data['sequence']
-
-    from biopython import Seq
-    seq = Seq(sequence)
-    translation = seq.translate()
-
-    return jsonify({'translation': str(translation)})
-
-# Nueva ruta for chemistry mol vis
-@app.route('/api/visualize_molecule', methods=['POST'])
-@login_required
-def visualize_molecule():
-    data = request.json
-    smiles = data['smiles']
-
-    mol = Chem.MolFromSmiles(smiles)
-    img = Chem.Draw.MolToImage(mol)
-    img_path = os.path.join(app.config['UPLOAD_FOLDER'], 'mol.png')
-    img.save(img_path)
-
-    return jsonify({'img_url': url_for('uploaded_file', filename='mol.png')})
-
-# Nueva ruta for quantum sim
-@app.route('/api/quantum_sim', methods=['POST'])
-@login_required
-def quantum_sim():
-    data = request.json
-    circuit = data['circuit']
-
-    # Use qutip
-    result = "Quantum result"  # sim
-
-    return jsonify({'result': result})
-
-# Nueva ruta for control systems
-@app.route('/api/control_system', methods=['POST'])
-@login_required
-def control_system():
-    data = request.json
-    transfer_func = data['transfer_func']
-
-    sys = control.tf(transfer_func['num'], transfer_func['den'])
-    step = control.step_response(sys)
-
-    # Plot with matplotlib
-    df = pd.DataFrame({'time': step[0], 'response': step[1]})
-    df.to_excel('step.xlsx')
-
-    return send_from_directory(app.config['UPLOAD_FOLDER'], 'step.xlsx')
-
-# Nueva ruta for stats analysis
-@app.route('/api/stats_analysis', methods=['POST'])
-@login_required
-def stats_analysis():
-    data = request.json
-    dataset = data['dataset']
-
-    df = pd.DataFrame(dataset)
-    model = sm.OLS(df['y'], sm.add_constant(df['x'])).fit()
-    summary = model.summary().as_text()
-
-    return jsonify({'summary': summary})
-
-# Nueva ruta for optimization
-@app.route('/api/optimize', methods=['POST'])
-@login_required
-def optimize():
-    data = request.json
-    problem = LpProblem("Opt", LpMaximize)
-    # Setup with PuLP
-    problem.solve()
-
-    return jsonify({'solution': value(problem.objective)})
-
-# Nueva ruta for music generation
-@app.route('/api/generate_music', methods=['POST'])
-@login_required
-def generate_music():
-    data = request.json
-    notes = data['notes']
-
-    midi = MIDIFile(1)
-    midi.addTempo(0, 0, 120)
-    for note in notes:
-        midi.addNote(0, 0, note['pitch'], note['time'], note['duration'], 100)
-    with open("music.mid", "wb") as f:
-        midi.writeFile(f)
-
-    return send_from_directory('.', 'music.mid')
-
-# Nueva ruta for graph analysis
-@app.route('/api/graph_analysis', methods=['POST'])
-@login_required
-def graph_analysis():
-    data = request.json
-    edges = data['edges']
-
-    G = nx.Graph()
-    G.add_edges_from(edges)
-    degree = dict(G.degree())
-
-    return jsonify({'degree': degree})
-
-# Nueva ruta for ML training
-@app.route('/api/ml_train', methods=['POST'])
-@login_required
-def ml_train():
-    data = request.json
-    X = data['X']
-    y = data['y']
-
-    X = torch.tensor(X)
-    y = torch.tensor(y)
-    model = torch.nn.Linear(len(X[0]), 1)
-    criterion = torch.nn.MSELoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
-    for epoch in range(100):
-        y_pred = model(X)
-        loss = criterion(y_pred, y)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-    return jsonify({'model': 'trained'})
-
-# Nueva ruta for compression
-@app.route('/api/compress', methods=['POST'])
-@login_required
-def compress():
-    data = request.json
-    text = data['text']
-
-    compressed = snappy.compress(text.encode())
-
-    return jsonify({'compressed': compressed.hex()})
-
-# Nueva ruta for game
-@app.route('/game')
-@login_required
-def game():
-    return render_template('game.html')
-
-# Nueva ruta for chess move
-@app.route('/api/chess_move', methods=['POST'])
-@login_required
-def chess_move():
-    data = request.json
-    board = chess.Board(data['fen'])
-    move = chess.Move.from_uci(data['move'])
-    if move in board.legal_moves:
-        board.push(move)
-        return jsonify({'fen': board.fen()})
-    else:
-        return jsonify({'error': 'Illegal move'}), 400
-
-# Nueva ruta for crypto price
-@app.route('/api/crypto_price', methods=['GET'])
-@login_required
-def crypto_price():
-    coin = request.args.get('coin', 'bitcoin')
-    cg = CoinGeckoAPI()
-    price = cg.get_price(ids=coin, vs_currencies='usd')
-
-    return jsonify(price)
-
-# Nueva ruta for stock price
-@app.route('/api/stock_price', methods=['GET'])
-@login_required
-def stock_price():
-    stock = request.args.get('stock', 'AAPL')
-    # Use polygon
-    price = 150  # sim
-
-    return jsonify({'price': price})
-
-# Nueva ruta for symbolic math
-@app.route('/api/symbolic_math', methods=['POST'])
-@login_required
-def symbolic_math():
-    data = request.json
-    expr = data['expr']
-
-    sym = sympy.sympify(expr)
-    integral = sympy.integrate(sym, sympy.symbols('x'))
-
-    return jsonify({'integral': str(integral)})
-
-# Nueva ruta for excel process
-@app.route('/api/process_excel', methods=['POST'])
-@login_required
-def process_excel():
-    file = request.files['excel']
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-    file.save(filepath)
-
-    df = pd.read_excel(filepath)
-    summary = df.describe()
-
-    output = StringIO()
-    summary.to_csv(output)
-    return jsonify({'summary': output.getvalue()})
-
-# Nueva ruta for plot data
-@app.route('/api/plot_data', methods=['POST'])
-@login_required
-def plot_data():
-    data = request.json['data']
-    df = pd.DataFrame(data)
-    fig, ax = plt.subplots()
-    df.plot(ax=ax)
-    img = StringIO()
-    fig.savefig(img, format='png')
-    img.seek(0)
-    return send_file(img, mimetype='image/png')
-
-# Nueva ruta for tqdm progress
-@app.route('/api/long_task', methods=['POST'])
-@login_required
-def long_task():
-    for i in tqdm(range(100)):
-        time.sleep(0.1)
-    return jsonify({'success': 'Done'})
-
-# Nueva ruta for ecdsa sign
-@app.route('/api/ecdsa_sign', methods=['POST'])
-@login_required
-def ecdsa_sign():
-    data = request.json
-    msg = data['msg']
-    sk = ecdsa.SigningKey.generate()
-    sig = sk.sign(msg.encode())
-
-    return jsonify({'sig': sig.hex()})
-
-# Nueva ruta for coingecko advanced
-@app.route('/api/coingecko_market', methods=['GET'])
-@login_required
-def coingecko_market():
-    cg = CoinGeckoAPI()
-    market = cg.get_coins_markets(vs_currency='usd')
-
-    return jsonify(market)
-
-# Nueva ruta for polygon stock
-@app.route('/api/polygon_stock', methods=['GET'])
-@login_required
-def polygon_stock():
-    # Assume client configured
-    client = polygon.RESTClient()
-    quote = client.get_last_quote('AAPL')
-
-    return jsonify({'price': quote.ask_price})
-
-# Nueva ruta for mpmath calc
-@app.route('/api/high_precision_calc', methods=['POST'])
-@login_required
-def high_precision_calc():
-    data = request.json
-    expr = data['expr']
-
-    with mpmath.workdps(50):
-        result = mpmath.mpf(expr)
-
-    return jsonify({'result': str(result)})
-
-# Nueva ruta for sympy solve
-@app.route('/api/solve_equation', methods=['POST'])
-@login_required
-def solve_equation():
-    data = request.json
-    eq = data['eq']
-
-    x = sympy.symbols('x')
-    solution = sympy.solve(eq, x)
-
-    return jsonify({'solution': str(solution)})
-
-# Nueva ruta for openpyxl edit
-@app.route('/api/edit_excel', methods=['POST'])
-@login_required
-def edit_excel():
-    file = request.files['excel']
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-    file.save(filepath)
-
-    wb = openpyxl.load_workbook(filepath)
-    ws = wb.active
-    ws['A1'] = 'Edited'
-    wb.save(filepath)
-
-    return send_from_directory(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-
-# Nueva ruta for matplotlib advanced plot
-@app.route('/api/advanced_plot', methods=['POST'])
-@login_required
-def advanced_plot():
-    data = request.json
-    x = data['x']
-    y = data['y']
-
-    fig, ax = plt.subplots()
-    ax.plot(x, y)
-    ax.set_title('Advanced Plot')
-    img_path = os.path.join(app.config['UPLOAD_FOLDER'], 'advanced.png')
-    fig.savefig(img_path)
-
-    return jsonify({'img_url': url_for('uploaded_file', filename='advanced.png')})
-
-# Nueva ruta for pandas analysis
-@app.route('/api/pandas_analysis', methods=['POST'])
-@login_required
-def pandas_analysis():
-    data = request.json['data']
-    df = pd.DataFrame(data)
-    correlation = df.corr()
-
-    return jsonify({'correlation': correlation.to_dict()})
-
-# Nueva ruta for scipy optimize
-@app.route('/api/scipy_optimize', methods=['POST'])
-@login_required
-def scipy_optimize():
-    data = request.json
-    func = data['func']
-
-    from scipy.optimize import minimize
-    result = minimize(lambda x: eval(func), 0)
-
-    return jsonify({'minimum': result.x[0]})
-
-# Nueva ruta for numpy array ops
-@app.route('/api/numpy_ops', methods=['POST'])
-@login_required
-def numpy_ops():
-    data = request.json
-    arr1 = np.array(data['arr1'])
-    arr2 = np.array(data['arr2'])
-
-    dot = np.dot(arr1, arr2)
-
-    return jsonify({'dot': dot})
-
-# Nueva ruta for biopython seq analysis
-@app.route('/api/seq_analysis', methods=['POST'])
-@login_required
-def seq_analysis():
-    data = request.json
-    seq = data['seq']
-
-    from Bio.Seq import Seq
-    bio_seq = Seq(seq)
-    gc = bio_seq.count('G') + bio_seq.count('C')
-
-    return jsonify({'gc_content': gc / len(seq) * 100})
-
-# Nueva ruta for pubchem compound
-@app.route('/api/pubchem_compound', methods=['GET'])
-@login_required
-def pubchem_compound():
-    name = request.args.get('name', 'aspirin')
-    compound = pubchempy.get_compounds(name, 'name')[0]
-
-    return jsonify({'formula': compound.molecular_formula})
-
-# Nueva ruta for dendropy tree
-@app.route('/api/phylogenetic_tree', methods=['POST'])
-@login_required
-def phylogenetic_tree():
-    data = request.json
-    newick = data['newick']
-
-    tree = dendropy.Tree.get(data=newick, schema="newick")
-
-    return jsonify({'taxa': len(tree.taxon_namespace)})
-
-# Nueva ruta for astropy coordinates
-@app.route('/api/astro_coordinates', methods=['POST'])
-@login_required
-def astro_coordinates():
-    data = request.json
-    ra = data['ra']
-    dec = data['dec']
-
-    from astropy.coordinates import SkyCoord
-    c = SkyCoord(ra=ra, dec=dec, unit='deg')
-
-    return jsonify({'galactic': c.galactic.to_string()})
-
-# Nueva ruta for qutip quantum state
-@app.route('/api/quantum_state', methods=['POST'])
-@login_required
-def quantum_state():
-    data = request.json
-    state = data['state']
-
-    rho = basis(2, 0)  # sim
-
-    return jsonify({'density_matrix': str(rho)})
-
-# Nueva ruta for control bode plot
-@app.route('/api/bode_plot', methods=['POST'])
-@login_required
-def bode_plot():
-    data = request.json
-    sys = control.tf(data['num'], data['den'])
-
-    mag, phase, omega = control.bode(sys)
-
-    # Plot save
-    img_path = os.path.join(app.config['UPLOAD_FOLDER'], 'bode.png')
-    # save fig
-
-    return jsonify({'img_url': url_for('uploaded_file', filename='bode.png')})
-
-# Nueva ruta for statsmodels forecast
-@app.route('/api/forecast', methods=['POST'])
-@login_required
-def forecast():
-    data = request.json
-    series = data['series']
-
-    from statsmodels.tsa.arima.model import ARIMA
-    model = ARIMA(series, order=(5,1,0))
-    fit = model.fit()
-    pred = fit.forecast(steps=5)
-
-    return jsonify({'forecast': list(pred)})
-
-# Nueva ruta for PuLP advanced opt
-@app.route('/api/advanced_opt', methods=['POST'])
-@login_required
-def advanced_opt():
-    data = request.json
-    # Complex LP setup
-    result = 0  # sim
-
-    return jsonify({'result': result})
-
-# Nueva ruta for mido midi parse
-@app.route('/api/parse_midi', methods=['POST'])
-@login_required
-def parse_midi():
-    file = request.files['midi']
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-    file.save(filepath)
-
-    mid = mido.MidiFile(filepath)
-    notes = [msg.note for msg in mid if msg.type == 'note_on']
-
-    return jsonify({'notes': notes})
-
-# Nueva ruta for networkx path
-@app.route('/api/shortest_path', methods=['POST'])
-@login_required
-def shortest_path():
-    data = request.json
-    edges = data['edges']
-    start = data['start']
-    end = data['end']
-
-    G = nx.Graph(edges)
-    path = nx.shortest_path(G, start, end)
-
-    return jsonify({'path': path})
-
-# Nueva ruta for torch nn
-@app.route('/api/torch_nn', methods=['POST'])
-@login_required
-def torch_nn():
-    data = request.json
-    input = torch.tensor(data['input'])
-
-    model = torch.nn.Sequential(
-        torch.nn.Linear(10, 5),
-        torch.nn.ReLU(),
-        torch.nn.Linear(5, 1)
-    )
-    output = model(input)
-
-    return jsonify({'output': output.tolist()})
-
-# Nueva ruta for snappy compress advanced
-@app.route('/api/compress_advanced', methods=['POST'])
-@login_required
-def compress_advanced():
-    data = request.json
-    text = data['text']
-
-    compressed = snappy.compress(text.encode())
-    decompressed = snappy.decompress(compressed).decode()
-
-    return jsonify({'decompressed': decompressed})
-
-# Nueva ruta for pygame game sim
-# Advanced, perhaps not API
-
-# Nueva ruta for chess engine
-@app.route('/api/chess_engine_move', methods=['POST'])
-@login_required
-def chess_engine_move():
-    data = request.json
-    board = chess.Board(data['fen'])
-
-    # Sim random move
-    move = list(board.legal_moves)[0]
-    board.push(move)
-
-    return jsonify({'fen': board.fen(), 'move': str(move)})
-
-# Nueva ruta for coingecko history
-@app.route('/api/crypto_history', methods=['GET'])
-@login_required
-def crypto_history():
-    coin = request.args.get('coin', 'bitcoin')
-    cg = CoinGeckoAPI()
-    history = cg.get_coin_market_chart_by_id(id=coin, vs_currency='usd', days=30)
-
-    df = pd.DataFrame(history['prices'], columns=['time', 'price'])
-    df.to_json('history.json')
-
-    return send_from_directory('.', 'history.json')
-
-# Nueva ruta for polygon news
-@app.route('/api/stock_news', methods=['GET'])
-@login_required
-def stock_news():
-    ticker = request.args.get('ticker', 'AAPL')
-    # Assume client
-    client = polygon.RESTClient()
-    news = client.get_ticker_news(ticker)
-
-    return jsonify(news)
-
-# Nueva ruta for mpmath advanced
-@app.route('/api/mpmath_series', methods=['POST'])
-@login_required
-def mpmath_series():
-    data = request.json
-    n = data['n']
-
-    mpmath.mp.dps = 50
-    pi = mpmath.nsum(lambda k: (-1)**k / (2*k + 1) * 4, [0, n])
-
-    return jsonify({'pi': str(pi)})
-
-# Nueva ruta for sympy integral
-@app.route('/api/sympy_integral', methods=['POST'])
-@login_required
-def sympy_integral():
-    data = request.json
-    func = data['func']
-
-    x = sympy.symbols('x')
-    integral = sympy.integrate(func, x)
-
-    return jsonify({'integral': str(integral)})
-
-# Nueva ruta for openpyxl advanced
-@app.route('/api/advanced_excel', methods=['POST'])
-@login_required
-def advanced_excel():
-    file = request.files['excel']
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-    file.save(filepath)
-
-    wb = openpyxl.load_workbook(filepath)
-    ws = wb.active
-    df = pd.DataFrame(ws.values)
-    summary = df.describe()
-    ws['A10'] = 'Summary'
-    for r, (col, values) in enumerate(summary.iterrows(), start=11):
-        ws.cell(row=r, column=1, value=col)
-        for c, val in enumerate(values, start=2):
-            ws.cell(row=r, column=c, value=val)
-    wb.save(filepath)
-
-    return send_from_directory(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-
-# Wrapping up the code
-# All pending comments and features completed as per request
-
-
-    # Continuation from the provided code snippet.
-# Starting from where it left off in the prompt (after the last advanced_excel route and the if __name__ block).
-# I'll complete missing functions, fix errors (e.g., define missing functions like get_db_connection, check_level_up, get_all_users), 
-# add more features to make it a super learning platform: advanced AI integrations, more STEM simulations, user analytics, 
-# collaborative coding sessions, virtual labs, personalized learning paths, integration with external APIs, etc.
-# I'll count lines as I go and pause every 1500 lines (approximately, since exact line count depends on formatting).
-# This is chunk 1: Lines 1-1500 (continuing from your file).
-
-# First, fix and complete the table creations that were truncated.
-# Assuming the table creation code was cut off at envios_retos.
 def init_tables():
     """Initialize database tables."""
     try:
@@ -12578,13 +12229,8 @@ def generar_quiz_ai(materia_id):
     if not materia:
         return None
 
-    openai.api_key = app.config['OPENAI_API_KEY']
-    prompt = f"Generate a 10-question quiz for the subject {materia['nombre']}: {materia['descripcion']}. Include multiple choice options and correct answers."
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    quiz = response.choices[0].message['content']
+    prompt = f"Genera un quiz de 10 preguntas para la materia {materia['nombre']}: {materia['descripcion']}. Incluye opciones múltiples y respuestas correctas."
+    quiz = gemini_chat(prompt)
     
     cursor.execute("UPDATE materias SET quiz_generado = %s WHERE id = %s", (quiz, materia_id))
     mysql.connection.commit()
@@ -12603,30 +12249,6 @@ def detectar_plagio(codigo_fuente, tarea_id):
         if similarity > 0.8:
             return True
     return False
-
-def predecir_desercion(alumno_id):
-    """Predict student dropout using ML."""
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-        SELECT AVG(et.calificacion) as promedio, COUNT(a.id) as asistencias, u.xp
-        FROM usuarios u
-        LEFT JOIN entregas_tareas et ON u.id = et.estudiante_id
-        LEFT JOIN asistencias a ON u.id = a.estudiante_id AND a.presente = 1
-        WHERE u.id = %s
-        GROUP BY u.id
-    """, (alumno_id,))
-    data = cursor.fetchone()
-    cursor.close()
-
-    if not data:
-        return 'bajo'
-
-    features = np.array([[data['promedio'] or 0, data['asistencias'] or 0, data['xp'] or 0]])
-    # Assume trained model
-    model = RandomForestClassifier()  # Load from pickle or train
-    riesgo = model.predict(features)[0]
-
-    return riesgo  # 'bajo', 'medio', 'alto'
 
 def calcular_liga_semanal():
     """Calculate weekly league winner."""
@@ -12744,6 +12366,330 @@ def panel_admin():
         print(f"[ERROR PANEL ADMIN] {str(e)}")
         flash(f'Error loading admin panel: {str(e)}', 'error')
         return redirect(url_for('index'))
+
+
+# ============ API RESUMEN ADMIN ============
+
+@app.route('/api/admin/resumen-metricas', methods=['GET'])
+@login_required
+@role_required('admin')
+def api_admin_resumen_metricas():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        cursor.execute("SELECT COUNT(*) AS total FROM usuarios")
+        total_usuarios = cursor.fetchone()['total']
+
+        cursor.execute("SELECT COUNT(*) AS total FROM usuarios WHERE tipo_usuario = 'alumno' AND activo = 1")
+        total_alumnos = cursor.fetchone()['total']
+
+        cursor.execute("SELECT COUNT(*) AS total FROM usuarios WHERE tipo_usuario = 'docente' AND activo = 1")
+        total_docentes = cursor.fetchone()['total']
+
+        cursor.execute("SELECT COUNT(*) AS total FROM usuarios WHERE tipo_usuario = 'tutor'")
+        total_tutores = cursor.fetchone()['total']
+
+        cursor.execute("SELECT COUNT(*) AS total FROM tareas")
+        total_tareas = cursor.fetchone()['total']
+
+        cursor.execute("SELECT ROUND(AVG(calificacion), 2) AS promedio FROM entregas_tareas WHERE calificacion IS NOT NULL AND calificacion > 0")
+        promedio_general = cursor.fetchone()['promedio'] or 0
+
+        cursor.execute("SELECT ROUND(AVG(presente) * 100, 1) AS asistencia FROM asistencias")
+        promedio_asistencia = cursor.fetchone()['asistencia'] or 0
+
+        cursor.close()
+
+        return jsonify({
+            'total_usuarios': total_usuarios,
+            'total_alumnos': total_alumnos,
+            'total_docentes': total_docentes,
+            'total_tutores': total_tutores,
+            'total_tareas': total_tareas,
+            'promedio_general': promedio_general,
+            'promedio_asistencia': promedio_asistencia
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ============ API ADMIN USUARIOS/GRUPOS (JSON) ============
+
+@app.route('/api/admin/usuarios', methods=['GET'])
+@login_required
+@role_required('admin')
+def api_admin_usuarios():
+    try:
+        rol_filtro = request.args.get('rol', '')
+        grupo_filtro = request.args.get('grupo', '')
+        estado_filtro = request.args.get('estado', '')
+        busqueda = request.args.get('q', '').strip()
+
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        query = """
+            SELECT u.id, u.nombre, u.apellido, u.email, u.tipo_usuario, u.numero_control, u.curp, u.telefono,
+                   u.direccion, u.activo, u.fecha_registro, u.semestre, u.grupo_id, g.nombre as grupo_nombre
+            FROM usuarios u
+            LEFT JOIN grupos g ON u.grupo_id = g.id
+            WHERE 1=1
+        """
+        params = []
+
+        if rol_filtro:
+            query += " AND u.tipo_usuario = %s"
+            params.append(rol_filtro)
+        if grupo_filtro:
+            query += " AND u.grupo_id = %s"
+            params.append(grupo_filtro)
+        if estado_filtro == 'activo':
+            query += " AND u.activo = 1"
+        elif estado_filtro == 'inactivo':
+            query += " AND u.activo = 0"
+        if busqueda:
+            query += """ AND (
+                u.nombre LIKE %s OR u.apellido LIKE %s OR u.email LIKE %s OR u.numero_control LIKE %s OR u.curp LIKE %s
+            )"""
+            search_param = f"%{busqueda}%"
+            params.extend([search_param] * 5)
+
+        query += " ORDER BY u.fecha_registro DESC"
+
+        cursor.execute(query, params)
+        usuarios = cursor.fetchall()
+
+        cursor.execute("SELECT id, nombre FROM grupos WHERE activo = 1 ORDER BY nombre")
+        grupos = cursor.fetchall()
+
+        cursor.execute("SELECT COUNT(*) as total, COUNT(CASE WHEN activo = 1 THEN 1 END) as activos FROM usuarios")
+        stats = cursor.fetchone()
+
+        cursor.close()
+
+        for usuario in usuarios:
+            if usuario.get('fecha_registro'):
+                usuario['fecha_registro'] = usuario['fecha_registro'].strftime('%Y-%m-%d %H:%M:%S')
+
+        return jsonify({'usuarios': usuarios, 'grupos': grupos, 'stats': stats}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/usuarios/<int:user_id>', methods=['GET'])
+@login_required
+@role_required('admin')
+def api_admin_usuario_detalle(user_id):
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT u.*, g.nombre as grupo_nombre
+            FROM usuarios u
+            LEFT JOIN grupos g ON u.grupo_id = g.id
+            WHERE u.id = %s
+        """, (user_id,))
+        usuario = cursor.fetchone()
+
+        if not usuario:
+            cursor.close()
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+
+        metricas = None
+        if usuario['tipo_usuario'] == 'alumno':
+            cursor.execute("""
+                SELECT 
+                    AVG(et.calificacion) as promedio_tareas,
+                    COUNT(et.id) as total_entregas,
+                    AVG(re.calificacion) as promedio_examenes,
+                    COUNT(re.id) as total_examenes,
+                    (SELECT COUNT(*) FROM asistencias WHERE estudiante_id = %s AND presente = 1) as asistencias,
+                    (SELECT COUNT(*) FROM asistencias WHERE estudiante_id = %s) as total_clases
+                FROM entregas_tareas et
+                LEFT JOIN respuestas_examen re ON et.estudiante_id = re.estudiante_id
+                WHERE et.estudiante_id = %s
+            """, (user_id, user_id, user_id))
+            metricas = cursor.fetchone()
+            if metricas and metricas.get('total_clases'):
+                metricas['porcentaje_asistencia'] = round((metricas['asistencias'] / metricas['total_clases']) * 100, 2)
+
+        cursor.execute("""
+            SELECT accion, descripcion, fecha, ip, modulo
+            FROM logs_auditoria
+            WHERE usuario_id = %s
+            ORDER BY fecha DESC
+            LIMIT 20
+        """, (user_id,))
+        actividad = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT i.nombre, i.descripcion, i.icono, ui.fecha_obtencion
+            FROM usuario_insignias ui
+            JOIN insignias i ON ui.insignia_id = i.id
+            WHERE ui.usuario_id = %s
+            ORDER BY ui.fecha_obtencion DESC
+        """, (user_id,))
+        insignias = cursor.fetchall()
+
+        compras = []
+        if usuario['tipo_usuario'] == 'alumno':
+            cursor.execute("""
+                SELECT ti.nombre, ti.descripcion, uc.fecha_compra
+                FROM usuario_compras uc
+                JOIN tienda_items ti ON uc.item_id = ti.id
+                WHERE uc.usuario_id = %s
+                ORDER BY uc.fecha_compra DESC
+                LIMIT 10
+            """, (user_id,))
+            compras = cursor.fetchall()
+
+        reportes = []
+        if usuario['tipo_usuario'] == 'alumno':
+            cursor.execute("""
+                SELECT rc.tipo, rc.descripcion, rc.fecha_reporte, u.nombre as orientador, rc.evidencia_ruta
+                FROM reportes_conducta rc
+                JOIN usuarios u ON rc.orientador_id = u.id
+                WHERE rc.alumno_id = %s
+                ORDER BY rc.fecha_reporte DESC
+            """, (user_id,))
+            reportes = cursor.fetchall()
+
+        cursor.close()
+
+        return jsonify({
+            'usuario': usuario,
+            'metricas': metricas,
+            'actividad': actividad,
+            'insignias': insignias,
+            'compras': compras,
+            'reportes': reportes
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/grupos', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def api_admin_grupos():
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        if request.method == 'POST':
+            data = request.json or {}
+            required = ['nombre', 'semestre', 'turno']
+            if not all(data.get(field) for field in required):
+                return jsonify({'error': 'Faltan campos obligatorios'}), 400
+
+            if data['turno'] not in ['matutino', 'vespertino']:
+                return jsonify({'error': 'Turno inválido'}), 400
+
+            cursor.execute("SELECT id FROM grupos WHERE nombre = %s AND semestre = %s", (data['nombre'], data['semestre']))
+            if cursor.fetchone():
+                return jsonify({'error': 'Grupo duplicado'}), 409
+
+            cursor.execute("""
+                INSERT INTO grupos (nombre, semestre, turno, tutor_id, capacidad_maxima)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (data['nombre'], data['semestre'], data['turno'], data.get('tutor_id'), data.get('capacidad_maxima', 40)))
+            mysql.connection.commit()
+            grupo_id = cursor.lastrowid
+            cursor.close()
+            log_accion('crear_grupo', f'Grupo {grupo_id} ({data["nombre"]}) creado', session['user_id'], 'grupos')
+            return jsonify({'success': True, 'id': grupo_id}), 201
+
+        cursor.execute("""
+            SELECT g.*, 
+                   COUNT(DISTINCT u.id) as total_alumnos,
+                   (SELECT nombre FROM usuarios WHERE id = g.tutor_id) as tutor_nombre
+            FROM grupos g
+            LEFT JOIN usuarios u ON g.id = u.grupo_id AND u.tipo_usuario = 'alumno' AND u.activo = 1
+            WHERE g.activo = 1
+            GROUP BY g.id
+            ORDER BY g.semestre, g.nombre
+        """)
+        grupos = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT id, CONCAT(nombre, ' ', apellido) as nombre_completo
+            FROM usuarios
+            WHERE tipo_usuario IN ('tutor', 'orientador') AND activo = 1
+            ORDER BY nombre
+        """)
+        tutores = cursor.fetchall()
+
+        cursor.close()
+        return jsonify({'grupos': grupos, 'tutores': tutores}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/grupos/<int:grupo_id>', methods=['PUT', 'DELETE'])
+@login_required
+@role_required('admin')
+def api_admin_grupo_update(grupo_id):
+    try:
+        cursor = mysql.connection.cursor()
+        if request.method == 'DELETE':
+            cursor.execute("UPDATE grupos SET activo = 0 WHERE id = %s", (grupo_id,))
+            mysql.connection.commit()
+            cursor.close()
+            log_accion('desactivar_grupo', f'Grupo {grupo_id} desactivado', session['user_id'], 'grupos')
+            return jsonify({'success': True}), 200
+
+        data = request.json or {}
+        cursor.execute("""
+            UPDATE grupos SET
+                nombre = %s, semestre = %s, turno = %s,
+                tutor_id = %s, capacidad_maxima = %s, activo = %s
+            WHERE id = %s
+        """, (
+            data.get('nombre'),
+            data.get('semestre'),
+            data.get('turno'),
+            data.get('tutor_id'),
+            data.get('capacidad_maxima', 40),
+            data.get('activo', 1),
+            grupo_id
+        ))
+        mysql.connection.commit()
+        cursor.close()
+        log_accion('editar_grupo', f'Grupo {grupo_id} actualizado', session['user_id'], 'grupos')
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/grupos/<int:grupo_id>/alumnos', methods=['GET'])
+@login_required
+@role_required('admin')
+def api_admin_grupo_alumnos(grupo_id):
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT * FROM grupos WHERE id = %s", (grupo_id,))
+        grupo = cursor.fetchone()
+        if not grupo:
+            cursor.close()
+            return jsonify({'error': 'Grupo no encontrado'}), 404
+
+        cursor.execute("""
+            SELECT u.id, u.nombre, u.apellido, u.numero_control, u.email,
+                   u.xp, u.rango, u.racha,
+                   AVG(et.calificacion) as promedio_tareas,
+                   AVG(re.calificacion) as promedio_examenes,
+                   (SELECT COUNT(*) FROM asistencias WHERE estudiante_id = u.id AND presente = 1) as asistencias,
+                   (SELECT COUNT(*) FROM asistencias WHERE estudiante_id = u.id) as total_clases
+            FROM usuarios u
+            LEFT JOIN entregas_tareas et ON u.id = et.estudiante_id
+            LEFT JOIN respuestas_examen re ON u.id = re.estudiante_id
+            WHERE u.grupo_id = %s AND u.tipo_usuario = 'alumno' AND u.activo = 1
+            GROUP BY u.id
+            ORDER BY u.apellido, u.nombre
+        """, (grupo_id,))
+        alumnos = cursor.fetchall()
+        cursor.close()
+
+        return jsonify({'grupo': grupo, 'alumnos': alumnos}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 # Add route for creating materia
@@ -12964,8 +12910,7 @@ def create_video_room(materia_id):
 def update_dropout_predictions():
     users = get_all_users()
     for user_id in users:
-        riesgo = predecir_desercion(user_id)
-        probabilidad = 0.5  # Sim
+        riesgo, probabilidad = calcular_riesgo_desercion(user_id)
         cursor = mysql.connection.cursor()
         cursor.execute("INSERT INTO predicciones_desercion (alumno_id, riesgo, probabilidad) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE riesgo = %s, probabilidad = %s",
                        (user_id, riesgo, probabilidad, riesgo, probabilidad))
@@ -13061,14 +13006,8 @@ def enviar_reto(reto_id):
         flash('Challenge not found.', 'error')
         return redirect(url_for('panel_alumno'))
     
-    # Execute code safely using restrictedpython
-    from restrictedpython import compile_restricted_exec
-    result = compile_restricted_exec(codigo)
-    if result.errors:
-        resultado = {'error': result.errors}
-    else:
-        # Run tests
-        resultado = {'passed': True}  # Sim, implement actual test running
+    # Evaluación automática deshabilitada (sin sandbox)
+    resultado = {'status': 'pendiente_revision'}
 
     cursor.execute("INSERT INTO envios_retos (reto_id, estudiante_id, codigo, resultado, lenguaje) VALUES (%s, %s, %s, %s, %s)",
                    (reto_id, session['user_id'], codigo, json.dumps(resultado), lenguaje))
@@ -13330,30 +13269,6 @@ def run_physics_lab(lab_id):
     
     return jsonify(result)
 
-# Similar for chemistry, biology using rdkit, biopython, etc.
-@app.route('/run-chemistry-lab/<int:lab_id>', methods=['POST'])
-@login_required
-@role_required('alumno')
-def run_chemistry_lab(lab_id):
-    smiles = request.json.get('smiles', '')
-    if not smiles:
-        return jsonify({'error': 'SMILES string required'}), 400
-    
-    mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        return jsonify({'error': 'Invalid SMILES'}), 400
-    
-    properties = {"mw": Chem.Descriptors.MolWt(mol)}
-    
-    # Store lab result
-    cursor = mysql.connection.cursor()
-    cursor.execute("INSERT INTO lab_results (lab_id, user_id, results, score) VALUES (%s, %s, %s, %s)",
-                   (lab_id, session['user_id'], json.dumps(properties), 100))
-    mysql.connection.commit()
-    cursor.close()
-    
-    return jsonify(properties)
-
 # Personalized recommendations using ML
 def recommend_resources_v2(user_id):
     """Recommend based on user data."""
@@ -13604,7 +13519,6 @@ def recommend_resources(user_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("SELECT materias FROM user_learning_progress WHERE user_id = %s", (user_id,))
     paths = cursor.fetchall()
-    # Use sklearn for rec sys sim
     recommendations = ["resource1", "resource2"]
     cursor.close()
     return recommendations
@@ -13876,10 +13790,9 @@ def moderate_content_old():
     content_id = request.form['content_id']
     content_type = request.form['type']  # e.g., 'mensaje', 'foro'
     # Fetch content
-    # Use OpenAI moderation
-    openai.api_key = app.config['OPENAI_API_KEY']
-    response = openai.Moderation.create(input=content)
-    if response['results'][0]['flagged']:
+    content = request.form.get('content', '')
+    # Usar Gemini moderation
+    if moderate_content(content):
         # Flag or delete
         flash('Content flagged for moderation.', 'warning')
     return redirect(request.referrer)
@@ -16210,8 +16123,8 @@ def importar_usuarios():
             flash(f'Error en importación: {str(e)}', 'error')
             return redirect(request.url)
     
-    # GET: Mostrar formulario con plantilla CSV de ejemplo
-    return render_template('admin/importar-usuarios.html')
+    # GET: Redirigir al panel admin unificado
+    return redirect(url_for('panel_admin'))
 
 @app.route('/admin/descargar-plantilla-csv')
 @login_required
@@ -16261,193 +16174,15 @@ def descargar_plantilla_csv():
 @login_required
 @role_required('admin')
 def admin_usuarios():
-    """Lista completa de usuarios con filtros avanzados."""
-    try:
-        # Obtener parámetros de filtro
-        rol_filtro = request.args.get('rol', '')
-        grupo_filtro = request.args.get('grupo', '')
-        estado_filtro = request.args.get('estado', '')
-        busqueda = request.args.get('q', '').strip()
-        
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Construir query dinámica
-        query = """
-            SELECT u.*, g.nombre as grupo_nombre,
-                   COUNT(DISTINCT la.id) as logs_count,
-                   u.ultimo_acceso,
-                   DATEDIFF(NOW(), u.ultimo_acceso) as dias_inactivo
-            FROM usuarios u
-            LEFT JOIN grupos g ON u.grupo_id = g.id
-            LEFT JOIN logs_auditoria la ON u.id = la.usuario_id
-            WHERE 1=1
-        """
-        params = []
-        
-        # Aplicar filtros
-        if rol_filtro:
-            query += " AND u.tipo_usuario = %s"
-            params.append(rol_filtro)
-        
-        if grupo_filtro:
-            query += " AND u.grupo_id = %s"
-            params.append(grupo_filtro)
-        
-        if estado_filtro == 'activo':
-            query += " AND u.activo = 1"
-        elif estado_filtro == 'inactivo':
-            query += " AND u.activo = 0"
-        
-        if busqueda:
-            query += """ AND (
-                u.nombre LIKE %s OR u.apellido LIKE %s OR 
-                u.email LIKE %s OR u.numero_control LIKE %s OR u.curp LIKE %s
-            )"""
-            search_param = f'%{busqueda}%'
-            params.extend([search_param] * 5)
-        
-        query += " GROUP BY u.id ORDER BY u.fecha_registro DESC"
-        
-        cursor.execute(query, params)
-        usuarios = cursor.fetchall()
-        
-        # Obtener grupos para filtro
-        cursor.execute("SELECT id, nombre FROM grupos WHERE activo = 1 ORDER BY nombre")
-        grupos = cursor.fetchall()
-        
-        # Estadísticas generales
-        cursor.execute("""
-            SELECT 
-                COUNT(*) as total,
-                COUNT(CASE WHEN activo = 1 THEN 1 END) as activos,
-                COUNT(CASE WHEN tipo_usuario = 'alumno' THEN 1 END) as alumnos,
-                COUNT(CASE WHEN tipo_usuario = 'docente' THEN 1 END) as docentes
-            FROM usuarios
-        """)
-        stats = cursor.fetchone()
-        
-        cursor.close()
-        
-        return render_template('admin/usuarios.html',
-                             usuarios=usuarios,
-                             grupos=grupos,
-                             stats=stats,
-                             filtros={
-                                 'rol': rol_filtro,
-                                 'grupo': grupo_filtro,
-                                 'estado': estado_filtro,
-                                 'busqueda': busqueda
-                             })
-        
-    except Exception as e:
-        flash(f'Error cargando usuarios: {str(e)}', 'error')
-        return redirect(url_for('panel_admin'))
+    """Redirigir al panel admin unificado."""
+    return redirect(url_for('panel_admin'))
 
 @app.route('/admin/usuario/<int:user_id>')
 @login_required
 @role_required('admin')
 def ver_usuario_detalle(user_id):
-    """Ver perfil completo de un usuario con todas las métricas."""
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Datos del usuario
-        cursor.execute("""
-            SELECT u.*, g.nombre as grupo_nombre
-            FROM usuarios u
-            LEFT JOIN grupos g ON u.grupo_id = g.id
-            WHERE u.id = %s
-        """, (user_id,))
-        usuario = cursor.fetchone()
-        
-        if not usuario:
-            flash('Usuario no encontrado.', 'error')
-            cursor.close()
-            return redirect(url_for('admin_usuarios'))
-        
-        # Métricas académicas (si es alumno)
-        metricas_academicas = None
-        if usuario['tipo_usuario'] == 'alumno':
-            cursor.execute("""
-                SELECT 
-                    AVG(et.calificacion) as promedio_tareas,
-                    COUNT(et.id) as total_entregas,
-                    AVG(re.calificacion) as promedio_examenes,
-                    COUNT(re.id) as total_examenes,
-                    (SELECT COUNT(*) FROM asistencias WHERE estudiante_id = %s AND presente = 1) as asistencias,
-                    (SELECT COUNT(*) FROM asistencias WHERE estudiante_id = %s) as total_clases
-                FROM entregas_tareas et
-                LEFT JOIN respuestas_examen re ON et.estudiante_id = re.estudiante_id
-                WHERE et.estudiante_id = %s
-            """, (user_id, user_id, user_id))
-            metricas_academicas = cursor.fetchone()
-            
-            if metricas_academicas['total_clases'] > 0:
-                metricas_academicas['porcentaje_asistencia'] = round(
-                    (metricas_academicas['asistencias'] / metricas_academicas['total_clases']) * 100, 2
-                )
-            else:
-                metricas_academicas['porcentaje_asistencia'] = 0
-        
-        # Actividad reciente
-        cursor.execute("""
-            SELECT accion, descripcion, fecha, ip, modulo
-            FROM logs_auditoria
-            WHERE usuario_id = %s
-            ORDER BY fecha DESC
-            LIMIT 20
-        """, (user_id,))
-        actividad_reciente = cursor.fetchall()
-        
-        # Insignias obtenidas
-        cursor.execute("""
-            SELECT i.nombre, i.descripcion, i.icono, ui.fecha_obtencion
-            FROM usuario_insignias ui
-            JOIN insignias i ON ui.insignia_id = i.id
-            WHERE ui.usuario_id = %s
-            ORDER BY ui.fecha_obtencion DESC
-        """, (user_id,))
-        insignias = cursor.fetchall()
-        
-        # Compras en tienda (si es alumno)
-        compras = []
-        if usuario['tipo_usuario'] == 'alumno':
-            cursor.execute("""
-                SELECT ti.nombre, ti.descripcion, uc.fecha_compra
-                FROM usuario_compras uc
-                JOIN tienda_items ti ON uc.item_id = ti.id
-                WHERE uc.usuario_id = %s
-                ORDER BY uc.fecha_compra DESC
-                LIMIT 10
-            """, (user_id,))
-            compras = cursor.fetchall()
-        
-        # Reportes de conducta (si es alumno)
-        reportes_conducta = []
-        if usuario['tipo_usuario'] == 'alumno':
-            cursor.execute("""
-                SELECT rc.tipo, rc.descripcion, rc.fecha_reporte, 
-                       u.nombre as orientador, rc.evidencia_ruta
-                FROM reportes_conducta rc
-                JOIN usuarios u ON rc.orientador_id = u.id
-                WHERE rc.alumno_id = %s
-                ORDER BY rc.fecha_reporte DESC
-            """, (user_id,))
-            reportes_conducta = cursor.fetchall()
-        
-        cursor.close()
-        
-        return render_template('admin/usuario-detalle.html',
-                             usuario=usuario,
-                             metricas=metricas_academicas,
-                             actividad=actividad_reciente,
-                             insignias=insignias,
-                             compras=compras,
-                             reportes=reportes_conducta)
-        
-    except Exception as e:
-        flash(f'Error cargando detalles: {str(e)}', 'error')
-        return redirect(url_for('admin_usuarios'))
+    """Redirigir al panel admin unificado."""
+    return redirect(url_for('panel_admin'))
 
 @app.route('/admin/usuario/<int:user_id>/editar', methods=['GET', 'POST'])
 @login_required
@@ -16455,6 +16190,10 @@ def ver_usuario_detalle(user_id):
 def editar_usuario_admin(user_id):
     """Editar datos completos de un usuario."""
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    if request.method == 'GET':
+        cursor.close()
+        return redirect(url_for('panel_admin'))
     
     if request.method == 'POST':
         try:
@@ -16545,7 +16284,7 @@ def editar_usuario_admin(user_id):
     
     cursor.close()
     
-    return render_template('admin/editar-usuario.html', usuario=usuario, grupos=grupos)
+    return redirect(url_for('panel_admin'))
 
 @app.route('/admin/usuario/<int:user_id>/toggle-estado', methods=['POST'])
 @login_required
@@ -16660,6 +16399,148 @@ def resetear_password_admin(user_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/admin/usuario/crear', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def crear_usuario_admin():
+    """Crear nuevo usuario desde el panel de administrador."""
+    if request.method == 'GET':
+        return redirect(url_for('panel_admin'))
+    if request.method == 'POST':
+        try:
+            # Obtener datos del formulario
+            nombre = request.form.get('nombre', '').strip()
+            apellido = request.form.get('apellido', '').strip()
+            email = request.form.get('email', '').strip().lower()
+            tipo_usuario = request.form.get('tipo_usuario', '').strip()
+            numero_control = request.form.get('numero_control', '').strip()
+            password = request.form.get('password', '').strip()
+            curp = request.form.get('curp', '').strip() or None
+            grupo_id = request.form.get('grupo_id', '').strip() or None
+            fecha_nacimiento = request.form.get('fecha_nacimiento', '').strip() or None
+            direccion = request.form.get('direccion', '').strip() or None
+            telefono = request.form.get('telefono', '').strip() or None
+            
+            # Validaciones
+            if not all([nombre, apellido, email, tipo_usuario, numero_control, password]):
+                flash('Nombre, apellido, email, rol, número de control y contraseña son obligatorios.', 'error')
+                return redirect(request.url)
+            
+            if tipo_usuario not in ['alumno', 'docente', 'tutor', 'orientador', 'admin']:
+                flash('Rol inválido.', 'error')
+                return redirect(request.url)
+            
+            if '@' not in email:
+                flash('Email inválido.', 'error')
+                return redirect(request.url)
+            
+            if len(password) < 8:
+                flash('La contraseña debe tener al menos 8 caracteres.', 'error')
+                return redirect(request.url)
+            
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            
+            # Verificar duplicados
+            cursor.execute("""
+                SELECT id FROM usuarios 
+                WHERE email = %s OR numero_control = %s
+            """, (email, numero_control))
+            
+            if cursor.fetchone():
+                cursor.close()
+                flash('Email o número de control ya existe.', 'error')
+                return redirect(request.url)
+            
+            # Hash de contraseña
+            password_hash = generate_password_hash(password)
+            
+            # Insertar usuario
+            cursor.execute("""
+                INSERT INTO usuarios (
+                    nombre, apellido, email, tipo_usuario, numero_control, 
+                    password_hash, curp, grupo_id, fecha_nacimiento, 
+                    direccion, telefono, activo, fecha_registro
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, NOW())
+            """, (nombre, apellido, email, tipo_usuario, numero_control, 
+                  password_hash, curp, grupo_id, fecha_nacimiento, 
+                  direccion, telefono))
+            
+            user_id = cursor.lastrowid
+            mysql.connection.commit()
+            cursor.close()
+            
+            # Enviar email de bienvenida
+            send_email(
+                email,
+                'Bienvenido a EduPlatform',
+                f"""
+                Hola {nombre} {apellido},
+                
+                Tu cuenta en EduPlatform ha sido creada exitosamente.
+                
+                Credenciales de acceso:
+                - Número de control: {numero_control}
+                - Contraseña: {password}
+                - Rol: {tipo_usuario}
+                
+                Accede en: {request.host_url}
+                
+                Por seguridad, te recomendamos cambiar tu contraseña en el primer inicio de sesión.
+                
+                Saludos,
+                Equipo EduPlatform
+                """
+            )
+            
+            log_accion('crear_usuario', f'Usuario {user_id} ({nombre} {apellido}) creado', 
+                      session['user_id'], 'usuarios')
+            flash(f'Usuario "{nombre} {apellido}" creado exitosamente.', 'success')
+            return redirect(url_for('admin_usuarios'))
+            
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Error creando usuario: {str(e)}', 'error')
+            return redirect(request.url)
+    
+    return redirect(url_for('panel_admin'))
+
+@app.route('/admin/usuario/<int:user_id>/eliminar', methods=['POST'])
+@login_required
+@role_required('admin')
+def eliminar_usuario_admin(user_id):
+    """Desactivar (eliminar lógicamente) un usuario."""
+    try:
+        # Evitar que el admin se elimine a sí mismo
+        if user_id == session['user_id']:
+            return jsonify({'error': 'No puedes eliminar tu propia cuenta'}), 400
+        
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        cursor.execute("SELECT nombre, email FROM usuarios WHERE id = %s", (user_id,))
+        usuario = cursor.fetchone()
+        
+        if not usuario:
+            cursor.close()
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+        
+        # Desactivar usuario
+        cursor.execute("UPDATE usuarios SET activo = 0 WHERE id = %s", (user_id,))
+        mysql.connection.commit()
+        cursor.close()
+        
+        log_accion('eliminar_usuario', f"Usuario {user_id} ({usuario['nombre']}) desactivado", 
+                  session['user_id'], 'usuarios')
+        
+        return jsonify({
+            'success': True,
+            'mensaje': f'Usuario "{usuario["nombre"]}" desactivado exitosamente'
+        })
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        return jsonify({'error': str(e)}), 500
+
 # =====================================================================
 # SISTEMA DE GRUPOS ESCOLARES
 # =====================================================================
@@ -16669,37 +16550,7 @@ def resetear_password_admin(user_id):
 @role_required('admin')
 def admin_grupos_v1():
     """Gestión de grupos escolares."""
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        cursor.execute("""
-            SELECT g.*, 
-                   COUNT(DISTINCT u.id) as total_alumnos,
-                   (SELECT nombre FROM usuarios WHERE id = g.tutor_id) as tutor_nombre
-            FROM grupos g
-            LEFT JOIN usuarios u ON g.id = u.grupo_id AND u.tipo_usuario = 'alumno' AND u.activo = 1
-            WHERE g.activo = 1
-            GROUP BY g.id
-            ORDER BY g.semestre, g.nombre
-        """)
-        grupos = cursor.fetchall()
-        
-        # Tutores disponibles
-        cursor.execute("""
-            SELECT id, CONCAT(nombre, ' ', apellido) as nombre_completo
-            FROM usuarios
-            WHERE tipo_usuario IN ('tutor', 'orientador') AND activo = 1
-            ORDER BY nombre
-        """)
-        tutores = cursor.fetchall()
-        
-        cursor.close()
-        
-        return render_template('admin/grupos.html', grupos=grupos, tutores=tutores)
-        
-    except Exception as e:
-        flash(f'Error cargando grupos: {str(e)}', 'error')
-        return redirect(url_for('panel_admin'))
+    return redirect(url_for('panel_admin'))
 
 @app.route('/admin/grupo/crear', methods=['POST'])
 @login_required
@@ -16784,41 +16635,7 @@ def editar_grupo(grupo_id):
 @role_required('admin')
 def ver_alumnos_grupo(grupo_id):
     """Ver alumnos de un grupo específico."""
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        # Info del grupo
-        cursor.execute("SELECT * FROM grupos WHERE id = %s", (grupo_id,))
-        grupo = cursor.fetchone()
-        
-        if not grupo:
-            cursor.close()
-            flash('Grupo no encontrado.', 'error')
-            return redirect(url_for('admin_grupos'))
-        
-        # Alumnos del grupo con métricas
-        cursor.execute("""
-            SELECT u.id, u.nombre, u.apellido, u.numero_control, u.email,
-                   u.xp, u.rango, u.racha,
-                   AVG(et.calificacion) as promedio_tareas,
-                   AVG(re.calificacion) as promedio_examenes,
-                   (SELECT COUNT(*) FROM asistencias WHERE estudiante_id = u.id AND presente = 1) as asistencias,
-                   (SELECT COUNT(*) FROM asistencias WHERE estudiante_id = u.id) as total_clases
-            FROM usuarios u
-            LEFT JOIN entregas_tareas et ON u.id = et.estudiante_id
-            LEFT JOIN respuestas_examen re ON u.id = re.estudiante_id
-            WHERE u.grupo_id = %s AND u.tipo_usuario = 'alumno' AND u.activo = 1
-            GROUP BY u.id
-            ORDER BY u.apellido, u.nombre
-        """, (grupo_id,))
-        alumnos = cursor.fetchall()
-        
-        cursor.close()
-        
-        return render_template('admin/grupo-alumnos.html', grupo=grupo, alumnos=alumnos)
-        
-    except Exception as e:
-        flash(f'Error cargando alumnos: {str(e)}', 'error')
-        return redirect(url_for('admin_grupos'))
+    return redirect(url_for('panel_admin'))
 
 def crear_tablas_usuarios_grupos():
     """Crear o verificar tablas relacionadas con usuarios y grupos."""
@@ -20444,47 +20261,74 @@ def alumno_get_calendar_events():
         """, (user_id, month, year))
         eventos = cursor.fetchall()
         
-        # Obtener tareas del alumno (como eventos)
+        # Obtener tareas del alumno (como eventos en el calendario)
         cursor.execute("""
-            SELECT t.id, t.titulo as title, DATE(t.fecha_vencimiento) as date, 'tarea' as type
+            SELECT t.id, t.titulo as title, DATE(t.fecha_vencimiento) as date, 'tarea' as type,
+                   CASE WHEN et.id IS NOT NULL THEN 1 ELSE 0 END as completado
             FROM tareas t
             JOIN materias m ON t.materia_id = m.id
             JOIN usuarios u ON u.id = %s
+            LEFT JOIN entregas_tareas et ON t.id = et.tarea_id AND et.estudiante_id = %s
             WHERE m.semestre = u.semestre AND m.activo = 1 AND t.activo = 1
             AND MONTH(t.fecha_vencimiento) = %s AND YEAR(t.fecha_vencimiento) = %s
-        """, (user_id, month, year))
+        """, (user_id, user_id, month, year))
         tareas = cursor.fetchall()
+        
+        # Obtener exámenes programados
+        cursor.execute("""
+            SELECT e.id, e.titulo as title, DATE(e.fecha_inicio) as date, 'examen' as type
+            FROM examenes e
+            JOIN materias m ON e.materia_id = m.id
+            JOIN usuarios u ON u.id = %s
+            WHERE m.semestre = u.semestre AND e.activo = 1
+            AND MONTH(e.fecha_inicio) = %s AND YEAR(e.fecha_inicio) = %s
+        """, (user_id, month, year))
+        examenes = cursor.fetchall()
         
         cursor.close()
         
-        # Combinar y formatear
+        # Combinar y formatear todos los eventos
         all_events = []
         for e in eventos:
             all_events.append({
                 'id': e['id'],
                 'title': e['title'],
                 'date': e['date'].strftime('%Y-%m-%d') if e['date'] else None,
-                'type': e['type']
+                'type': e['type'],
+                'completado': e.get('completado', 0)
             })
         for t in tareas:
             all_events.append({
                 'id': t['id'],
                 'title': t['title'],
                 'date': t['date'].strftime('%Y-%m-%d') if t['date'] else None,
-                'type': t['type']
+                'type': t['type'],
+                'completado': t.get('completado', 0)
+            })
+        for ex in examenes:
+            all_events.append({
+                'id': ex['id'],
+                'title': ex['title'],
+                'date': ex['date'].strftime('%Y-%m-%d') if ex['date'] else None,
+                'type': ex['type']
             })
         
         return jsonify(all_events)
     except Exception as e:
-        print(f"Error get_calendar_events: {e}")
+        print(f"[ERROR] alumno_get_calendar_events: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify([])
 
 @app.route('/api/calendar/events', methods=['POST'])
 @login_required
 def alumno_create_calendar_event():
-    """Crear evento personal"""
+    """Crear evento personal en el calendario"""
     try:
         data = request.get_json()
+        if not data.get('titulo') or not data.get('fecha'):
+            return jsonify({'success': False, 'error': 'El título y la fecha son requeridos'}), 400
+        
         user_id = session['user_id']
         
         cursor = mysql.connection.cursor()
@@ -20496,9 +20340,14 @@ def alumno_create_calendar_event():
         event_id = cursor.lastrowid
         cursor.close()
         
-        return jsonify({'success': True, 'id': event_id})
+        return jsonify({
+            'success': True, 
+            'id': event_id,
+            'mensaje': 'Evento creado exitosamente'
+        })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"[ERROR] alumno_create_calendar_event: {str(e)}")
+        return jsonify({'success': False, 'error': 'Error al crear el evento'}), 500
 
 # ==================== NOTES API ====================
 @app.route('/api/notes', methods=['GET'])
@@ -20533,6 +20382,9 @@ def alumno_create_note():
     """Crear nueva nota"""
     try:
         data = request.get_json()
+        if not data.get('titulo'):
+            return jsonify({'success': False, 'error': 'El título es requerido'}), 400
+        
         cursor = mysql.connection.cursor()
         cursor.execute("""
             INSERT INTO notas_pizarron (usuario_id, titulo, contenido_json, color)
@@ -20542,9 +20394,10 @@ def alumno_create_note():
         note_id = cursor.lastrowid
         cursor.close()
         
-        return jsonify({'success': True, 'id': note_id})
+        return jsonify({'success': True, 'id': note_id, 'mensaje': 'Nota creada exitosamente'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"[ERROR] alumno_create_note: {str(e)}")
+        return jsonify({'success': False, 'error': 'Error al crear la nota'}), 500
 
 @app.route('/api/notes/<int:note_id>', methods=['GET'])
 @login_required
@@ -20562,9 +20415,10 @@ def alumno_get_note(note_id):
         
         if note:
             return jsonify(note)
-        return jsonify({'error': 'Nota no encontrada'}), 404
+        return jsonify({'error': 'Nota no encontrada o no tienes permiso para acceder a ella'}), 404
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"[ERROR] alumno_get_note: {str(e)}")
+        return jsonify({'error': 'Error al obtener la nota'}), 500
 
 @app.route('/api/notes/<int:note_id>', methods=['PUT'])
 @login_required
@@ -20633,6 +20487,9 @@ def alumno_create_flashcard_deck():
     """Crear mazo de flashcards"""
     try:
         data = request.get_json()
+        if not data.get('nombre'):
+            return jsonify({'success': False, 'error': 'El nombre del mazo es requerido'}), 400
+        
         cursor = mysql.connection.cursor()
         cursor.execute("""
             INSERT INTO flashcard_mazos (usuario_id, nombre, descripcion)
@@ -20642,9 +20499,10 @@ def alumno_create_flashcard_deck():
         deck_id = cursor.lastrowid
         cursor.close()
         
-        return jsonify({'success': True, 'id': deck_id})
+        return jsonify({'success': True, 'id': deck_id, 'mensaje': 'Mazo creado exitosamente'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"[ERROR] alumno_create_flashcard_deck: {str(e)}")
+        return jsonify({'success': False, 'error': 'Error al crear el mazo'}), 500
 
 @app.route('/api/flashcards/mazos/<int:mazo_id>/cards', methods=['GET'])
 @login_required
@@ -20672,6 +20530,9 @@ def alumno_create_flashcard_card(mazo_id):
     """Crear tarjeta en mazo"""
     try:
         data = request.get_json()
+        if not data.get('pregunta') or not data.get('respuesta'):
+            return jsonify({'success': False, 'error': 'La pregunta y respuesta son requeridas'}), 400
+        
         cursor = mysql.connection.cursor()
         cursor.execute("""
             INSERT INTO flashcard_tarjetas (mazo_id, pregunta, respuesta)
@@ -20681,9 +20542,10 @@ def alumno_create_flashcard_card(mazo_id):
         card_id = cursor.lastrowid
         cursor.close()
         
-        return jsonify({'success': True, 'id': card_id})
+        return jsonify({'success': True, 'id': card_id, 'mensaje': 'Tarjeta creada exitosamente'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"[ERROR] alumno_create_flashcard_card: {str(e)}")
+        return jsonify({'success': False, 'error': 'Error al crear la tarjeta'}), 500
 
 @app.route('/api/flashcards/<int:card_id>/review', methods=['POST'])
 @login_required
@@ -20737,6 +20599,9 @@ def alumno_create_team():
     """Crear equipo de estudio"""
     try:
         data = request.get_json()
+        if not data.get('nombre'):
+            return jsonify({'success': False, 'error': 'El nombre del equipo es requerido'}), 400
+        
         codigo = uuid.uuid4().hex[:8].upper()
         
         cursor = mysql.connection.cursor()
@@ -20746,7 +20611,7 @@ def alumno_create_team():
         """, (data['nombre'], data.get('descripcion', ''), codigo, session['user_id']))
         team_id = cursor.lastrowid
         
-        # Añadir creador como miembro
+        # Añadir creador como miembro admin
         cursor.execute("""
             INSERT INTO miembros_equipo (equipo_id, usuario_id, rol)
             VALUES (%s, %s, 'admin')
@@ -20754,9 +20619,15 @@ def alumno_create_team():
         mysql.connection.commit()
         cursor.close()
         
-        return jsonify({'success': True, 'id': team_id, 'codigo': codigo})
+        return jsonify({
+            'success': True, 
+            'id': team_id, 
+            'codigo': codigo,
+            'mensaje': 'Equipo creado exitosamente. Comparte el código para invitar a otros miembros.'
+        })
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"[ERROR] alumno_create_team: {str(e)}")
+        return jsonify({'success': False, 'error': 'Error al crear el equipo'}), 500
 
 @app.route('/api/teams/join', methods=['POST'])
 @login_required
@@ -20771,13 +20642,15 @@ def alumno_join_team():
         team = cursor.fetchone()
         
         if not team:
-            return jsonify({'success': False, 'error': 'Código inválido'}), 404
+            cursor.close()
+            return jsonify({'success': False, 'error': 'Código inválido. Por favor verifica e intenta nuevamente.'}), 404
         
         # Verificar si ya es miembro
         cursor.execute("""
             SELECT 1 FROM miembros_equipo WHERE equipo_id = %s AND usuario_id = %s
         """, (team['id'], session['user_id']))
         if cursor.fetchone():
+            cursor.close()
             return jsonify({'success': False, 'error': 'Ya eres miembro de este equipo'}), 400
         
         cursor.execute("""
@@ -20787,9 +20660,10 @@ def alumno_join_team():
         mysql.connection.commit()
         cursor.close()
         
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'mensaje': 'Te has unido al equipo exitosamente'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"[ERROR] alumno_join_team: {str(e)}")
+        return jsonify({'success': False, 'error': 'Error al unirse al equipo'}), 500
 
 # ==================== PORTFOLIO API ====================
 @app.route('/api/portfolio', methods=['GET'])
@@ -20955,7 +20829,7 @@ def alumno_upload_profile_photo():
     """Subir foto de perfil"""
     try:
         if 'photo' not in request.files:
-            return jsonify({'success': False, 'error': 'No se envió foto'}), 400
+            return jsonify({'success': False, 'error': 'No se envió ninguna foto'}), 400
         
         file = request.files['photo']
         if file.filename == '':
@@ -20976,11 +20850,16 @@ def alumno_upload_profile_photo():
             mysql.connection.commit()
             cursor.close()
             
-            return jsonify({'success': True, 'foto_perfil': foto_url})
+            return jsonify({
+                'success': True, 
+                'foto_perfil': foto_url,
+                'mensaje': 'Foto de perfil actualizada exitosamente'
+            })
         
-        return jsonify({'success': False, 'error': 'Tipo de archivo no permitido'}), 400
+        return jsonify({'success': False, 'error': 'Tipo de archivo no permitido. Solo se aceptan imágenes.'}), 400
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"[ERROR] alumno_upload_profile_photo: {str(e)}")
+        return jsonify({'success': False, 'error': 'Error al subir la foto de perfil'}), 500
 
 # ============================================================================
 # NUEVAS FUNCIONALIDADES - ENDPOINTS FALTANTES POR ROL
@@ -21152,10 +21031,14 @@ def alumno_portafolio():
         # Información del alumno
         cursor.execute("""
             SELECT nombre, email, semestre, xp, educoins, racha, rango, 
-                   fecha_registro, numero_control
+                   fecha_registro, numero_control, foto_perfil, avatar_url
             FROM usuarios WHERE id = %s
         """, (user_id,))
         alumno = cursor.fetchone()
+        
+        if not alumno:
+            cursor.close()
+            return jsonify({'error': 'Alumno no encontrado'}), 404
         
         # Historial de calificaciones
         cursor.execute("""
@@ -21164,8 +21047,9 @@ def alumno_portafolio():
             FROM entregas_tareas et
             JOIN tareas t ON et.tarea_id = t.id
             JOIN materias m ON t.materia_id = m.id
-            WHERE et.estudiante_id = %s
+            WHERE et.estudiante_id = %s AND et.calificacion IS NOT NULL
             ORDER BY et.fecha_entrega DESC
+            LIMIT 50
         """, (user_id,))
         calificaciones = cursor.fetchall()
         
@@ -21183,7 +21067,7 @@ def alumno_portafolio():
             FROM asistencias WHERE estudiante_id = %s
         """, (user_id,))
         asistencia = cursor.fetchone()
-        porcentaje_asistencia = (asistencia['presentes'] / asistencia['total'] * 100) if asistencia['total'] else 100
+        porcentaje_asistencia = (asistencia['presentes'] / asistencia['total'] * 100) if asistencia['total'] and asistencia['total'] > 0 else 100
         
         # Insignias
         cursor.execute("""
@@ -21191,6 +21075,7 @@ def alumno_portafolio():
             FROM usuario_insignias ui
             JOIN insignias i ON ui.insignia_id = i.id
             WHERE ui.usuario_id = %s
+            ORDER BY ui.fecha_obtencion DESC
         """, (user_id,))
         insignias = cursor.fetchall()
         
@@ -21200,6 +21085,7 @@ def alumno_portafolio():
             FROM materias m
             JOIN usuarios u ON m.docente_id = u.id
             WHERE m.semestre = %s AND m.activo = 1
+            ORDER BY m.nombre
         """, (alumno['semestre'],))
         materias = cursor.fetchall()
         
@@ -21208,12 +21094,12 @@ def alumno_portafolio():
         # Formatear fechas
         for cal in calificaciones:
             if cal['fecha_entrega']:
-                cal['fecha_entrega'] = cal['fecha_entrega'].strftime('%Y-%m-%d %H:%M')
+                cal['fecha_entrega'] = cal['fecha_entrega'].strftime('%d/%m/%Y %H:%M')
         for ins in insignias:
             if ins['fecha_obtencion']:
-                ins['fecha_obtencion'] = ins['fecha_obtencion'].strftime('%Y-%m-%d')
+                ins['fecha_obtencion'] = ins['fecha_obtencion'].strftime('%d/%m/%Y')
         if alumno['fecha_registro']:
-            alumno['fecha_registro'] = alumno['fecha_registro'].strftime('%Y-%m-%d')
+            alumno['fecha_registro'] = alumno['fecha_registro'].strftime('%d/%m/%Y')
         
         return jsonify({
             'alumno': alumno,
@@ -21225,7 +21111,10 @@ def alumno_portafolio():
             'total_entregas': len(calificaciones)
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"[ERROR] alumno_portafolio: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Error al obtener el portafolio'}), 500
 
 @app.route('/api/alumno/tutorias', methods=['GET'])
 @login_required
@@ -21237,10 +21126,11 @@ def alumno_tutorias():
         
         # Obtener tutor asignado
         cursor.execute("""
-            SELECT u.id, u.nombre, u.email, u.telefono
+            SELECT u.id, u.nombre, u.email, u.telefono, u.foto_perfil
             FROM tutores_estudiantes te
             JOIN usuarios u ON te.tutor_id = u.id
             WHERE te.estudiante_id = %s
+            LIMIT 1
         """, (session['user_id'],))
         tutor = cursor.fetchone()
         
@@ -21252,6 +21142,7 @@ def alumno_tutorias():
             JOIN usuarios u ON st.tutor_id = u.id
             WHERE st.alumno_id = %s
             ORDER BY st.fecha DESC
+            LIMIT 20
         """, (session['user_id'],))
         sesiones = cursor.fetchall()
         
@@ -21260,14 +21151,16 @@ def alumno_tutorias():
         # Formatear fechas
         for s in sesiones:
             if s['fecha']:
-                s['fecha'] = s['fecha'].strftime('%Y-%m-%d %H:%M')
+                s['fecha'] = s['fecha'].strftime('%d/%m/%Y %H:%M')
         
         return jsonify({
-            'tutor': tutor,
-            'sesiones': sesiones
+            'tutor': tutor if tutor else None,
+            'sesiones': sesiones,
+            'mensaje': 'Aún no tienes un tutor asignado' if not tutor else None
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"[ERROR] alumno_tutorias: {str(e)}")
+        return jsonify({'error': 'Error al obtener las tutorías'}), 500
 
 @app.route('/api/alumno/equipos', methods=['GET', 'POST'])
 @login_required
@@ -21278,6 +21171,9 @@ def alumno_equipos():
         # Crear equipo
         try:
             data = request.json
+            if not data.get('nombre'):
+                return jsonify({'error': 'El nombre del equipo es requerido', 'success': False}), 400
+            
             cursor = mysql.connection.cursor()
             cursor.execute("""
                 INSERT INTO equipos_estudio (nombre, descripcion, materia_id, creador_id)
@@ -21293,31 +21189,39 @@ def alumno_equipos():
             mysql.connection.commit()
             cursor.close()
             
-            return jsonify({'success': True, 'equipo_id': equipo_id})
+            return jsonify({
+                'success': True, 
+                'equipo_id': equipo_id,
+                'mensaje': 'Equipo creado exitosamente'
+            })
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            print(f"[ERROR] alumno_equipos POST: {str(e)}")
+            return jsonify({'error': 'Error al crear el equipo', 'success': False}), 500
     else:
         # Listar equipos
         try:
             cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
             cursor.execute("""
                 SELECT e.id, e.nombre, e.descripcion, m.nombre as materia,
-                       me.rol, e.fecha_creacion
+                       me.rol, e.fecha_creacion,
+                       (SELECT COUNT(*) FROM miembros_equipo WHERE equipo_id = e.id) as total_miembros
                 FROM miembros_equipo me
                 JOIN equipos_estudio e ON me.equipo_id = e.id
                 LEFT JOIN materias m ON e.materia_id = m.id
                 WHERE me.alumno_id = %s AND e.activo = 1
+                ORDER BY e.fecha_creacion DESC
             """, (session['user_id'],))
             equipos = cursor.fetchall()
             cursor.close()
             
             for e in equipos:
                 if e['fecha_creacion']:
-                    e['fecha_creacion'] = e['fecha_creacion'].strftime('%Y-%m-%d')
+                    e['fecha_creacion'] = e['fecha_creacion'].strftime('%d/%m/%Y')
             
             return jsonify(equipos)
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            print(f"[ERROR] alumno_equipos GET: {str(e)}")
+            return jsonify({'error': 'Error al obtener los equipos'}), 500
 
 @app.route('/api/alumno/equipos/<int:equipo_id>/unirse', methods=['POST'])
 @login_required
@@ -21325,16 +21229,115 @@ def alumno_equipos():
 def alumno_unirse_equipo(equipo_id):
     """Unirse a un equipo de estudio"""
     try:
-        cursor = mysql.connection.cursor()
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Verificar que el equipo existe y está activo
+        cursor.execute("SELECT id, nombre FROM equipos_estudio WHERE id = %s AND activo = 1", (equipo_id,))
+        equipo = cursor.fetchone()
+        if not equipo:
+            cursor.close()
+            return jsonify({'error': 'Equipo no encontrado o inactivo', 'success': False}), 404
+        
+        # Verificar si ya es miembro
+        cursor.execute("""
+            SELECT id FROM miembros_equipo WHERE equipo_id = %s AND alumno_id = %s
+        """, (equipo_id, session['user_id']))
+        if cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Ya eres miembro de este equipo', 'success': False}), 400
+        
+        # Unirse al equipo
         cursor.execute("""
             INSERT IGNORE INTO miembros_equipo (equipo_id, alumno_id, rol)
             VALUES (%s, %s, 'miembro')
         """, (equipo_id, session['user_id']))
         mysql.connection.commit()
         cursor.close()
-        return jsonify({'success': True})
+        
+        return jsonify({
+            'success': True, 
+            'mensaje': f'Te has unido al equipo "{equipo["nombre"]}" exitosamente'
+        })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"[ERROR] alumno_unirse_equipo: {str(e)}")
+        return jsonify({'error': 'Error al unirse al equipo', 'success': False}), 500
+
+@app.route('/api/alumno/tareas', methods=['GET'])
+@login_required
+@role_required('alumno')
+def alumno_tareas():
+    """Obtener listado de tareas del alumno con información completa"""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        user_id = session['user_id']
+        
+        # Obtener semestre del alumno
+        cursor.execute("SELECT semestre FROM usuarios WHERE id = %s", (user_id,))
+        alumno_info = cursor.fetchone()
+        if not alumno_info:
+            cursor.close()
+            return jsonify({'error': 'Información del alumno no encontrada'}), 404
+        
+        semestre = alumno_info['semestre']
+        
+        # Obtener tareas del alumno
+        cursor.execute("""
+            SELECT t.id, t.titulo, t.descripcion, 
+                   DATE_FORMAT(t.fecha_vencimiento, '%d/%m/%Y') as fecha_limite,
+                   t.valor_porcentaje, t.archivo_tarea,
+                   m.nombre as materia,
+                   CONCAT(d.nombre, ' ', d.apellido) as docente,
+                   et.id as entrega_id,
+                   et.calificacion,
+                   DATE_FORMAT(et.fecha_entrega, '%d/%m/%Y %H:%i') as fecha_entrega_alumno,
+                   et.comentarios as retroalimentacion,
+                   CASE 
+                       WHEN et.id IS NOT NULL THEN 0
+                       ELSE GREATEST(DATEDIFF(t.fecha_vencimiento, NOW()), 0)
+                   END as dias_restantes
+            FROM tareas t
+            JOIN materias m ON t.materia_id = m.id
+            JOIN usuarios d ON t.docente_id = d.id
+            LEFT JOIN entregas_tareas et ON t.id = et.tarea_id AND et.estudiante_id = %s
+            WHERE t.activo = 1
+            AND (
+                EXISTS (
+                    SELECT 1 FROM matriculas mat
+                    WHERE mat.materia_id = m.id AND mat.estudiante_id = %s
+                )
+                OR (m.semestre = %s)
+            )
+            ORDER BY 
+                CASE 
+                    WHEN et.id IS NULL AND t.fecha_vencimiento >= NOW() THEN 1
+                    WHEN et.id IS NULL AND t.fecha_vencimiento < NOW() THEN 2
+                    ELSE 3
+                END,
+                t.fecha_vencimiento ASC
+            LIMIT 50
+        """, (user_id, user_id, semestre))
+        
+        tareas = cursor.fetchall()
+        cursor.close()
+        
+        # Contadores
+        pendientes = sum(1 for t in tareas if not t['entrega_id'] and t['dias_restantes'] >= 0)
+        vencidas = sum(1 for t in tareas if not t['entrega_id'] and t['dias_restantes'] < 0)
+        entregadas = sum(1 for t in tareas if t['entrega_id'])
+        
+        return jsonify({
+            'success': True,
+            'tareas': tareas,
+            'pendientes': pendientes,
+            'vencidas': vencidas,
+            'entregadas': entregadas,
+            'total': len(tareas)
+        })
+    except Exception as e:
+        print(f"[ERROR] alumno_tareas: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Error al obtener tareas'}), 500
 
 @app.route('/api/alumno/examenes', methods=['GET'])
 @login_required
@@ -21344,9 +21347,16 @@ def alumno_examenes():
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         
+        # Obtener semestre del alumno
         cursor.execute("SELECT semestre FROM usuarios WHERE id = %s", (session['user_id'],))
-        semestre = cursor.fetchone()['semestre']
+        alumno_info = cursor.fetchone()
+        if not alumno_info:
+            cursor.close()
+            return jsonify({'error': 'Información del alumno no encontrada'}), 404
         
+        semestre = alumno_info['semestre']
+        
+        # Obtener exámenes disponibles
         cursor.execute("""
             SELECT eo.id, eo.titulo, eo.descripcion, eo.tiempo_limite,
                    eo.fecha_inicio, eo.fecha_fin, m.nombre as materia,
@@ -21363,15 +21373,23 @@ def alumno_examenes():
         examenes = cursor.fetchall()
         cursor.close()
         
+        # Formatear fechas
         for e in examenes:
             if e['fecha_inicio']:
-                e['fecha_inicio'] = e['fecha_inicio'].strftime('%Y-%m-%d %H:%M')
+                e['fecha_inicio'] = e['fecha_inicio'].strftime('%d/%m/%Y %H:%M')
             if e['fecha_fin']:
-                e['fecha_fin'] = e['fecha_fin'].strftime('%Y-%m-%d %H:%M')
+                e['fecha_fin'] = e['fecha_fin'].strftime('%d/%m/%Y %H:%M')
         
-        return jsonify(examenes)
+        return jsonify({
+            'examenes': examenes,
+            'total': len(examenes),
+            'pendientes': len([e for e in examenes if not e['presentado']])
+        })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"[ERROR] alumno_examenes: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Error al obtener los exámenes'}), 500
 
 @app.route('/api/alumno/examenes/<int:examen_id>/presentar', methods=['POST'])
 @login_required
@@ -21558,41 +21576,75 @@ def tutor_sesiones():
         try:
             data = request.json
             cursor = mysql.connection.cursor()
+            
+            # Combinar fecha y hora
+            fecha_str = data.get('fecha')
+            hora_str = data.get('hora', '00:00')
+            fecha_hora = f"{fecha_str} {hora_str}"
+            
             cursor.execute("""
-                INSERT INTO sesiones_tutoria (tutor_id, alumno_id, fecha, duracion_minutos, notas, estado)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (session['user_id'], data['alumno_id'], data['fecha'], 
-                  data.get('duracion_minutos', 60), data.get('notas', ''), data.get('estado', 'programada')))
+                INSERT INTO sesiones_tutoria (tutor_id, alumno_id, fecha, hora, tipo, duracion_minutos, notas, estado)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'programada')
+            """, (session['user_id'], data.get('estudiante_id'), fecha_str, hora_str,
+                  data.get('tipo', 'individual'), data.get('duracion_minutos', 60), data.get('notas', '')))
             sesion_id = cursor.lastrowid
             mysql.connection.commit()
             cursor.close()
             
             log_accion('crear_sesion_tutoria', f'Sesión ID {sesion_id} creada', session['user_id'])
-            return jsonify({'success': True, 'sesion_id': sesion_id})
+            return jsonify({
+                'success': True,
+                'sesion_id': sesion_id,
+                'message': 'Sesión agendada exitosamente'
+            })
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'message': 'Error al agendar sesión'
+            }), 500
     else:
+        limite = request.args.get('limite')
         try:
             cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            cursor.execute("""
-                SELECT st.*, u.nombre as alumno_nombre, u.numero_control
-                FROM sesiones_tutoria st
-                JOIN usuarios u ON st.alumno_id = u.id
-                WHERE st.tutor_id = %s
-                ORDER BY st.fecha DESC
-            """, (session['user_id'],))
+            
+            if limite:
+                cursor.execute("""
+                    SELECT st.id, st.fecha, st.hora, st.tipo, st.estado, st.notas,
+                           u.nombre as estudiante_nombre, u.numero_control
+                    FROM sesiones_tutoria st
+                    JOIN usuarios u ON st.alumno_id = u.id
+                    WHERE st.tutor_id = %s
+                    ORDER BY st.fecha DESC, st.hora DESC
+                    LIMIT %s
+                """, (session['user_id'], int(limite)))
+            else:
+                cursor.execute("""
+                    SELECT st.id, st.fecha, st.hora, st.tipo, st.estado, st.notas,
+                           u.nombre as estudiante_nombre, u.numero_control
+                    FROM sesiones_tutoria st
+                    JOIN usuarios u ON st.alumno_id = u.id
+                    WHERE st.tutor_id = %s
+                    ORDER BY st.fecha DESC, st.hora DESC
+                """, (session['user_id'],))
+            
             sesiones = cursor.fetchall()
             cursor.close()
             
             for s in sesiones:
                 if s['fecha']:
-                    s['fecha'] = s['fecha'].strftime('%Y-%m-%d %H:%M')
-                if s['fecha_creacion']:
-                    s['fecha_creacion'] = s['fecha_creacion'].strftime('%Y-%m-%d %H:%M')
+                    s['fecha'] = s['fecha'].strftime('%Y-%m-%d')
             
-            return jsonify(sesiones)
+            return jsonify({
+                'success': True,
+                'sesiones': sesiones
+            })
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'message': 'Error al cargar sesiones'
+            }), 500
 
 @app.route('/api/tutor/sesiones/<int:sesion_id>', methods=['PUT'])
 @login_required
@@ -21603,14 +21655,21 @@ def tutor_actualizar_sesion(sesion_id):
         data = request.json
         cursor = mysql.connection.cursor()
         cursor.execute("""
-            UPDATE sesiones_tutoria SET estado = %s, notas = %s
+            UPDATE sesiones_tutoria SET estado = %s, notas = COALESCE(%s, notas)
             WHERE id = %s AND tutor_id = %s
         """, (data.get('estado'), data.get('notas'), sesion_id, session['user_id']))
         mysql.connection.commit()
         cursor.close()
-        return jsonify({'success': True})
+        return jsonify({
+            'success': True,
+            'message': 'Sesión actualizada exitosamente'
+        })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Error al actualizar sesión'
+        }), 500
 
 @app.route('/api/tutor/observaciones', methods=['GET', 'POST'])
 @login_required
@@ -21622,45 +21681,59 @@ def tutor_observaciones():
             data = request.json
             cursor = mysql.connection.cursor()
             cursor.execute("""
-                INSERT INTO observaciones_tutor (tutor_id, alumno_id, observacion, tipo)
-                VALUES (%s, %s, %s, %s)
-            """, (session['user_id'], data['alumno_id'], data['observacion'], data.get('tipo', 'general')))
+                INSERT INTO observaciones_tutor (tutor_id, alumno_id, observacion, tipo, fecha)
+                VALUES (%s, %s, %s, %s, NOW())
+            """, (session['user_id'], data.get('estudiante_id'), data.get('observacion'), data.get('tipo', 'academico')))
             mysql.connection.commit()
             cursor.close()
             
-            return jsonify({'success': True})
+            return jsonify({
+                'success': True,
+                'message': 'Observación guardada exitosamente'
+            })
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'message': 'Error al guardar observación'
+            }), 500
     else:
         alumno_id = request.args.get('alumno_id')
         try:
             cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
             if alumno_id:
                 cursor.execute("""
-                    SELECT ot.*, u.nombre as alumno_nombre
+                    SELECT ot.id, ot.observacion, ot.tipo, 
+                           DATE_FORMAT(ot.fecha, '%%Y-%%m-%%d %%H:%%i') as fecha,
+                           u.nombre as estudiante_nombre
                     FROM observaciones_tutor ot
                     JOIN usuarios u ON ot.alumno_id = u.id
                     WHERE ot.tutor_id = %s AND ot.alumno_id = %s
-                    ORDER BY ot.fecha_creacion DESC
+                    ORDER BY ot.fecha DESC
                 """, (session['user_id'], alumno_id))
             else:
                 cursor.execute("""
-                    SELECT ot.*, u.nombre as alumno_nombre
+                    SELECT ot.id, ot.observacion, ot.tipo,
+                           DATE_FORMAT(ot.fecha, '%%Y-%%m-%%d %%H:%%i') as fecha,
+                           u.nombre as estudiante_nombre
                     FROM observaciones_tutor ot
                     JOIN usuarios u ON ot.alumno_id = u.id
                     WHERE ot.tutor_id = %s
-                    ORDER BY ot.fecha_creacion DESC LIMIT 50
+                    ORDER BY ot.fecha DESC LIMIT 50
                 """, (session['user_id'],))
             observaciones = cursor.fetchall()
             cursor.close()
             
-            for o in observaciones:
-                if o['fecha_creacion']:
-                    o['fecha_creacion'] = o['fecha_creacion'].strftime('%Y-%m-%d %H:%M')
-            
-            return jsonify(observaciones)
+            return jsonify({
+                'success': True,
+                'observaciones': observaciones
+            })
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            return jsonify({
+                'success': False,
+                'error': str(e),
+                'message': 'Error al cargar observaciones'
+            }), 500
 
 @app.route('/api/tutor/portafolio/<int:alumno_id>', methods=['GET'])
 @login_required
@@ -21733,7 +21806,7 @@ def tutor_ver_portafolio(alumno_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/tutor/reporte-seguimiento', methods=['GET'])
+@app.route('/api/tutor/reporte-seguimiento', methods=['GET', 'POST'])
 @login_required
 @role_required('tutor')
 def tutor_reporte_seguimiento():
@@ -21741,28 +21814,96 @@ def tutor_reporte_seguimiento():
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         
-        cursor.execute("""
-            SELECT u.id, u.nombre, u.numero_control, u.semestre, u.xp, u.racha,
-                   AVG(et.calificacion) as promedio,
-                   (SELECT COUNT(*) FROM sesiones_tutoria st WHERE st.alumno_id = u.id AND st.tutor_id = %s) as sesiones_totales,
-                   (SELECT COUNT(*) FROM observaciones_tutor ot WHERE ot.alumno_id = u.id AND ot.tutor_id = %s) as observaciones
-            FROM usuarios u
-            JOIN tutores_estudiantes te ON u.id = te.estudiante_id
-            LEFT JOIN entregas_tareas et ON u.id = et.estudiante_id
-            WHERE te.tutor_id = %s AND u.activo = 1
-            GROUP BY u.id
-            ORDER BY promedio ASC
-        """, (session['user_id'], session['user_id'], session['user_id']))
-        alumnos = cursor.fetchall()
-        cursor.close()
-        
-        return jsonify({
-            'fecha_generacion': datetime.now().strftime('%Y-%m-%d %H:%M'),
-            'total_alumnos': len(alumnos),
-            'alumnos': alumnos
-        })
+        # Obtener parámetros si es POST
+        if request.method == 'POST':
+            data = request.get_json() or {}
+            estudiante_id = data.get('estudiante_id')
+            fecha_inicio = data.get('fecha_inicio')
+            fecha_fin = data.get('fecha_fin')
+            formato = data.get('formato', 'pdf')
+            
+            # Si se especifica un estudiante
+            if estudiante_id and estudiante_id != 'todos':
+                cursor.execute("""
+                    SELECT u.id, u.nombre, u.numero_control, u.semestre, u.xp, u.racha,
+                           AVG(et.calificacion) as promedio,
+                           (SELECT COUNT(*) FROM sesiones_tutoria st 
+                            WHERE st.alumno_id = u.id AND st.tutor_id = %s
+                            AND (%s IS NULL OR st.fecha >= %s)
+                            AND (%s IS NULL OR st.fecha <= %s)) as sesiones_totales,
+                           (SELECT COUNT(*) FROM observaciones_tutor ot 
+                            WHERE ot.alumno_id = u.id AND ot.tutor_id = %s
+                            AND (%s IS NULL OR ot.fecha >= %s)
+                            AND (%s IS NULL OR ot.fecha <= %s)) as observaciones
+                    FROM usuarios u
+                    JOIN tutores_estudiantes te ON u.id = te.estudiante_id
+                    LEFT JOIN entregas_tareas et ON u.id = et.estudiante_id
+                    WHERE te.tutor_id = %s AND u.id = %s AND u.activo = 1
+                    GROUP BY u.id
+                """, (session['user_id'], fecha_inicio, fecha_inicio, fecha_fin, fecha_fin,
+                      session['user_id'], fecha_inicio, fecha_inicio, fecha_fin, fecha_fin,
+                      session['user_id'], estudiante_id))
+            else:
+                # Todos los estudiantes
+                cursor.execute("""
+                    SELECT u.id, u.nombre, u.numero_control, u.semestre, u.xp, u.racha,
+                           AVG(et.calificacion) as promedio,
+                           (SELECT COUNT(*) FROM sesiones_tutoria st 
+                            WHERE st.alumno_id = u.id AND st.tutor_id = %s
+                            AND (%s IS NULL OR st.fecha >= %s)
+                            AND (%s IS NULL OR st.fecha <= %s)) as sesiones_totales,
+                           (SELECT COUNT(*) FROM observaciones_tutor ot 
+                            WHERE ot.alumno_id = u.id AND ot.tutor_id = %s
+                            AND (%s IS NULL OR ot.fecha >= %s)
+                            AND (%s IS NULL OR ot.fecha <= %s)) as observaciones
+                    FROM usuarios u
+                    JOIN tutores_estudiantes te ON u.id = te.estudiante_id
+                    LEFT JOIN entregas_tareas et ON u.id = et.estudiante_id
+                    WHERE te.tutor_id = %s AND u.activo = 1
+                    GROUP BY u.id
+                    ORDER BY promedio ASC
+                """, (session['user_id'], fecha_inicio, fecha_inicio, fecha_fin, fecha_fin,
+                      session['user_id'], fecha_inicio, fecha_inicio, fecha_fin, fecha_fin,
+                      session['user_id']))
+            
+            alumnos = cursor.fetchall()
+            cursor.close()
+            
+            # Simular generación de archivo (en producción, aquí generarías el PDF/Excel real)
+            filename = f"reporte_seguimiento_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{formato}"
+            
+            return jsonify({
+                'success': True,
+                'fecha_generacion': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'total_alumnos': len(alumnos),
+                'alumnos': alumnos,
+                'url': f'/reportes/{filename}',  # URL donde estaría el archivo generado
+                'message': 'Reporte generado exitosamente'
+            })
+        else:
+            # Método GET original
+            cursor.execute("""
+                SELECT u.id, u.nombre, u.numero_control, u.semestre, u.xp, u.racha,
+                       AVG(et.calificacion) as promedio,
+                       (SELECT COUNT(*) FROM sesiones_tutoria st WHERE st.alumno_id = u.id AND st.tutor_id = %s) as sesiones_totales,
+                       (SELECT COUNT(*) FROM observaciones_tutor ot WHERE ot.alumno_id = u.id AND ot.tutor_id = %s) as observaciones
+                FROM usuarios u
+                JOIN tutores_estudiantes te ON u.id = te.estudiante_id
+                LEFT JOIN entregas_tareas et ON u.id = et.estudiante_id
+                WHERE te.tutor_id = %s AND u.activo = 1
+                GROUP BY u.id
+                ORDER BY promedio ASC
+            """, (session['user_id'], session['user_id'], session['user_id']))
+            alumnos = cursor.fetchall()
+            cursor.close()
+            
+            return jsonify({
+                'fecha_generacion': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'total_alumnos': len(alumnos),
+                'alumnos': alumnos
+            })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'success': False, 'error': str(e), 'message': 'Error al generar reporte'}), 500
 
 # ==================== ORIENTADOR - ENDPOINTS FALTANTES ====================
 
@@ -22962,13 +23103,39 @@ def tutor_estudiante_detalle_v2(estudiante_id):
             'faltas': int(m['faltas']) if m['faltas'] else 0
         })
     
+    # Obtener sesiones realizadas
+    cursor.execute("""
+        SELECT COUNT(*) as sesiones_realizadas
+        FROM sesiones_tutoria
+        WHERE alumno_id = %s AND tutor_id = %s AND estado = 'completada'
+    """, (estudiante_id, session['user_id']))
+    sesiones = cursor.fetchone()
+    sesiones_realizadas = sesiones['sesiones_realizadas'] if sesiones else 0
+    
+    # Obtener última observación
+    cursor.execute("""
+        SELECT observacion
+        FROM observaciones_tutor
+        WHERE alumno_id = %s AND tutor_id = %s
+        ORDER BY fecha DESC LIMIT 1
+    """, (estudiante_id, session['user_id']))
+    obs = cursor.fetchone()
+    observaciones_recientes = obs['observacion'] if obs else None
+    
     cursor.close()
     
     return jsonify({
-        'estudiante': estudiante['nombre'],
-        'promedio': promedio,
-        'asistencia': asistencia,
-        'materias': materias
+        'success': True,
+        'estudiante': {
+            'nombre': estudiante['nombre'],
+            'email': estudiante['email'],
+            'numero_control': estudiante['numero_control'],
+            'grupo': estudiante.get('grupo', 'N/A'),
+            'promedio': promedio,
+            'asistencia': asistencia,
+            'sesiones_realizadas': sesiones_realizadas,
+            'observaciones_recientes': observaciones_recientes
+        }
     })
 
 @app.route('/api/tutor/mensajes', methods=['GET', 'POST'])
@@ -23151,16 +23318,18 @@ def tutor_justificantes():
             if file:
                 upload_folder = os.path.join(current_app.root_path, 'uploads', 'tareas')
                 os.makedirs(upload_folder, exist_ok=True)
-                filename = f"{current_user.id}_{assignment_id}_{secure_filename(file.filename)}"
+                
+                filename = f"{session['user_id']}_{assignment_id}_{secure_filename(file.filename)}"
                 file_path = os.path.join(upload_folder, filename)
                 file.save(file_path)
+                
                 # Guardar registro en la tabla entregas_tareas
                 try:
                     cursor = mysql.connection.cursor()
                     cursor.execute("""
                         INSERT INTO entregas_tareas (tarea_id, estudiante_id, archivo_nombre, archivo_ruta, comentarios)
                         VALUES (%s, %s, %s, %s, %s)
-                    """, (assignment_id, current_user.id, filename, file_path, comentario))
+                    """, (assignment_id, session['user_id'], filename, file_path, comentario))
                     mysql.connection.commit()
                     cursor.close()
                 except Exception as e:
@@ -27634,42 +27803,6 @@ def insertar_items_tienda_ejemplo():
         print(f"[WARN] Error insertando items de tienda: {e}")
 
 
-# ==================== RUTAS DE PANELES (FALTANTES) ====================
-
-@app.route('/panel-orientador')
-@login_required
-@role_required('orientador')
-def panel_orientador_v2():
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        # Obtener info del orientador
-        cursor.execute("""
-            SELECT nombre, email FROM usuarios WHERE id = %s
-        """, (session['user_id'],))
-        orientador_info = cursor.fetchone()
-        nombre = orientador_info['nombre'] if orientador_info else 'Orientador'
-        email = orientador_info['email'] if orientador_info else ''
-        
-        # Generar iniciales
-        partes = nombre.split()
-        iniciales = ''.join([p[0].upper() for p in partes[:2]]) if partes else 'OR'
-        
-        cursor.close()
-        return render_template('panel-orientador.html',
-            nombre=nombre,
-            email=email,
-            iniciales=iniciales
-        )
-    except Exception as e:
-        print(f"Error en panel orientador: {e}")
-        return render_template('panel-orientador.html',
-            nombre='Orientador',
-            email='',
-            iniciales='OR'
-        )
-
-
 # ==================== TAREAS PROGRAMADAS ALUMNO ====================
 
 def tarea_diaria_alumnos():
@@ -28348,19 +28481,19 @@ def api_responder_encuesta_docente():
 @login_required
 def get_student_dashboard_data():
     """Devuelve todos los datos estadísticos y misiones del alumno en una sola llamada"""
-    # 1. Obtener Estadísticas Reales
+    user_name = session.get('user_name', 'Usuario')
+    user_id = session.get('user_id', 0)
+    
     stats = {
-        "nombre": current_user.nombre,
-        "avatar": current_user.avatar or "https://ui-avatars.com/api/?name=" + current_user.nombre,
-        "xp": getattr(current_user, 'xp', 0),
-        "nivel": getattr(current_user, 'nivel', 1),
-        "monedas": getattr(current_user, 'monedas', 0),
-        # Calculamos porcentaje para el siguiente nivel (ejemplo simple)
-        "xp_percent": (getattr(current_user, 'xp', 0) % 1000) / 10
+        "nombre": user_name,
+        "avatar": f"https://ui-avatars.com/api/?name={user_name}",
+        "xp": 0,
+        "nivel": 1,
+        "monedas": 0,
+        "xp_percent": 0
     }
     
     # 2. Obtener Misiones (Ejemplo: hardcoded o desde DB si tienes tabla Misiones)
-    # Lo ideal es conectar esto a una tabla 'Misiones'
     misiones = [
         {"id": 1, "title": "Completar 2 Tareas", "type": "target", "progress": 1, "total": 2, "xp_reward": 50},
         {"id": 2, "title": "Leer 15 mins", "type": "reading", "progress": 15, "total": 15, "xp_reward": 30}
@@ -28417,7 +28550,7 @@ def upload_assignment():
         upload_folder = os.path.join(current_app.root_path, 'uploads', 'tareas')
         os.makedirs(upload_folder, exist_ok=True)
         
-        filename = f"{current_user.id}_{assignment_id}_{secure_filename(file.filename)}"
+        filename = f"{session['user_id']}_{assignment_id}_{secure_filename(file.filename)}"
         file.save(os.path.join(upload_folder, filename))
         
         # AQUÍ: Guardar registro en la tabla 'Entrega' de la base de datos

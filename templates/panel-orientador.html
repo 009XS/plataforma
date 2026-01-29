@@ -1,4 +1,691 @@
 <!DOCTYPE html>
+<html class="light" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Panel Orientador</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1A2633",
+                        "text-main-light": "#111418",
+                        "text-main-dark": "#F3F4F6",
+                        "text-sec-light": "#617589",
+                        "text-sec-dark": "#9CA3AF",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased transition-colors duration-200">
+    <div id="main-app-container"
+        class="relative flex flex-col w-full max-w-md mx-auto bg-white dark:bg-background-dark shadow-2xl min-h-screen h-screen overflow-hidden">
+
+        <div id="header-stats" class="w-full flex flex-col items-center pt-8 pb-4 bg-white dark:bg-background-dark">
+            <div class="relative mb-3">
+                <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center"
+                    style="background-image: url('https://ui-avatars.com/api/?name={{ nombre }}&background=random');">
+                </div>
+                <div
+                    class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark">
+                    <span class="material-symbols-outlined text-[16px] block">badge</span>
+                </div>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ nombre }}</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Orientador</p>
+
+            <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
+                <div
+                    class="bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">groups</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Alumnos activos</p>
+                    <h3 class="text-2xl font-bold">{{ total_alumnos }}</h3>
+                </div>
+                <div
+                    class="bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">warning</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Alertas activas</p>
+                    <h3 class="text-2xl font-bold">{{ alertas_activas }}</h3>
+                </div>
+                <div
+                    class="bg-gradient-to-br from-violet-500 to-fuchsia-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">event</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Citas pendientes</p>
+                    <h3 class="text-2xl font-bold">{{ citas_pendientes }}</h3>
+                </div>
+                <div
+                    class="bg-gradient-to-br from-emerald-500 to-teal-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">assignment</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Reportes (30 días)</p>
+                    <h3 class="text-2xl font-bold">{{ reportes_mes }}</h3>
+                </div>
+            </div>
+            <div class="w-full px-4 mt-3">
+                <div
+                    class="bg-gradient-to-br from-rose-500 to-red-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">report</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Alumnos en riesgo alto</p>
+                    <h3 class="text-2xl font-bold">{{ alumnos_riesgo }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6" id="dashboard-view">
+            <section id="alertas-container" class="w-full">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Alertas recientes</h3>
+                    <button onclick="loadAlertas()"
+                        class="text-xs text-primary font-medium hover:underline">Actualizar</button>
+                </div>
+                <div id="alertas-list" class="flex flex-col gap-3">
+                    {% if ultimas_alertas %}
+                    {% for alerta in ultimas_alertas %}
+                    <div
+                        class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">{{ alerta.alumno_nombre }} • {{ alerta.numero_control }}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">{{ alerta.titulo }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ alerta.descripcion }}</p>
+                            </div>
+                            <span
+                                class="text-[10px] uppercase px-2 py-1 rounded-full bg-orange-100 text-orange-700">{{ alerta.nivel }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="p-4 text-center text-slate-500">No hay alertas recientes.</div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section id="citas-container" class="w-full">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Próximas citas</h3>
+                    <button onclick="openCitaModal()"
+                        class="text-xs text-primary font-medium hover:underline">Nueva cita</button>
+                </div>
+                <div id="citas-list" class="flex flex-col gap-3">
+                    {% if proximas_citas %}
+                    {% for cita in proximas_citas %}
+                    <div
+                        class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">{{ cita.alumno_nombre }}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">{{ cita.motivo }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ cita.fecha }} • {{ cita.hora }}</p>
+                            </div>
+                            <span
+                                class="text-[10px] uppercase px-2 py-1 rounded-full bg-blue-100 text-blue-700">{{ cita.estado }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="p-4 text-center text-slate-500">No hay citas programadas.</div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section id="reportes-container" class="w-full pb-8">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Reportes recientes</h3>
+                    <button onclick="loadReportes()"
+                        class="text-xs text-primary font-medium hover:underline">Actualizar</button>
+                </div>
+                <div id="reportes-list" class="flex flex-col gap-3">
+                    {% if ultimos_reportes %}
+                    {% for reporte in ultimos_reportes %}
+                    <div
+                        class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">{{ reporte.alumno_nombre }}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">{{ reporte.tipo }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ reporte.descripcion }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="p-4 text-center text-slate-500">No hay reportes recientes.</div>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+
+        <div id="orientadores-view"
+            class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+            <div class="flex items-center gap-2 mb-2">
+                <button onclick="showPanel('dashboard')"
+                    class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">CRUD Orientadores</h2>
+            </div>
+
+            <div class="flex gap-2">
+                <input id="orientadores-search" type="text" placeholder="Buscar por nombre, email o CURP"
+                    class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"
+                    oninput="loadOrientadores()" />
+                <select id="orientadores-activo" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-2 py-2 text-sm"
+                    onchange="loadOrientadores()">
+                    <option value="">Todos</option>
+                    <option value="1">Activos</option>
+                    <option value="0">Inactivos</option>
+                </select>
+            </div>
+
+            <div id="orientadores-list" class="flex flex-col gap-3">
+                <p class="text-xs text-slate-400">Cargando orientadores...</p>
+            </div>
+
+            <button onclick="openOrientadorModal()"
+                class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition mt-4">
+                Nuevo orientador
+            </button>
+        </div>
+
+        <nav
+            class="fixed bottom-0 left-0 right-0 z-30 max-w-md mx-auto bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg">
+            <div class="flex h-16 items-center justify-between px-1" id="bottom-nav"></div>
+        </nav>
+    </div>
+
+    <div id="orientador-modal"
+        class="hidden fixed inset-0 z-40 bg-black/40 items-center justify-center p-4">
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold" id="orientador-modal-title">Nuevo orientador</h3>
+                <button onclick="closeOrientadorModal()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="mt-3 space-y-3">
+                <input id="orientador-id" type="hidden" />
+                <input id="orientador-nombre" type="text" placeholder="Nombre completo"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-email" type="email" placeholder="Email"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-numero" type="text" placeholder="Número de control"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-curp" type="text" placeholder="CURP"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-telefono" type="text" placeholder="Teléfono"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-direccion" type="text" placeholder="Dirección"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-password" type="password" placeholder="Contraseña (opcional al editar)"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <div class="flex gap-2">
+                    <button onclick="saveOrientador()"
+                        class="flex-1 py-2 rounded-lg bg-primary text-white font-semibold">Guardar</button>
+                    <button onclick="closeOrientadorModal()"
+                        class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cita-modal" class="hidden fixed inset-0 z-40 bg-black/40 items-center justify-center p-4">
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold" id="cita-modal-title">Nueva cita</h3>
+                <button onclick="closeCitaModal()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="mt-3 space-y-3">
+                <input id="cita-id" type="hidden" />
+                <input id="cita-alumno-id" type="hidden" />
+                <div>
+                    <input id="cita-alumno-search" type="text" placeholder="Buscar alumno (min 3 letras)"
+                        class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"
+                        oninput="buscarAlumnos(this.value)" />
+                    <div id="alumno-results"
+                        class="mt-2 max-h-40 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark hidden"></div>
+                </div>
+                <input id="cita-fecha" type="date"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="cita-hora" type="time"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="cita-motivo" type="text" placeholder="Motivo"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <select id="cita-estado"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="confirmada">Confirmada</option>
+                    <option value="completada">Completada</option>
+                    <option value="cancelada">Cancelada</option>
+                </select>
+                <div class="flex gap-2">
+                    <button onclick="saveCita()"
+                        class="flex-1 py-2 rounded-lg bg-primary text-white font-semibold">Guardar</button>
+                    <button onclick="closeCitaModal()"
+                        class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm z-50"></div>
+
+    <script>
+        const navItems = [
+            { key: 'dashboard', icon: 'home', label: 'Inicio', action: () => showPanel('dashboard') },
+            { key: 'orientadores', icon: 'badge', label: 'Orientadores', action: () => showPanel('orientadores') },
+            { key: 'logout', icon: 'logout', label: 'Salir', action: () => window.location.href = '/logout' }
+        ];
+
+        let activeNav = 'dashboard';
+        let citasCache = [];
+
+        function renderBottomNav() {
+            const nav = document.getElementById('bottom-nav');
+            nav.innerHTML = navItems.map(item => `
+                <a href="#" onclick="setActiveNav('${item.key}'); return false;"
+                    class="flex flex-1 flex-col items-center justify-center gap-0.5 ${activeNav === item.key ? 'text-primary font-bold' : 'text-slate-400'} transition-colors hover:text-primary dark:text-slate-500 dark:hover:text-primary hover:bg-primary/10 dark:hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[26px]">${item.icon}</span>
+                    <span class="text-[11px] font-semibold">${item.label}</span>
+                </a>
+            `).join('');
+        }
+
+        function setActiveNav(key) {
+            activeNav = key;
+            renderBottomNav();
+            const item = navItems.find(i => i.key === key);
+            if (item && typeof item.action === 'function') item.action();
+        }
+
+        function showPanel(panelName) {
+            const dashboard = document.getElementById('dashboard-view');
+            const header = document.getElementById('header-stats');
+            const orientadoresView = document.getElementById('orientadores-view');
+
+            dashboard.classList.add('hidden');
+            header.classList.add('hidden');
+            orientadoresView.classList.add('hidden');
+
+            if (panelName === 'orientadores') {
+                orientadoresView.classList.remove('hidden');
+                loadOrientadores();
+            } else {
+                dashboard.classList.remove('hidden');
+                header.classList.remove('hidden');
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm z-50 ${isError ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 2500);
+        }
+
+        async function apiFetch(url, options = {}) {
+            const response = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                ...options
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Error en la solicitud');
+            return data;
+        }
+
+        async function loadAlertas() {
+            try {
+                const data = await apiFetch('/api/orientador/alertas');
+                const alertas = Array.isArray(data) ? data : [];
+                const container = document.getElementById('alertas-list');
+                if (!alertas.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay alertas recientes.</div>';
+                    return;
+                }
+                container.innerHTML = alertas.slice(0, 5).map(alerta => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">${alerta.alumno_nombre || 'Sin alumno'}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">${alerta.titulo || 'Alerta'}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${alerta.descripcion || ''}</p>
+                            </div>
+                            <span class="text-[10px] uppercase px-2 py-1 rounded-full bg-orange-100 text-orange-700">${alerta.nivel || 'medio'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadCitas() {
+            try {
+                const data = await apiFetch('/api/orientador/citas');
+                citasCache = data.citas || [];
+                const container = document.getElementById('citas-list');
+                if (!citasCache.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay citas programadas.</div>';
+                    return;
+                }
+                container.innerHTML = citasCache.slice(0, 5).map(cita => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">${cita.alumno_nombre || ''}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">${cita.motivo || ''}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${cita.fecha || ''} • ${cita.hora || ''}</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <span class="text-[10px] uppercase px-2 py-1 rounded-full bg-blue-100 text-blue-700">${cita.estado || 'pendiente'}</span>
+                                <button class="text-xs text-primary" onclick="editCita(${cita.id})">Editar</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadReportes() {
+            try {
+                const data = await apiFetch('/api/orientador/reportes');
+                const reportes = data.reportes || [];
+                const container = document.getElementById('reportes-list');
+                if (!reportes.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay reportes recientes.</div>';
+                    return;
+                }
+                container.innerHTML = reportes.slice(0, 5).map(reporte => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">${reporte.alumno_nombre || ''}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">${reporte.tipo || 'Reporte'}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${reporte.descripcion || ''}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadOrientadores() {
+            try {
+                const q = document.getElementById('orientadores-search').value.trim();
+                const activo = document.getElementById('orientadores-activo').value;
+                const params = new URLSearchParams();
+                if (q) params.append('q', q);
+                if (activo) params.append('activo', activo);
+
+                const data = await apiFetch(`/api/orientadores?${params.toString()}`);
+                const orientadores = data.orientadores || [];
+                const container = document.getElementById('orientadores-list');
+                if (!orientadores.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay orientadores.</div>';
+                    return;
+                }
+
+                container.innerHTML = orientadores.map(or => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">${or.email}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">${or.nombre}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${or.numero_control} • ${or.curp}</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <span class="text-[10px] uppercase px-2 py-1 rounded-full ${or.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}">${or.activo ? 'Activo' : 'Inactivo'}</span>
+                                <div class="flex gap-2">
+                                    <button class="text-xs text-primary" onclick='openOrientadorModal(${JSON.stringify(or)})'>Editar</button>
+                                    <button class="text-xs text-red-500" onclick='deleteOrientador(${or.id})'>Desactivar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function openOrientadorModal(orientador = null) {
+            document.getElementById('orientador-modal').classList.remove('hidden');
+            document.getElementById('orientador-modal').classList.add('flex');
+            document.getElementById('orientador-modal-title').textContent = orientador ? 'Editar orientador' : 'Nuevo orientador';
+            document.getElementById('orientador-id').value = orientador ? orientador.id : '';
+            document.getElementById('orientador-nombre').value = orientador ? orientador.nombre : '';
+            document.getElementById('orientador-email').value = orientador ? orientador.email : '';
+            document.getElementById('orientador-numero').value = orientador ? orientador.numero_control : '';
+            document.getElementById('orientador-curp').value = orientador ? orientador.curp : '';
+            document.getElementById('orientador-telefono').value = orientador ? (orientador.telefono || '') : '';
+            document.getElementById('orientador-direccion').value = orientador ? (orientador.direccion || '') : '';
+            document.getElementById('orientador-password').value = '';
+        }
+
+        function closeOrientadorModal() {
+            document.getElementById('orientador-modal').classList.add('hidden');
+            document.getElementById('orientador-modal').classList.remove('flex');
+        }
+
+        async function saveOrientador() {
+            try {
+                const id = document.getElementById('orientador-id').value;
+                const payload = {
+                    nombre: document.getElementById('orientador-nombre').value.trim(),
+                    email: document.getElementById('orientador-email').value.trim(),
+                    numero_control: document.getElementById('orientador-numero').value.trim(),
+                    curp: document.getElementById('orientador-curp').value.trim(),
+                    telefono: document.getElementById('orientador-telefono').value.trim(),
+                    direccion: document.getElementById('orientador-direccion').value.trim(),
+                    password: document.getElementById('orientador-password').value.trim()
+                };
+
+                if (!payload.nombre || !payload.email || !payload.numero_control || !payload.curp) {
+                    showToast('Completa los campos obligatorios', true);
+                    return;
+                }
+
+                if (id) {
+                    if (!payload.password) delete payload.password;
+                    await apiFetch(`/api/orientadores/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                    showToast('Orientador actualizado');
+                } else {
+                    if (!payload.password) {
+                        showToast('La contraseña es obligatoria', true);
+                        return;
+                    }
+                    await apiFetch('/api/orientadores', { method: 'POST', body: JSON.stringify(payload) });
+                    showToast('Orientador creado');
+                }
+                closeOrientadorModal();
+                loadOrientadores();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function deleteOrientador(id) {
+            if (!confirm('¿Desactivar este orientador?')) return;
+            try {
+                await apiFetch(`/api/orientadores/${id}`, { method: 'DELETE' });
+                showToast('Orientador desactivado');
+                loadOrientadores();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function openCitaModal() {
+            document.getElementById('cita-modal').classList.remove('hidden');
+            document.getElementById('cita-modal').classList.add('flex');
+            document.getElementById('cita-modal-title').textContent = 'Nueva cita';
+            document.getElementById('cita-id').value = '';
+            document.getElementById('cita-alumno-id').value = '';
+            document.getElementById('cita-alumno-search').value = '';
+            document.getElementById('cita-fecha').value = '';
+            document.getElementById('cita-hora').value = '';
+            document.getElementById('cita-motivo').value = '';
+            document.getElementById('cita-estado').value = 'pendiente';
+            document.getElementById('alumno-results').classList.add('hidden');
+        }
+
+        function editCita(citaId) {
+            const cita = citasCache.find(c => c.id === citaId);
+            if (!cita) return;
+            document.getElementById('cita-modal').classList.remove('hidden');
+            document.getElementById('cita-modal').classList.add('flex');
+            document.getElementById('cita-modal-title').textContent = 'Editar cita';
+            document.getElementById('cita-id').value = cita.id;
+            document.getElementById('cita-alumno-id').value = cita.alumno_id;
+            document.getElementById('cita-alumno-search').value = cita.alumno_nombre || '';
+            document.getElementById('cita-fecha').value = cita.fecha || '';
+            document.getElementById('cita-hora').value = cita.hora || '';
+            document.getElementById('cita-motivo').value = cita.motivo || '';
+            document.getElementById('cita-estado').value = cita.estado || 'pendiente';
+            document.getElementById('alumno-results').classList.add('hidden');
+        }
+
+        function closeCitaModal() {
+            document.getElementById('cita-modal').classList.add('hidden');
+            document.getElementById('cita-modal').classList.remove('flex');
+        }
+
+        async function buscarAlumnos(query) {
+            const results = document.getElementById('alumno-results');
+            if (!query || query.length < 3) {
+                results.classList.add('hidden');
+                results.innerHTML = '';
+                return;
+            }
+            try {
+                const data = await apiFetch(`/api/buscar_alumnos?q=${encodeURIComponent(query)}`);
+                if (!data.length) {
+                    results.classList.add('hidden');
+                    results.innerHTML = '';
+                    return;
+                }
+                results.classList.remove('hidden');
+                results.innerHTML = data.map(alumno => `
+                    <button class="w-full text-left px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="seleccionarAlumno(${alumno.id}, '${alumno.nombre} (${alumno.numero_control})')">
+                        <span class="text-sm">${alumno.nombre}</span>
+                        <span class="text-xs text-slate-400"> • ${alumno.numero_control}</span>
+                    </button>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function seleccionarAlumno(id, label) {
+            document.getElementById('cita-alumno-id').value = id;
+            document.getElementById('cita-alumno-search').value = label;
+            const results = document.getElementById('alumno-results');
+            results.classList.add('hidden');
+            results.innerHTML = '';
+        }
+
+        async function saveCita() {
+            try {
+                const id = document.getElementById('cita-id').value;
+                const payload = {
+                    alumno_id: document.getElementById('cita-alumno-id').value,
+                    fecha: document.getElementById('cita-fecha').value,
+                    hora: document.getElementById('cita-hora').value,
+                    motivo: document.getElementById('cita-motivo').value.trim(),
+                    estado: document.getElementById('cita-estado').value
+                };
+
+                if (!payload.alumno_id || !payload.fecha || !payload.hora || !payload.motivo) {
+                    showToast('Completa los campos obligatorios', true);
+                    return;
+                }
+
+                if (id) {
+                    await apiFetch(`/api/orientador/citas/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                    showToast('Cita actualizada');
+                } else {
+                    await apiFetch('/api/orientador/citas', { method: 'POST', body: JSON.stringify(payload) });
+                    showToast('Cita creada');
+                }
+                closeCitaModal();
+                loadCitas();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderBottomNav();
+            loadAlertas();
+            loadCitas();
+            loadReportes();
+        });
+    </script>
+</body>
+
+</html><!DOCTYPE html>
 <html lang="es">
 
 <head>

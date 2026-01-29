@@ -1,4 +1,940 @@
 <!DOCTYPE html>
+<html class="light" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Panel Admin</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1A2633",
+                        "text-main-light": "#111418",
+                        "text-main-dark": "#F3F4F6",
+                        "text-sec-light": "#617589",
+                        "text-sec-dark": "#9CA3AF",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased transition-colors duration-200">
+    <div id="main-app-container"
+        class="relative flex flex-col w-full max-w-md mx-auto bg-white dark:bg-background-dark shadow-2xl min-h-screen h-screen overflow-hidden">
+
+        <div id="header-stats" class="w-full flex flex-col items-center pt-8 pb-4 bg-white dark:bg-background-dark">
+            <div class="relative mb-3">
+                <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center"
+                    style="background-image: url('https://ui-avatars.com/api/?name=Admin&background=random');">
+                </div>
+                <div
+                    class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark">
+                    <span class="material-symbols-outlined text-[16px] block">admin_panel_settings</span>
+                </div>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Administrador</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Panel del sistema</p>
+
+            <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
+                <div class="bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl p-4 text-white shadow-lg">
+                    <p class="text-white/80 text-xs font-medium mb-1">Usuarios</p>
+                    <h3 class="text-2xl font-bold" id="stat-total-users">{{ total_users }}</h3>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-500 to-teal-400 rounded-xl p-4 text-white shadow-lg">
+                    <p class="text-white/80 text-xs font-medium mb-1">Alumnos activos</p>
+                    <h3 class="text-2xl font-bold" id="stat-total-alumnos">{{ total_alumnos }}</h3>
+                </div>
+                <div class="bg-gradient-to-br from-violet-500 to-fuchsia-400 rounded-xl p-4 text-white shadow-lg">
+                    <p class="text-white/80 text-xs font-medium mb-1">Docentes activos</p>
+                    <h3 class="text-2xl font-bold" id="stat-docentes">{{ active_teachers }}</h3>
+                </div>
+                <div class="bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl p-4 text-white shadow-lg">
+                    <p class="text-white/80 text-xs font-medium mb-1">Tutores</p>
+                    <h3 class="text-2xl font-bold" id="stat-tutores">{{ registered_tutors }}</h3>
+                </div>
+            </div>
+            <div class="w-full px-4 mt-3">
+                <div class="bg-gradient-to-br from-rose-500 to-red-400 rounded-xl p-4 text-white shadow-lg">
+                    <p class="text-white/80 text-xs font-medium mb-1">Promedio general</p>
+                    <h3 class="text-2xl font-bold" id="stat-promedio">{{ general_average }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6" id="dashboard-view">
+            <section class="w-full">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Métricas rápidas</h3>
+                    <button onclick="loadMetrics()"
+                        class="text-xs text-primary font-medium hover:underline">Actualizar</button>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs text-slate-400">Asistencia promedio</p>
+                        <p class="text-lg font-bold" id="stat-asistencia">{{ average_attendance }}%</p>
+                    </div>
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs text-slate-400">Tareas registradas</p>
+                        <p class="text-lg font-bold" id="stat-tareas">{{ total_tareas }}</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="w-full">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Logs recientes</h3>
+                    <button onclick="loadLogs()" class="text-xs text-primary font-medium hover:underline">Actualizar</button>
+                </div>
+                <div id="logs-preview" class="flex flex-col gap-3">
+                    {% if logs %}
+                    {% for log in logs %}
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs text-slate-400">{{ log.usuario }} • {{ log.accion }} • {{ log.modulo }}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ log.descripcion }}</p>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="p-4 text-center text-slate-500">Sin logs recientes.</div>
+                    {% endif %}
+                </div>
+            </section>
+        </main>
+
+        <div id="usuarios-view"
+            class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+            <div class="flex items-center gap-2 mb-2">
+                <button onclick="showPanel('dashboard')"
+                    class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Gestión de usuarios</h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+                <input id="usuarios-search" type="text" placeholder="Buscar"
+                    class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"
+                    oninput="loadUsuarios()" />
+                <select id="usuarios-rol" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-2 py-2 text-sm"
+                    onchange="loadUsuarios()">
+                    <option value="">Todos</option>
+                    <option value="alumno">Alumno</option>
+                    <option value="docente">Docente</option>
+                    <option value="tutor">Tutor</option>
+                    <option value="orientador">Orientador</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <select id="usuarios-estado" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-2 py-2 text-sm"
+                    onchange="loadUsuarios()">
+                    <option value="">Todos</option>
+                    <option value="activo">Activos</option>
+                    <option value="inactivo">Inactivos</option>
+                </select>
+                <select id="usuarios-grupo" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-2 py-2 text-sm"
+                    onchange="loadUsuarios()">
+                    <option value="">Grupo</option>
+                </select>
+            </div>
+
+            <div id="usuarios-list" class="flex flex-col gap-3"></div>
+
+            <button onclick="openUsuarioModal()"
+                class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition mt-4">
+                Nuevo usuario
+            </button>
+        </div>
+
+        <div id="grupos-view"
+            class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+            <div class="flex items-center gap-2 mb-2">
+                <button onclick="showPanel('dashboard')"
+                    class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Gestión de grupos</h2>
+            </div>
+
+            <div id="grupos-list" class="flex flex-col gap-3"></div>
+
+            <button onclick="openGrupoModal()"
+                class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition mt-4">
+                Nuevo grupo
+            </button>
+        </div>
+
+        <div id="notificaciones-view"
+            class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+            <div class="flex items-center gap-2 mb-2">
+                <button onclick="showPanel('dashboard')"
+                    class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Notificaciones globales</h2>
+            </div>
+
+            <div id="notificaciones-list" class="flex flex-col gap-3"></div>
+
+            <button onclick="openNotificacionModal()"
+                class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition mt-4">
+                Nueva notificación
+            </button>
+        </div>
+
+        <div id="logs-view"
+            class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+            <div class="flex items-center gap-2 mb-2">
+                <button onclick="showPanel('dashboard')"
+                    class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Auditoría</h2>
+            </div>
+            <button onclick="searchLogs()"
+                class="w-full py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Buscar logs</button>
+            <div id="logs-list" class="flex flex-col gap-3"></div>
+        </div>
+
+        <div id="backups-view"
+            class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+            <div class="flex items-center gap-2 mb-2">
+                <button onclick="showPanel('dashboard')"
+                    class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Backups</h2>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="createBackup()"
+                    class="flex-1 py-2 rounded-lg bg-primary text-white font-semibold">Crear backup</button>
+                <button onclick="loadBackups()"
+                    class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Actualizar</button>
+            </div>
+            <div id="backups-list" class="flex flex-col gap-3"></div>
+        </div>
+
+        <nav
+            class="fixed bottom-0 left-0 right-0 z-30 max-w-md mx-auto bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg">
+            <div class="flex h-16 items-center justify-between px-1" id="bottom-nav"></div>
+        </nav>
+    </div>
+
+    <div id="usuario-modal" class="hidden fixed inset-0 z-40 bg-black/40 items-center justify-center p-4">
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold" id="usuario-modal-title">Nuevo usuario</h3>
+                <button onclick="closeUsuarioModal()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="mt-3 space-y-3">
+                <input id="usuario-id" type="hidden" />
+                <input id="usuario-nombre" type="text" placeholder="Nombre completo"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="usuario-email" type="email" placeholder="Email"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="usuario-numero" type="text" placeholder="Número de control"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="usuario-curp" type="text" placeholder="CURP"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="usuario-telefono" type="text" placeholder="Teléfono"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="usuario-direccion" type="text" placeholder="Dirección"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <select id="usuario-rol"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                    <option value="alumno">Alumno</option>
+                    <option value="docente">Docente</option>
+                    <option value="tutor">Tutor</option>
+                    <option value="orientador">Orientador</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <input id="usuario-semestre" type="text" placeholder="Semestre (opcional)"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="usuario-password" type="password" placeholder="Contraseña (opcional al editar)"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <div class="flex gap-2">
+                    <button onclick="saveUsuario()"
+                        class="flex-1 py-2 rounded-lg bg-primary text-white font-semibold">Guardar</button>
+                    <button onclick="closeUsuarioModal()"
+                        class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="grupo-modal" class="hidden fixed inset-0 z-40 bg-black/40 items-center justify-center p-4">
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold" id="grupo-modal-title">Nuevo grupo</h3>
+                <button onclick="closeGrupoModal()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="mt-3 space-y-3">
+                <input id="grupo-id" type="hidden" />
+                <input id="grupo-nombre" type="text" placeholder="Nombre"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="grupo-semestre" type="text" placeholder="Semestre"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <select id="grupo-turno"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                    <option value="matutino">Matutino</option>
+                    <option value="vespertino">Vespertino</option>
+                </select>
+                <select id="grupo-tutor"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                    <option value="">Tutor (opcional)</option>
+                </select>
+                <input id="grupo-capacidad" type="number" placeholder="Capacidad"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <div class="flex gap-2">
+                    <button onclick="saveGrupo()"
+                        class="flex-1 py-2 rounded-lg bg-primary text-white font-semibold">Guardar</button>
+                    <button onclick="closeGrupoModal()"
+                        class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="grupo-alumnos-modal" class="hidden fixed inset-0 z-40 bg-black/40 items-center justify-center p-4">
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold" id="grupo-alumnos-title">Alumnos del grupo</h3>
+                <button onclick="document.getElementById('grupo-alumnos-modal').classList.add('hidden');document.getElementById('grupo-alumnos-modal').classList.remove('flex');"
+                    class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="grupo-alumnos-list" class="mt-3 space-y-3 max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <div id="notificacion-modal" class="hidden fixed inset-0 z-40 bg-black/40 items-center justify-center p-4">
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold" id="notificacion-modal-title">Nueva notificación</h3>
+                <button onclick="closeNotificacionModal()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="mt-3 space-y-3">
+                <input id="notificacion-id" type="hidden" />
+                <input id="notificacion-titulo" type="text" placeholder="Título"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <textarea id="notificacion-contenido" placeholder="Contenido"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                <div class="flex gap-2">
+                    <button onclick="saveNotificacion()"
+                        class="flex-1 py-2 rounded-lg bg-primary text-white font-semibold">Guardar</button>
+                    <button onclick="closeNotificacionModal()"
+                        class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm z-50"></div>
+
+    <script>
+        const navItems = [
+            { key: 'dashboard', icon: 'home', label: 'Inicio', action: () => showPanel('dashboard') },
+            { key: 'usuarios', icon: 'group', label: 'Usuarios', action: () => showPanel('usuarios') },
+            { key: 'grupos', icon: 'groups', label: 'Grupos', action: () => showPanel('grupos') },
+            { key: 'notificaciones', icon: 'notifications', label: 'Avisos', action: () => showPanel('notificaciones') },
+            { key: 'logs', icon: 'history', label: 'Logs', action: () => showPanel('logs') },
+            { key: 'backups', icon: 'database', label: 'Backups', action: () => showPanel('backups') },
+            { key: 'logout', icon: 'logout', label: 'Salir', action: () => window.location.href = '/logout' }
+        ];
+
+        let activeNav = 'dashboard';
+
+        function renderBottomNav() {
+            const nav = document.getElementById('bottom-nav');
+            nav.innerHTML = navItems.map(item => `
+                <a href="#" onclick="setActiveNav('${item.key}'); return false;"
+                    class="flex flex-1 flex-col items-center justify-center gap-0.5 ${activeNav === item.key ? 'text-primary font-bold' : 'text-slate-400'} transition-colors hover:text-primary dark:text-slate-500 dark:hover:text-primary hover:bg-primary/10 dark:hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[24px]">${item.icon}</span>
+                    <span class="text-[10px] font-semibold">${item.label}</span>
+                </a>
+            `).join('');
+        }
+
+        function setActiveNav(key) {
+            activeNav = key;
+            renderBottomNav();
+            const item = navItems.find(i => i.key === key);
+            if (item && typeof item.action === 'function') item.action();
+        }
+
+        function showPanel(panelName) {
+            const dashboard = document.getElementById('dashboard-view');
+            const header = document.getElementById('header-stats');
+            const usuariosView = document.getElementById('usuarios-view');
+            const gruposView = document.getElementById('grupos-view');
+            const notificacionesView = document.getElementById('notificaciones-view');
+            const logsView = document.getElementById('logs-view');
+            const backupsView = document.getElementById('backups-view');
+
+            dashboard.classList.add('hidden');
+            header.classList.add('hidden');
+            usuariosView.classList.add('hidden');
+            gruposView.classList.add('hidden');
+            notificacionesView.classList.add('hidden');
+            logsView.classList.add('hidden');
+            backupsView.classList.add('hidden');
+
+            if (panelName === 'usuarios') {
+                usuariosView.classList.remove('hidden');
+                loadUsuarios();
+            } else if (panelName === 'grupos') {
+                gruposView.classList.remove('hidden');
+                loadGrupos();
+            } else if (panelName === 'notificaciones') {
+                notificacionesView.classList.remove('hidden');
+                loadNotificaciones();
+            } else if (panelName === 'logs') {
+                logsView.classList.remove('hidden');
+                loadLogs();
+            } else if (panelName === 'backups') {
+                backupsView.classList.remove('hidden');
+                loadBackups();
+            } else {
+                dashboard.classList.remove('hidden');
+                header.classList.remove('hidden');
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm z-50 ${isError ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 2500);
+        }
+
+        async function apiFetch(url, options = {}) {
+            const response = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                ...options
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Error en la solicitud');
+            return data;
+        }
+
+        async function loadMetrics() {
+            try {
+                const data = await apiFetch('/api/admin/resumen-metricas');
+                if (data.total_usuarios !== undefined) {
+                    document.getElementById('stat-total-users').textContent = data.total_usuarios;
+                }
+                if (data.total_alumnos !== undefined) {
+                    document.getElementById('stat-total-alumnos').textContent = data.total_alumnos;
+                }
+                if (data.total_docentes !== undefined) {
+                    document.getElementById('stat-docentes').textContent = data.total_docentes;
+                }
+                if (data.total_tutores !== undefined) {
+                    document.getElementById('stat-tutores').textContent = data.total_tutores;
+                }
+                if (data.promedio_general !== undefined) {
+                    document.getElementById('stat-promedio').textContent = data.promedio_general;
+                }
+                if (data.promedio_asistencia !== undefined) {
+                    document.getElementById('stat-asistencia').textContent = `${data.promedio_asistencia}%`;
+                }
+                if (data.total_tareas !== undefined) {
+                    document.getElementById('stat-tareas').textContent = data.total_tareas;
+                }
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadUsuarios() {
+            try {
+                const q = document.getElementById('usuarios-search').value.trim();
+                const rol = document.getElementById('usuarios-rol').value;
+                const estado = document.getElementById('usuarios-estado').value;
+                const grupo = document.getElementById('usuarios-grupo').value;
+                const params = new URLSearchParams();
+                if (q) params.append('q', q);
+                if (rol) params.append('rol', rol);
+                if (estado) params.append('estado', estado);
+                if (grupo) params.append('grupo', grupo);
+
+                const data = await apiFetch(`/api/admin/usuarios?${params.toString()}`);
+                const usuarios = data.usuarios || [];
+                const grupos = data.grupos || [];
+                const gruposSelect = document.getElementById('usuarios-grupo');
+                if (gruposSelect.options.length <= 1) {
+                    grupos.forEach(g => {
+                        const option = document.createElement('option');
+                        option.value = g.id;
+                        option.textContent = g.nombre;
+                        gruposSelect.appendChild(option);
+                    });
+                }
+
+                const container = document.getElementById('usuarios-list');
+                if (!usuarios.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay usuarios.</div>';
+                    return;
+                }
+                container.innerHTML = usuarios.map(u => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">${u.email}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">${u.nombre}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${u.tipo_usuario} • ${u.numero_control || ''}</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <span class="text-[10px] uppercase px-2 py-1 rounded-full ${u.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}">${u.activo ? 'Activo' : 'Inactivo'}</span>
+                                <div class="flex gap-2">
+                                    <button class="text-xs text-primary" onclick='openUsuarioModal(${JSON.stringify(u)})'>Editar</button>
+                                    <button class="text-xs text-amber-500" onclick='toggleUsuario(${u.id}, ${u.activo ? 0 : 1})'>${u.activo ? 'Desactivar' : 'Activar'}</button>
+                                    <button class="text-xs text-red-500" onclick='deleteUsuario(${u.id})'>Eliminar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function openUsuarioModal(usuario = null) {
+            document.getElementById('usuario-modal').classList.remove('hidden');
+            document.getElementById('usuario-modal').classList.add('flex');
+            document.getElementById('usuario-modal-title').textContent = usuario ? 'Editar usuario' : 'Nuevo usuario';
+            document.getElementById('usuario-id').value = usuario ? usuario.id : '';
+            document.getElementById('usuario-nombre').value = usuario ? usuario.nombre : '';
+            document.getElementById('usuario-email').value = usuario ? usuario.email : '';
+            document.getElementById('usuario-numero').value = usuario ? usuario.numero_control || '' : '';
+            document.getElementById('usuario-curp').value = usuario ? usuario.curp || '' : '';
+            document.getElementById('usuario-telefono').value = usuario ? usuario.telefono || '' : '';
+            document.getElementById('usuario-direccion').value = usuario ? usuario.direccion || '' : '';
+            document.getElementById('usuario-rol').value = usuario ? usuario.tipo_usuario : 'alumno';
+            document.getElementById('usuario-semestre').value = usuario ? usuario.semestre || '' : '';
+            document.getElementById('usuario-password').value = '';
+        }
+
+        function closeUsuarioModal() {
+            document.getElementById('usuario-modal').classList.add('hidden');
+            document.getElementById('usuario-modal').classList.remove('flex');
+        }
+
+        async function saveUsuario() {
+            try {
+                const id = document.getElementById('usuario-id').value;
+                const payload = {
+                    nombre: document.getElementById('usuario-nombre').value.trim(),
+                    tipo_usuario: document.getElementById('usuario-rol').value,
+                    email: document.getElementById('usuario-email').value.trim(),
+                    telefono: document.getElementById('usuario-telefono').value.trim(),
+                    numero_control: document.getElementById('usuario-numero').value.trim(),
+                    curp: document.getElementById('usuario-curp').value.trim(),
+                    direccion: document.getElementById('usuario-direccion').value.trim(),
+                    semestre: document.getElementById('usuario-semestre').value.trim()
+                };
+                const password = document.getElementById('usuario-password').value.trim();
+
+                if (!payload.nombre || !payload.tipo_usuario || !payload.email || !payload.numero_control || !payload.curp) {
+                    showToast('Completa los campos obligatorios', true);
+                    return;
+                }
+
+                if (id) {
+                    if (password) payload.password_hash = password;
+                    payload.id = id;
+                    await apiFetch('/api/actualizar-usuario', { method: 'POST', body: JSON.stringify(payload) });
+                    showToast('Usuario actualizado');
+                } else {
+                    if (!password) {
+                        showToast('La contraseña es obligatoria', true);
+                        return;
+                    }
+                    payload.password_hash = password;
+                    await apiFetch('/api/crear-usuario', { method: 'POST', body: JSON.stringify(payload) });
+                    showToast('Usuario creado');
+                }
+                closeUsuarioModal();
+                loadUsuarios();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function toggleUsuario(id, activar) {
+            try {
+                const endpoint = activar ? '/api/activar-usuario' : '/api/desactivar-usuario';
+                await apiFetch(endpoint, { method: 'POST', body: JSON.stringify({ id }) });
+                showToast(activar ? 'Usuario activado' : 'Usuario desactivado');
+                loadUsuarios();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function deleteUsuario(id) {
+            if (!confirm('¿Eliminar este usuario?')) return;
+            try {
+                await apiFetch('/api/eliminar-usuario', { method: 'POST', body: JSON.stringify({ id }) });
+                showToast('Usuario eliminado');
+                loadUsuarios();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadGrupos() {
+            try {
+                const data = await apiFetch('/api/admin/grupos');
+                const grupos = data.grupos || [];
+                const tutores = data.tutores || [];
+                const tutorSelect = document.getElementById('grupo-tutor');
+                if (tutorSelect.options.length <= 1) {
+                    tutores.forEach(t => {
+                        const option = document.createElement('option');
+                        option.value = t.id;
+                        option.textContent = t.nombre_completo;
+                        tutorSelect.appendChild(option);
+                    });
+                }
+
+                const container = document.getElementById('grupos-list');
+                if (!grupos.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay grupos.</div>';
+                    return;
+                }
+                container.innerHTML = grupos.map(g => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">${g.semestre} • ${g.turno}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">${g.nombre}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Tutor: ${g.tutor_nombre || 'Sin tutor'} • Alumnos: ${g.total_alumnos || 0}</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <span class="text-[10px] uppercase px-2 py-1 rounded-full ${g.activo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}">${g.activo ? 'Activo' : 'Inactivo'}</span>
+                                <div class="flex gap-2">
+                                    <button class="text-xs text-primary" onclick='openGrupoModal(${JSON.stringify(g)})'>Editar</button>
+                                    <button class="text-xs text-slate-600" onclick='viewGrupoAlumnos(${g.id})'>Alumnos</button>
+                                    <button class="text-xs text-red-500" onclick='deleteGrupo(${g.id})'>Desactivar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function openGrupoModal(grupo = null) {
+            document.getElementById('grupo-modal').classList.remove('hidden');
+            document.getElementById('grupo-modal').classList.add('flex');
+            document.getElementById('grupo-modal-title').textContent = grupo ? 'Editar grupo' : 'Nuevo grupo';
+            document.getElementById('grupo-id').value = grupo ? grupo.id : '';
+            document.getElementById('grupo-nombre').value = grupo ? grupo.nombre : '';
+            document.getElementById('grupo-semestre').value = grupo ? grupo.semestre : '';
+            document.getElementById('grupo-turno').value = grupo ? grupo.turno : 'matutino';
+            document.getElementById('grupo-tutor').value = grupo ? (grupo.tutor_id || '') : '';
+            document.getElementById('grupo-capacidad').value = grupo ? (grupo.capacidad_maxima || 40) : 40;
+        }
+
+        function closeGrupoModal() {
+            document.getElementById('grupo-modal').classList.add('hidden');
+            document.getElementById('grupo-modal').classList.remove('flex');
+        }
+
+        async function saveGrupo() {
+            try {
+                const id = document.getElementById('grupo-id').value;
+                const payload = {
+                    nombre: document.getElementById('grupo-nombre').value.trim(),
+                    semestre: document.getElementById('grupo-semestre').value.trim(),
+                    turno: document.getElementById('grupo-turno').value,
+                    tutor_id: document.getElementById('grupo-tutor').value || null,
+                    capacidad_maxima: parseInt(document.getElementById('grupo-capacidad').value || '40', 10)
+                };
+                if (!payload.nombre || !payload.semestre || !payload.turno) {
+                    showToast('Completa los campos obligatorios', true);
+                    return;
+                }
+                if (id) {
+                    await apiFetch(`/api/admin/grupos/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                    showToast('Grupo actualizado');
+                } else {
+                    await apiFetch('/api/admin/grupos', { method: 'POST', body: JSON.stringify(payload) });
+                    showToast('Grupo creado');
+                }
+                closeGrupoModal();
+                loadGrupos();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function deleteGrupo(id) {
+            if (!confirm('¿Desactivar este grupo?')) return;
+            try {
+                await apiFetch(`/api/admin/grupos/${id}`, { method: 'DELETE' });
+                showToast('Grupo desactivado');
+                loadGrupos();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadNotificaciones() {
+            try {
+                const data = await apiFetch('/api/admin/notificaciones-globales');
+                const notificaciones = Array.isArray(data) ? data : (data.notificaciones || []);
+                const container = document.getElementById('notificaciones-list');
+                if (!notificaciones.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay notificaciones.</div>';
+                    return;
+                }
+                container.innerHTML = notificaciones.map(n => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="text-xs text-slate-400">${n.fecha_creacion || n.fecha_publicacion || ''}</p>
+                        <p class="text-base font-semibold text-slate-900 dark:text-white">${n.titulo}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${n.mensaje || ''}</p>
+                        <div class="flex gap-2 mt-2">
+                            <button class="text-xs text-primary" onclick='openNotificacionModal(${JSON.stringify(n)})'>Editar</button>
+                            <button class="text-xs text-red-500" onclick='deleteNotificacion(${n.id})'>Eliminar</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function openNotificacionModal(notificacion = null) {
+            document.getElementById('notificacion-modal').classList.remove('hidden');
+            document.getElementById('notificacion-modal').classList.add('flex');
+            document.getElementById('notificacion-modal-title').textContent = notificacion ? 'Editar notificación' : 'Nueva notificación';
+            document.getElementById('notificacion-id').value = notificacion ? notificacion.id : '';
+            document.getElementById('notificacion-titulo').value = notificacion ? notificacion.titulo : '';
+            document.getElementById('notificacion-contenido').value = notificacion ? (notificacion.mensaje || '') : '';
+        }
+
+        function closeNotificacionModal() {
+            document.getElementById('notificacion-modal').classList.add('hidden');
+            document.getElementById('notificacion-modal').classList.remove('flex');
+        }
+
+        async function saveNotificacion() {
+            try {
+                const id = document.getElementById('notificacion-id').value;
+                const payload = {
+                    titulo: document.getElementById('notificacion-titulo').value.trim(),
+                    mensaje: document.getElementById('notificacion-contenido').value.trim()
+                };
+                if (!payload.titulo || !payload.mensaje) {
+                    showToast('Completa título y contenido', true);
+                    return;
+                }
+                if (id) {
+                    await apiFetch(`/api/admin/notificaciones-globales/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                    showToast('Notificación actualizada');
+                } else {
+                    await apiFetch('/api/admin/notificaciones-globales', { method: 'POST', body: JSON.stringify(payload) });
+                    showToast('Notificación creada');
+                }
+                closeNotificacionModal();
+                loadNotificaciones();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function deleteNotificacion(id) {
+            if (!confirm('¿Eliminar notificación?')) return;
+            try {
+                await apiFetch(`/api/admin/notificaciones-globales/${id}`, { method: 'DELETE' });
+                showToast('Notificación eliminada');
+                loadNotificaciones();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadLogs() {
+            try {
+            const data = await apiFetch('/api/admin/auditoria');
+            const logs = Array.isArray(data) ? data : (data.logs || []);
+                const container = document.getElementById('logs-list');
+                const preview = document.getElementById('logs-preview');
+                if (preview && logs.length) {
+                    preview.innerHTML = logs.slice(0, 5).map(log => `
+                        <div class="bg-white dark:bg-surface-dark rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                            <p class="text-xs text-slate-400">${log.usuario || log.usuario_id || ''} • ${log.accion || ''} • ${log.modulo || ''}</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">${log.descripcion || ''}</p>
+                        </div>
+                    `).join('');
+                }
+                if (!logs.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">Sin logs.</div>';
+                    return;
+                }
+                container.innerHTML = logs.map(log => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs text-slate-400">${log.fecha || log.fecha_accion || ''} • ${log.usuario || log.usuario_id || ''}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${log.accion || ''} • ${log.modulo || ''}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${log.descripcion || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function searchLogs() {
+            const query = prompt('Buscar en logs');
+            if (!query) return;
+            try {
+                const data = await apiFetch('/api/search_logs', { method: 'POST', body: JSON.stringify({ query }) });
+                const logs = Array.isArray(data) ? data : (data.logs || []);
+                const container = document.getElementById('logs-list');
+                if (!logs.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">Sin resultados.</div>';
+                    return;
+                }
+                container.innerHTML = logs.map(log => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs text-slate-400">${log.fecha || log.fecha_accion || ''} • ${log.usuario || log.usuario_id || ''}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${log.accion || ''} • ${log.modulo || ''}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${log.descripcion || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function viewGrupoAlumnos(grupoId) {
+            try {
+                const data = await apiFetch(`/api/admin/grupos/${grupoId}/alumnos`);
+                const alumnos = data.alumnos || [];
+                const modal = document.getElementById('grupo-alumnos-modal');
+                const title = document.getElementById('grupo-alumnos-title');
+                const list = document.getElementById('grupo-alumnos-list');
+                title.textContent = data.grupo ? `Alumnos de ${data.grupo.nombre}` : 'Alumnos del grupo';
+                list.innerHTML = alumnos.length ? alumnos.map(a => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs text-slate-400">${a.email || ''}</p>
+                        <p class="text-base font-semibold text-slate-900 dark:text-white">${a.nombre} ${a.apellido || ''}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${a.numero_control || ''} • XP ${a.xp || 0}</p>
+                    </div>
+                `).join('') : '<div class="p-4 text-center text-slate-500">Sin alumnos registrados.</div>';
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadBackups() {
+            try {
+                const data = await apiFetch('/api/admin/backups');
+                const backups = Array.isArray(data) ? data : (data.backups || []);
+                const container = document.getElementById('backups-list');
+                if (!backups.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay backups.</div>';
+                    return;
+                }
+                container.innerHTML = backups.map(b => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="text-xs text-slate-400">${b.fecha_inicio || ''}</p>
+                        <p class="text-base font-semibold text-slate-900 dark:text-white">${b.nombre_archivo || 'Backup'}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${b.estado || ''}</p>
+                        <button class="mt-2 text-xs text-primary" onclick="restoreBackup(${b.id})">Restaurar</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function createBackup() {
+            try {
+                await apiFetch('/api/admin/backups', { method: 'POST', body: JSON.stringify({}) });
+                showToast('Backup generado');
+                loadBackups();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function restoreBackup(id) {
+            if (!confirm('¿Restaurar este backup?')) return;
+            try {
+                await apiFetch(`/api/admin/backups/${id}/restaurar`, { method: 'POST', body: JSON.stringify({}) });
+                showToast('Backup restaurado');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderBottomNav();
+            loadLogs();
+        });
+    </script>
+</body>
+
+</html><!DOCTYPE html>
 <html lang="es">
 
 <head>
