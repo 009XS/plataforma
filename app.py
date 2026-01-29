@@ -28620,6 +28620,137 @@ def get_course_resources(course_id):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/quiz/<int:quiz_id>', methods=['GET'])
+@login_required
+def get_quiz(quiz_id):
+    """Obtiene un quiz/examen específico para presentar"""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Obtener el examen
+        cursor.execute("""
+            SELECT eo.id, eo.titulo as title, eo.descripcion, eo.preguntas, eo.tiempo_limite,
+                   m.nombre as materia
+            FROM examenes_online eo
+            JOIN materias m ON eo.materia_id = m.id
+            WHERE eo.id = %s AND eo.activo = 1
+        """, (quiz_id,))
+        
+        examen = cursor.fetchone()
+        cursor.close()
+        
+        if not examen:
+            return jsonify({'error': 'Quiz no encontrado'}), 404
+        
+        # Parse questions if stored as JSON string
+        preguntas = examen['preguntas']
+        if isinstance(preguntas, str):
+            preguntas = json.loads(preguntas)
+        
+        # Format questions for frontend
+        questions = []
+        for idx, pregunta in enumerate(preguntas):
+            questions.append({
+                'id': idx + 1,
+                'text': pregunta.get('pregunta', pregunta.get('text', '')),
+                'options': pregunta.get('opciones', pregunta.get('options', []))
+            })
+        
+        result = {
+            'id': examen['id'],
+            'title': examen['title'],
+            'description': examen.get('descripcion'),
+            'materia': examen.get('materia'),
+            'tiempo_limite': examen.get('tiempo_limite'),
+            'questions': questions
+        }
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error en get_quiz: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/submit_quiz', methods=['POST'])
+@login_required
+def submit_quiz():
+    """Envía las respuestas de un quiz y calcula la calificación"""
+    try:
+        data = request.json
+        quiz_id = data.get('quiz_id')
+        answers = data.get('answers', {})
+        
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Obtener el examen con las respuestas correctas
+        cursor.execute("""
+            SELECT preguntas FROM examenes_online WHERE id = %s AND activo = 1
+        """, (quiz_id,))
+        
+        examen = cursor.fetchone()
+        if not examen:
+            return jsonify({'error': 'Quiz no encontrado'}), 404
+        
+        # Parse questions
+        preguntas = examen['preguntas']
+        if isinstance(preguntas, str):
+            preguntas = json.loads(preguntas)
+        
+        # Calculate score
+        correctas = 0
+        total = len(preguntas)
+        
+        for idx, pregunta in enumerate(preguntas):
+            question_id = str(idx + 1)
+            respuesta_correcta = pregunta.get('respuesta_correcta', pregunta.get('correct', 0))
+            
+            # Convert answer index to int for comparison
+            if question_id in answers:
+                respuesta_alumno = answers[question_id]
+                if isinstance(respuesta_alumno, str):
+                    respuesta_alumno = int(respuesta_alumno)
+                if isinstance(respuesta_correcta, str):
+                    respuesta_correcta = int(respuesta_correcta)
+                
+                if respuesta_alumno == respuesta_correcta:
+                    correctas += 1
+        
+        # Calculate final score (0-10 scale)
+        calificacion = round((correctas / total) * 10, 1) if total > 0 else 0
+        
+        # Save exam response
+        cursor.execute("""
+            INSERT INTO respuestas_examenes 
+            (examen_id, alumno_id, respuestas_json, calificacion, fecha_presentacion)
+            VALUES (%s, %s, %s, %s, NOW())
+        """, (quiz_id, session['user_id'], json.dumps(answers), calificacion))
+        
+        mysql.connection.commit()
+        
+        # Award XP for completing quiz
+        xp_ganado = int(calificacion * 10)  # 10 XP per point
+        cursor.execute("""
+            UPDATE usuarios SET xp = xp + %s, educoins = educoins + %s 
+            WHERE id = %s
+        """, (xp_ganado, int(calificacion), session['user_id']))
+        
+        mysql.connection.commit()
+        cursor.close()
+        
+        return jsonify({
+            'success': True,
+            'score': calificacion,
+            'correctas': correctas,
+            'total': total,
+            'xp_ganado': xp_ganado,
+            'message': f'¡Has obtenido {calificacion}/10!'
+        })
+        
+    except Exception as e:
+        print(f"Error en submit_quiz: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 # ==================== MAIN EXECUTION ====================
 
 if __name__ == '__main__':
