@@ -10487,14 +10487,75 @@ def profile():
 @app.route('/api/update_profile', methods=['POST'])
 @login_required
 def update_profile():
-    data = request.json
-    cursor = mysql.connection.cursor()
-    cursor.execute("UPDATE usuarios SET nombre = %s, email = %s, telefono = %s WHERE id = %s",
-                   (data['nombre'], data['email'], data['telefono'], session['user_id']))
-    mysql.connection.commit()
-    cursor.close()
-
-    return jsonify({'success': 'Perfil actualizado'})
+    """Actualizar perfil del usuario (avatar, contraseña)"""
+    try:
+        cursor = mysql.connection.cursor()
+        updates = []
+        values = []
+        
+        # Handle avatar upload
+        if 'avatar' in request.files:
+            avatar_file = request.files['avatar']
+            if avatar_file and avatar_file.filename:
+                # Create uploads directory if it doesn't exist
+                upload_folder = os.path.join(app.config.get('UPLOAD_FOLDER', 'uploads'), 'avatars')
+                os.makedirs(upload_folder, exist_ok=True)
+                
+                # Save with secure filename
+                filename = secure_filename(f"{session['user_id']}_{avatar_file.filename}")
+                filepath = os.path.join(upload_folder, filename)
+                avatar_file.save(filepath)
+                
+                # Update avatar URL in database
+                avatar_url = f"/uploads/avatars/{filename}"
+                updates.append("avatar = %s")
+                values.append(avatar_url)
+        
+        # Handle password change
+        if 'password' in request.form and request.form['password']:
+            password_hash = generate_password_hash(request.form['password'])
+            updates.append("password_hash = %s")
+            values.append(password_hash)
+        
+        # Handle other form fields (if sent as form data)
+        if 'nombre' in request.form and request.form['nombre']:
+            updates.append("nombre = %s")
+            values.append(request.form['nombre'])
+        
+        if 'email' in request.form and request.form['email']:
+            updates.append("email = %s")
+            values.append(request.form['email'])
+        
+        if 'telefono' in request.form and request.form['telefono']:
+            updates.append("telefono = %s")
+            values.append(request.form['telefono'])
+        
+        # Also handle JSON data (for backward compatibility)
+        if request.is_json:
+            data = request.json
+            if 'nombre' in data:
+                updates.append("nombre = %s")
+                values.append(data['nombre'])
+            if 'email' in data:
+                updates.append("email = %s")
+                values.append(data['email'])
+            if 'telefono' in data:
+                updates.append("telefono = %s")
+                values.append(data['telefono'])
+        
+        # Execute update if there are changes
+        if updates:
+            values.append(session['user_id'])
+            query = f"UPDATE usuarios SET {', '.join(updates)} WHERE id = %s"
+            cursor.execute(query, tuple(values))
+            mysql.connection.commit()
+        
+        cursor.close()
+        return jsonify({'success': True, 'message': 'Perfil actualizado correctamente'})
+    
+    except Exception as e:
+        print(f"Error en update_profile: {e}")
+        return jsonify({'error': str(e)}), 500
 
 # Nueva ruta para change password
 @app.route('/api/change_password', methods=['POST'])
@@ -28335,33 +28396,67 @@ def get_student_dashboard_data():
         "missions": misiones
     })
 
+@app.route('/api/assignments', methods=['GET'])
 @app.route('/api/student/assignments', methods=['GET'])
 @login_required
 def get_student_assignments():
-    """Obtiene las tareas pendientes del alumno"""
-    # Aquí deberías hacer la consulta real a tu base de datos:
-    # tareas = Tarea.query.filter_by(grupo_id=current_user.grupo_id).all()
-    
-    # Simulación de respuesta basada en estructura DB (Modifica según tus modelos reales)
-    # Esto es para que el frontend no se rompa mientras conectas la DB real
-    return jsonify([
-        {
-            "id": 101,
-            "title": "Ecuaciones Cuadráticas",
-            "subject": "Matemáticas",
-            "status": "Pending", 
-            "due_date": "25 Ene",
-            "type": "homework"
-        },
-        {
-            "id": 102,
-            "title": "Reporte de Laboratorio",
-            "subject": "Biología",
-            "status": "In Progress", 
-            "due_date": "28 Ene",
-            "type": "lab"
-        }
-    ])
+    """Obtiene las tareas del alumno con información completa"""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Obtener tareas del alumno con información de materia
+        cursor.execute('''
+            SELECT 
+                t.id,
+                t.titulo as title,
+                t.descripcion,
+                m.nombre as subject,
+                t.fecha_vencimiento,
+                t.fecha_vencimiento as due_date,
+                CASE 
+                    WHEN et.id IS NOT NULL AND et.calificacion IS NOT NULL THEN 'Graded'
+                    WHEN et.id IS NOT NULL THEN 'Submitted'
+                    WHEN t.fecha_vencimiento < NOW() THEN 'Overdue'
+                    ELSE 'Pending'
+                END as status,
+                et.calificacion as grade,
+                et.fecha_entrega,
+                'homework' as type
+            FROM tareas t
+            LEFT JOIN materias m ON t.materia_id = m.id
+            LEFT JOIN entregas_tareas et ON t.id = et.tarea_id AND et.estudiante_id = %s
+            WHERE t.activo = 1
+            ORDER BY 
+                CASE 
+                    WHEN t.fecha_vencimiento < NOW() THEN 3
+                    WHEN et.id IS NOT NULL THEN 2
+                    ELSE 1
+                END,
+                t.fecha_vencimiento ASC
+        ''', (session['user_id'],))
+        
+        tasks = cursor.fetchall()
+        cursor.close()
+        
+        # Format dates for frontend
+        result = []
+        for task in tasks:
+            formatted_task = {
+                'id': task['id'],
+                'title': task['title'],
+                'subject': task['subject'] or 'Sin materia',
+                'status': task['status'],
+                'due_date': task['due_date'].strftime('%d %b') if task['due_date'] else '',
+                'type': task['type'],
+                'grade': task['grade'],
+                'description': task['descripcion']
+            }
+            result.append(formatted_task)
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error en get_student_assignments: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/student/upload-assignment', methods=['POST'])
 @login_required
@@ -28392,6 +28487,137 @@ def upload_assignment():
         return jsonify({"success": True, "message": "Tarea subida correctamente"})
 
     return jsonify({"error": "Error desconocido"}), 500
+
+
+@app.route('/api/student/subjects', methods=['GET'])
+@login_required
+def get_student_subjects():
+    """Obtiene las materias del alumno (alias de /api/alumno/materias)"""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        user_id = session['user_id']
+        
+        # Obtener el semestre del alumno
+        cursor.execute("SELECT semestre FROM usuarios WHERE id = %s", (user_id,))
+        alumno = cursor.fetchone()
+        semestre = alumno['semestre'] if alumno else None
+        
+        if not semestre:
+            return jsonify([])
+        
+        # Obtener materias del semestre con información del docente
+        cursor.execute("""
+            SELECT 
+                m.id, 
+                m.nombre as name, 
+                u.nombre as prof,
+                m.horario,
+                m.aula,
+                'calculate' as icon,
+                'blue' as color
+            FROM materias m
+            JOIN usuarios u ON m.docente_id = u.id
+            WHERE m.semestre = %s AND m.activo = 1
+            ORDER BY m.nombre
+        """, (semestre,))
+        
+        materias = cursor.fetchall()
+        cursor.close()
+        
+        # Format for frontend
+        result = []
+        colors = ['orange', 'blue', 'purple', 'pink', 'green', 'indigo']
+        icons = ['calculate', 'history_edu', 'science', 'menu_book', 'language', 'computer']
+        
+        for idx, materia in enumerate(materias):
+            result.append({
+                'id': materia['id'],
+                'name': materia['name'],
+                'prof': materia['prof'],
+                'icon': icons[idx % len(icons)],
+                'color': colors[idx % len(colors)],
+                'horario': materia.get('horario'),
+                'aula': materia.get('aula')
+            })
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error en get_student_subjects: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/courses/<int:course_id>/resources', methods=['GET'])
+@login_required
+def get_course_resources(course_id):
+    """Obtiene los recursos de una materia específica"""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        
+        # Verificar que el alumno está inscrito en la materia
+        cursor.execute("""
+            SELECT m.id, m.semestre
+            FROM materias m
+            JOIN usuarios u ON u.semestre = m.semestre
+            WHERE m.id = %s AND u.id = %s AND m.activo = 1
+        """, (course_id, session['user_id']))
+        
+        materia = cursor.fetchone()
+        if not materia:
+            return jsonify({'error': 'No tienes acceso a esta materia'}), 403
+        
+        # Obtener recursos de la materia
+        cursor.execute("""
+            SELECT 
+                r.id,
+                r.titulo as name,
+                r.tipo as type,
+                r.tamano as size,
+                r.archivo_nombre,
+                r.archivo_ruta,
+                r.fecha_creacion
+            FROM recursos_educativos r
+            WHERE r.materia_id = %s AND r.activo = 1
+            ORDER BY r.fecha_creacion DESC
+        """, (course_id,))
+        
+        recursos = cursor.fetchall()
+        cursor.close()
+        
+        # Format resources for frontend
+        result = []
+        for recurso in recursos:
+            # Format size
+            size = recurso.get('size', 0)
+            if size:
+                if size > 1024 * 1024:  # MB
+                    size_str = f"{size / (1024 * 1024):.1f} MB"
+                else:  # KB
+                    size_str = f"{size / 1024:.0f} KB"
+            else:
+                size_str = "N/A"
+            
+            # Determine type icon
+            tipo = recurso.get('type', 'doc')
+            if tipo in ['pdf', 'application/pdf']:
+                tipo = 'pdf'
+            elif tipo in ['video', 'mp4', 'video/mp4']:
+                tipo = 'video'
+            else:
+                tipo = 'doc'
+            
+            result.append({
+                'id': recurso['id'],
+                'name': recurso['name'],
+                'type': tipo,
+                'size': size_str,
+                'archivo_nombre': recurso.get('archivo_nombre'),
+                'fecha_creacion': recurso.get('fecha_creacion').strftime('%d %b %Y') if recurso.get('fecha_creacion') else ''
+            })
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error en get_course_resources: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 # ==================== MAIN EXECUTION ====================
