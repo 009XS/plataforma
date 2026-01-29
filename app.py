@@ -309,6 +309,8 @@ with app.app_context():
                 ("tareas", "ADD COLUMN IF NOT EXISTS archivo_adjunto VARCHAR(255)"),  # Nueva
                 ("mensajes", "ADD COLUMN IF NOT EXISTS adjunto_ruta VARCHAR(255)"),
                 ("mensajes", "ADD COLUMN IF NOT EXISTS leido TINYINT(1) DEFAULT 0"),
+                ("mensajes", "ADD COLUMN IF NOT EXISTS destinatario_tipo ENUM('usuario','materia') NOT NULL DEFAULT 'usuario'"),
+                ("mensajes", "ADD COLUMN IF NOT EXISTS asunto VARCHAR(255) DEFAULT 'Sin asunto'"),
                 ("recursos", "ADD COLUMN IF NOT EXISTS vistas INT DEFAULT 0"),
                 ("recursos", "ADD COLUMN IF NOT EXISTS descargas INT DEFAULT 0"),
                 ("asistencias", "ADD COLUMN IF NOT EXISTS lat DECIMAL(10,8)"),
@@ -6330,7 +6332,7 @@ def index():
         elif role == 'tutor':
             return redirect(url_for('panel_tutor'))
         elif role == 'docente':
-            return redirect(url_for('mis_materias'))  # CAMBIO: Redirige a lista de materias
+            return redirect(url_for('panel_docente'))
         elif role == 'admin':
             return redirect(url_for('panel_admin'))
         else:
@@ -6406,7 +6408,7 @@ def google_callback():
             elif role == 'tutor':
                 return redirect(url_for('panel_tutor'))
             elif role == 'docente':
-                return redirect(url_for('mis_materias'))  # CAMBIO: Redirige a lista de materias
+                return redirect(url_for('panel_docente'))
             elif role == 'admin':
                 return redirect(url_for('panel_admin'))
             else:
@@ -6487,7 +6489,7 @@ def login():
                 elif role == 'tutor':
                     return redirect(url_for('panel_tutor'))
                 elif role == 'docente':
-                    return redirect(url_for('mis_materias'))  # CAMBIO: Redirige a lista de materias
+                    return redirect(url_for('panel_docente'))
                 elif role == 'admin':
                     return redirect(url_for('panel_admin'))
                 else:
@@ -6567,12 +6569,17 @@ def send_message():
     if 'user_id' not in session:
         return jsonify({'error': 'No autorizado'}), 401
 
-    contenido = request.form.get('contenido')
-    chat_id = request.form.get('chat_id')
-    file = request.files.get('adjunto')
+    is_json = request.is_json
+    data = request.get_json(silent=True) or {} if is_json else {}
 
-    if not chat_id or not contenido:
-        return jsonify({'error': 'Datos requeridos'}), 400
+    contenido = (data.get('contenido') if is_json else request.form.get('contenido'))
+    asunto = (data.get('asunto') if is_json else request.form.get('asunto')) or 'Sin asunto'
+    chat_id = (data.get('chat_id') if is_json else request.form.get('chat_id'))
+    destinatario_id = (data.get('destinatario_id') if is_json else request.form.get('destinatario_id'))
+    file = None if is_json else request.files.get('adjunto')
+
+    if not contenido:
+        return jsonify({'error': 'Contenido requerido'}), 400
 
     user_id = session['user_id']
     conn = get_db_connection()
@@ -6584,17 +6591,26 @@ def send_message():
         adjunto_ruta = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(adjunto_ruta)
 
-    if chat_id.startswith('group_'):
-        destinatario_id = int(chat_id.split('_')[1])
-        destinatario_tipo = 'materia'
-    else:
-        destinatario_id = int(chat_id.split('_')[1])
+    destinatario_tipo = 'usuario'
+    if chat_id:
+        if chat_id.startswith('group_') or chat_id.startswith('materia_'):
+            destinatario_id = int(chat_id.split('_')[1])
+            destinatario_tipo = 'materia'
+        else:
+            destinatario_id = int(chat_id.split('_')[1])
+            destinatario_tipo = 'usuario'
+    elif destinatario_id:
+        destinatario_id = int(destinatario_id)
         destinatario_tipo = 'usuario'
+    else:
+        cursor.close()
+        conn.close()
+        return jsonify({'error': 'Destinatario requerido'}), 400
 
     cursor.execute("""
-        INSERT INTO mensajes (remitente_id, destinatario_id, destinatario_tipo, contenido, adjunto_ruta)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (user_id, destinatario_id, destinatario_tipo, contenido, adjunto_ruta))
+        INSERT INTO mensajes (remitente_id, destinatario_id, destinatario_tipo, asunto, contenido, adjunto_ruta)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (user_id, destinatario_id, destinatario_tipo, asunto, contenido, adjunto_ruta))
     conn.commit()
 
     cursor.close()
@@ -8410,10 +8426,12 @@ def tutor_enviar_mensaje():
         res = cursor.fetchone()
         receptor_id = res[0] if res else session['user_id']
         
+        asunto = data.get('subject') or 'Sin asunto'
+        contenido = f"Alumno Ref: {data.get('student_name')}\n\n{data.get('content', '')}".strip()
         cursor.execute("""
-            INSERT INTO mensajes (emisor_id, receptor_id, asunto, contenido, tipo)
-            VALUES (%s, %s, %s, %s, 'tutor')
-        """, (session['user_id'], receptor_id, data['subject'], f"Alumno Ref: {data.get('student_name')}\n\n{data['content']}"))
+            INSERT INTO mensajes (remitente_id, destinatario_id, destinatario_tipo, asunto, contenido)
+            VALUES (%s, %s, 'usuario', %s, %s)
+        """, (session['user_id'], receptor_id, asunto, contenido))
         
         mysql.connection.commit()
         return jsonify({'status': 'ok'})
@@ -8430,8 +8448,8 @@ def tutor_inbox():
         cursor.execute("""
             SELECT m.id, m.asunto, m.contenido, m.fecha_envio, u.nombre as emisor
             FROM mensajes m
-            JOIN usuarios u ON m.emisor_id = u.id
-            WHERE m.receptor_id = %s
+            JOIN usuarios u ON m.remitente_id = u.id
+            WHERE m.destinatario_id = %s AND m.destinatario_tipo = 'usuario'
             ORDER BY m.fecha_envio DESC
         """, (session['user_id'],))
         mensajes = cursor.fetchall()
@@ -9975,33 +9993,7 @@ def obtener_comunicados_y_reportes():
 @role_required('docente')
 def mis_materias():
     """List of teacher's subjects."""
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        cursor.execute("""
-            SELECT m.id, m.nombre, m.descripcion, m.semestre, 
-                   COUNT(mat.estudiante_id) as total_alumnos,
-                   (SELECT COUNT(et.id) 
-                    FROM entregas_tareas et 
-                    JOIN tareas t ON et.tarea_id = t.id 
-                    WHERE t.materia_id = m.id AND et.calificacion IS NULL) as pendientes_calificar,
-                   (SELECT COUNT(r.id) FROM retos_codigo r WHERE r.materia_id = m.id) as retos
-            FROM materias m
-            LEFT JOIN matriculas mat ON m.id = mat.materia_id
-            WHERE m.docente_id = %s AND m.activo = 1
-            GROUP BY m.id
-            ORDER BY m.semestre DESC, m.nombre ASC
-        """, (session['user_id'],))
-        
-        materias = cursor.fetchall()
-        cursor.close()
-        
-        return render_template('mis-materias.html', 
-                               materias=materias, 
-                               nombre_docente=session.get('user_name', ''))
-    except Exception as e:
-        flash(f'Error loading subjects: {str(e)}', 'error')
-        return redirect(url_for('index'))
+    return redirect(url_for('panel_docente'))
 
 
 

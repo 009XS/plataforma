@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html class="light" lang="es">
 
 <head>
     <meta charset="utf-8" />
@@ -118,7 +118,7 @@
                     <h3 class="text-2xl font-bold" id="coin-count">{{ educoins }}</h3>
                     <button onclick="alert('Próximamente estaremos abriendo la tienda de recompensas.')"
                         class="mt-2 text-[10px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded text-white font-medium transition">
-                        Redeem
+                        Canjear
                     </button>
                 </div>
             </div>
@@ -133,8 +133,8 @@
             <!-- Missions Container -->
             <div id="missions-container" class="w-full">
                 <div class="flex items-center justify-between mb-3 px-1">
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Daily Missions</h3>
-                    <span class="text-xs text-primary font-medium cursor-pointer hover:underline">View All</span>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Misiones diarias</h3>
+                    <button onclick="showPanel('misiones')" class="text-xs text-primary font-medium hover:underline">Ver todas</button>
                 </div>
                 <!-- Horizontal Scroll List -->
                 <!-- Filled by JS loadMissions() -->
@@ -150,9 +150,8 @@
                 <div
                     class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Schedule</h3>
-                        <span class="text-xs text-primary font-medium cursor-pointer hover:underline">Full
-                            Calendar</span>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Horario</h3>
+                        <button onclick="showPanel('hoy')" class="text-xs text-primary font-medium hover:underline">Calendario completo</button>
                     </div>
                     <!-- Timeline Items Loop -->
                     {% if materias %}
@@ -195,13 +194,14 @@
             <!-- Assignments Container -->
             <div id="assignments-container" class="w-full pb-6">
                 <div class="flex items-center justify-between mb-3 px-1">
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Assignments</h3>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Tareas</h3>
                     <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
                         <button
-                            class="px-2 py-0.5 text-xs font-medium rounded-md bg-white dark:bg-surface-dark shadow-sm text-slate-900 dark:text-white">To
-                            Do</button>
+                            onclick="filtrarTareas('pendientes')"
+                            class="filtro-tareas px-2 py-0.5 text-xs font-medium rounded-md bg-white dark:bg-surface-dark shadow-sm text-slate-900 dark:text-white" data-filtro="pendientes">Pendientes</button>
                         <button
-                            class="px-2 py-0.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Done</button>
+                            onclick="filtrarTareas('completadas')"
+                            class="filtro-tareas px-2 py-0.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" data-filtro="completadas">Completadas</button>
                     </div>
                 </div>
 
@@ -256,9 +256,9 @@
                     {% endfor %}
                 </div>
 
-                <button
+                <button onclick="window.location.href='/tareas'"
                     class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
-                    View All Assignments
+                    Ver todas las tareas
                     <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
                 </button>
             </div>
@@ -483,6 +483,16 @@
     </div>
 
     <!-- Subviews de más funcionalidades -->
+    <div id="misiones-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Misiones</h2>
+        </div>
+        <div id="misiones-list" class="flex flex-col gap-3"></div>
+    </div>
+
     <div id="hoy-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
         <div class="flex items-center gap-2 mb-2">
             <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
@@ -1656,7 +1666,7 @@
                 </div>
                 <div>
                     <h2 class="font-bold text-slate-900 dark:text-white leading-tight">Aula General</h2>
-                    <p class="text-xs text-slate-500">32 Online • Grupo 501</p>
+                    <p class="text-xs text-slate-500">32 en línea • Grupo 501</p>
                 </div>
             </div>
             <button class="text-slate-400 hover:text-indigo-600 transition">
@@ -1715,9 +1725,9 @@
                     <span class="material-symbols-outlined text-white">psychology</span>
                 </div>
                 <div>
-                    <h3 class="font-bold text-white text-sm">AI Tutor</h3>
+                    <h3 class="font-bold text-white text-sm">Tutor IA</h3>
                     <p class="text-[10px] text-white/80 flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span> Online
+                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span> En línea
                     </p>
                 </div>
             </div>
@@ -1808,6 +1818,7 @@
         });
 
         let tareasCache = [];
+        let filtroTareas = 'pendientes';
         let equiposCache = [];
 
         async function loadDashboard() {
@@ -1948,6 +1959,91 @@
             }
         }
 
+        function renderAssignments(tareas, filtro) {
+            const container = document.getElementById('assignments-container');
+            const pendientesActivo = filtro === 'pendientes';
+            const completadasActivo = filtro === 'completadas';
+
+            const tareasFiltradas = (tareas || []).filter(task => {
+                if (filtro === 'pendientes') return !task.entrega_id;
+                if (filtro === 'completadas') return !!task.entrega_id;
+                return true;
+            });
+
+            let html = `
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Tareas</h3>
+                        <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+                            <button onclick="filtrarTareas('pendientes')" class="filtro-tareas px-2 py-0.5 text-xs font-medium rounded-md ${pendientesActivo ? 'bg-white dark:bg-surface-dark shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}" data-filtro="pendientes">Pendientes</button>
+                            <button onclick="filtrarTareas('completadas')" class="filtro-tareas px-2 py-0.5 text-xs font-medium rounded-md ${completadasActivo ? 'bg-white dark:bg-surface-dark shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}" data-filtro="completadas">Completadas</button>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                `;
+
+            if (!tareas || tareas.length === 0) {
+                html += `
+                        <div class="flex flex-col items-center justify-center py-8 text-center bg-white dark:bg-surface-dark rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                            <span class="material-symbols-outlined text-4xl text-green-500 mb-2">check_circle</span>
+                            <p class="text-slate-900 dark:text-white font-medium">¡Todo al día!</p>
+                            <p class="text-xs text-slate-500">No tienes tareas pendientes.</p>
+                        </div>
+                     `;
+            } else if (tareasFiltradas.length === 0) {
+                html += `
+                        <div class="p-6 text-center text-slate-500 bg-white dark:bg-surface-dark rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                            <p>No hay tareas ${filtro === 'completadas' ? 'completadas' : 'pendientes'}.</p>
+                        </div>
+                    `;
+            } else {
+                tareasFiltradas.forEach(task => {
+                    const isPending = !task.fecha_entrega_alumno;
+                    const badgeBg = isPending ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-green-100 dark:bg-green-900/30';
+                    const badgeText = isPending ? 'text-orange-700 dark:text-orange-300' : 'text-green-700 dark:text-green-300';
+                    const estadoTexto = isPending ? 'Pendiente' : 'Entregada';
+                    const fechaVencimiento = task.fecha_limite || 'Sin fecha';
+                    const esUrgente = task.dias_restantes !== undefined && task.dias_restantes <= 2;
+
+                    html += `
+                        <div class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer ${esUrgente && isPending ? 'ring-red-300 dark:ring-red-800' : ''}" onclick="verTarea(${task.id})">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="flex flex-1 flex-col gap-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="inline-flex items-center rounded-full ${badgeBg} px-2.5 py-0.5 text-xs font-medium ${badgeText}">
+                                            ${estadoTexto}
+                                        </span>
+                                        ${esUrgente && isPending ? '<span class="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">Urgente</span>' : ''}
+                                        <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
+                                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">${task.materia || 'Sin materia'}</span>
+                                    </div>
+                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">${task.titulo}</h3>
+                                    <div class="mt-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                                        <span class="material-symbols-outlined text-[18px]">event</span>
+                                        <p class="text-sm">Vence: ${fechaVencimiento}</p>
+                                        ${task.dias_restantes !== undefined ? '<span class="text-xs">(' + task.dias_restantes + ' días)</span>' : ''}
+                                    </div>
+                                    ${task.calificacion ? '<div class="mt-1 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-green-600">grade</span><p class="text-sm font-bold text-green-600">Calificación: ' + task.calificacion + '</p></div>' : ''}
+                                </div>
+                                <div class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300">
+                                     <span class="material-symbols-outlined text-[32px]">description</span>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                });
+            }
+
+            html += `
+                    </div>
+                    <button onclick="window.location.href='/tareas'" class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
+                        Ver todas las tareas
+                        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                    </button>
+                `;
+
+            container.innerHTML = html;
+        }
+
         async function loadAssignments() {
             try {
                 const response = await fetch('/api/alumno/tareas');
@@ -1956,81 +2052,14 @@
                 
                 const tareas = data.tareas || [];
                 tareasCache = tareas;
-                const container = document.getElementById('assignments-container');
-
-                // Header
-                let html = `
-                        <div class="flex items-center justify-between mb-3 px-1">
-                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Tareas</h3>
-                            <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
-                                <button onclick="filtrarTareas('pendientes')" class="filtro-tareas px-2 py-0.5 text-xs font-medium rounded-md bg-white dark:bg-surface-dark shadow-sm text-slate-900 dark:text-white" data-filtro="pendientes">Pendientes</button>
-                                <button onclick="filtrarTareas('completadas')" class="filtro-tareas px-2 py-0.5 text-xs font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" data-filtro="completadas">Completadas</button>
-                            </div>
-                        </div>
-                        <div class="flex flex-col gap-3">
-                    `;
-
-                if (!tareas || tareas.length === 0) {
-                    html += `
-                            <div class="flex flex-col items-center justify-center py-8 text-center bg-white dark:bg-surface-dark rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-                                <span class="material-symbols-outlined text-4xl text-green-500 mb-2">check_circle</span>
-                                <p class="text-slate-900 dark:text-white font-medium">¡Todo al día!</p>
-                                <p class="text-xs text-slate-500">No tienes tareas pendientes.</p>
-                            </div>
-                         `;
-                } else {
-                    tareas.forEach(task => {
-                        // Determinar estado
-                        const isPending = !task.fecha_entrega_alumno;
-                        const badgeBg = isPending ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-green-100 dark:bg-green-900/30';
-                        const badgeText = isPending ? 'text-orange-700 dark:text-orange-300' : 'text-green-700 dark:text-green-300';
-                        const estadoTexto = isPending ? 'Pendiente' : 'Entregada';
-                        
-                        // Fecha de vencimiento
-                        const fechaVencimiento = task.fecha_limite || 'Sin fecha';
-                        const esUrgente = task.dias_restantes !== undefined && task.dias_restantes <= 2;
-
-                        html += `
-                            <div class="group flex flex-col gap-4 rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition-all hover:shadow-md cursor-pointer ${esUrgente && isPending ? 'ring-red-300 dark:ring-red-800' : ''}" onclick="verTarea(${task.id})">
-                                <div class="flex items-start justify-between gap-4">
-                                    <div class="flex flex-1 flex-col gap-1">
-                                        <div class="flex items-center gap-2 mb-1">
-                                            <span class="inline-flex items-center rounded-full ${badgeBg} px-2.5 py-0.5 text-xs font-medium ${badgeText}">
-                                                ${estadoTexto}
-                                            </span>
-                                            ${esUrgente && isPending ? '<span class="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-300">Urgente</span>' : ''}
-                                            <span class="text-xs text-slate-400 dark:text-slate-500">•</span>
-                                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">${task.materia || 'Sin materia'}</span>
-                                        </div>
-                                        <h3 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">${task.titulo}</h3>
-                                        <div class="mt-1 flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
-                                            <span class="material-symbols-outlined text-[18px]">event</span>
-                                            <p class="text-sm">Vence: ${fechaVencimiento}</p>
-                                            ${task.dias_restantes !== undefined ? '<span class="text-xs">(' + task.dias_restantes + ' días)</span>' : ''}
-                                        </div>
-                                        ${task.calificacion ? '<div class="mt-1 flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px] text-green-600">grade</span><p class="text-sm font-bold text-green-600">Calificación: ' + task.calificacion + '</p></div>' : ''}
-                                    </div>
-                                    <div class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300">
-                                         <span class="material-symbols-outlined text-[32px]">description</span>
-                                    </div>
-                                </div>
-                            </div>
-                            `;
-                    });
-                }
-
-                html += `
-                        </div>
-                        <button onclick="window.location.href='/tareas'" class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
-                            Ver Todas las Tareas
-                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-                        </button>
-                    `;
-
-                container.innerHTML = html;
+                renderAssignments(tareasCache, filtroTareas);
 
             } catch (error) {
                 console.error('Error loading assignments:', error);
+                const container = document.getElementById('assignments-container');
+                if (container) {
+                    container.innerHTML = '<div class="p-6 text-center text-red-500">Error al cargar tareas.</div>';
+                }
             }
         }
         
@@ -2079,8 +2108,12 @@
                     btn.classList.add('text-slate-500', 'dark:text-slate-400');
                 }
             });
-            // Recargar tareas con filtro (aquí se puede implementar lógica de filtrado)
-            loadAssignments();
+            filtroTareas = filtro;
+            if (tareasCache && tareasCache.length) {
+                renderAssignments(tareasCache, filtroTareas);
+            } else {
+                loadAssignments();
+            }
         }
 
         // --- Phase 1: Academic Core Additions ---
@@ -3285,6 +3318,66 @@
             window.open('/api/alumno/boleta-calificaciones', '_blank');
         }
 
+        async function loadMisionesView() {
+            const container = document.getElementById('misiones-list');
+            if (!container) return;
+            container.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando misiones...</span></div>';
+            try {
+                const response = await fetch('/api/alumno/misiones');
+                if (!response.ok) throw new Error('Error al obtener misiones');
+                const missions = await response.json();
+
+                if (!missions || missions.length === 0) {
+                    container.innerHTML = '<div class="p-6 text-center text-slate-500">No hay misiones activas.</div>';
+                    return;
+                }
+
+                container.innerHTML = missions.map(m => {
+                    const isTarget = m.tipo === 'academica';
+                    const bgColor = isTarget ? 'bg-purple-100 dark:bg-purple-900/30' : 'bg-green-100 dark:bg-green-900/30';
+                    const textColor = isTarget ? 'text-purple-600' : 'text-green-600';
+                    const barColor = isTarget ? 'bg-purple-500' : 'bg-green-500';
+                    const icon = m.icono || (isTarget ? 'school' : 'menu_book');
+                    const total = m.requisito_cantidad || 1;
+                    const progress = m.progreso || 0;
+                    const percent = Math.min((progress / total) * 100, 100);
+
+                    return `
+                        <div class="bg-white dark:bg-surface-dark p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-2 relative">
+                            ${m.completada ? `
+                            <div class="absolute top-2 right-2 text-green-500">
+                                <span class="material-symbols-outlined">check_circle</span>
+                            </div>` : ''}
+
+                            <div class="flex items-center gap-2">
+                                <div class="p-2 ${bgColor} ${textColor} rounded-lg shrink-0">
+                                    <span class="material-symbols-outlined text-[20px]">${icon}</span>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight">${m.titulo}</p>
+                                    <p class="text-xs text-slate-500">${m.descripcion || ''}</p>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-1">
+                                <div class="${barColor} h-1.5 rounded-full" style="width: ${percent}%"></div>
+                            </div>
+                            <div class="flex justify-between items-center text-xs text-slate-500">
+                                <span>+${m.xp_recompensa} XP • ${m.educoins_recompensa || 0} EduCoins</span>
+                                <span>${progress}/${total}</span>
+                            </div>
+                            ${!m.completada ? `
+                            <button onclick="updateMissionProgress(${m.id}, 1)" class="mt-1 w-full text-[11px] py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-400 transition">
+                                Registrar progreso
+                            </button>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                container.innerHTML = '<p class="text-center text-red-500">Error al cargar misiones.</p>';
+            }
+        }
+
         function showPanel(panelName) {
             const dashboard = document.querySelector('main');
             const header = document.getElementById('header-stats');
@@ -3292,7 +3385,7 @@
             const views = [
                 'notes-view', 'portfolio-view', 'tutorias-view', 'equipos-view',
                 'community-container', 'subjects-container', 'courses-view', 'resources-view', 'more-view',
-                'hoy-view', 'objetivos-view', 'habitos-view', 'notificaciones-view',
+                'misiones-view', 'hoy-view', 'objetivos-view', 'habitos-view', 'notificaciones-view',
                 'recomendaciones-view', 'progreso-view', 'riesgo-view', 'funciones-view',
                 'recompensas-view', 'balance-view', 'examenes-view', 'encuestas-view',
                 'feedback-view', 'exportaciones-view', 'ayuda-view', 'documentos-view'
@@ -3347,6 +3440,10 @@
                     break;
                 case 'more':
                     show('more-view');
+                    break;
+                case 'misiones':
+                    show('misiones-view');
+                    loadMisionesView();
                     break;
                 case 'hoy':
                     show('hoy-view');

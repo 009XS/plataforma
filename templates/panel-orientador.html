@@ -7,6 +7,1924 @@
     <title>Panel Orientador</title>
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1A2633",
+                        "text-main-light": "#111418",
+                        "text-main-dark": "#F3F4F6",
+                        "text-sec-light": "#617589",
+                        "text-sec-dark": "#9CA3AF",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased transition-colors duration-200">
+    <div id="main-app-container" class="relative flex flex-col w-full max-w-md mx-auto bg-white dark:bg-background-dark shadow-2xl min-h-screen h-screen overflow-hidden">
+        <header id="header-stats" class="w-full flex flex-col items-center pt-8 pb-4 bg-white dark:bg-background-dark">
+            <div class="relative mb-3">
+                <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white text-3xl font-semibold" id="profile-avatar">
+                    {{ iniciales }}
+                </div>
+                <div class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark">
+                    <span class="material-symbols-outlined text-[16px] block">badge</span>
+                </div>
+            </div>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ nombre }}</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">Orientador</p>
+
+            <div class="grid grid-cols-2 gap-3 w-full px-4 mt-6">
+                <div class="bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">groups</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Alumnos activos</p>
+                    <h3 class="text-2xl font-bold">{{ total_alumnos }}</h3>
+                </div>
+                <div class="bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">warning</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Alertas activas</p>
+                    <h3 class="text-2xl font-bold">{{ alertas_activas }}</h3>
+                </div>
+                <div class="bg-gradient-to-br from-violet-500 to-fuchsia-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">event</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Citas pendientes</p>
+                    <h3 class="text-2xl font-bold">{{ citas_pendientes }}</h3>
+                </div>
+                <div class="bg-gradient-to-br from-emerald-500 to-teal-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">assignment</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Reportes (30 días)</p>
+                    <h3 class="text-2xl font-bold">{{ reportes_mes }}</h3>
+                </div>
+            </div>
+            <div class="w-full px-4 mt-3">
+                <div class="bg-gradient-to-br from-rose-500 to-red-400 rounded-xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-2 -top-2 opacity-20">
+                        <span class="material-symbols-outlined text-[80px]">report</span>
+                    </div>
+                    <p class="text-white/80 text-xs font-medium mb-1">Alumnos en riesgo alto</p>
+                    <h3 class="text-2xl font-bold">{{ alumnos_riesgo }}</h3>
+                </div>
+            </div>
+        </header>
+
+        <main class="relative flex-1 overflow-y-auto no-scrollbar p-4 space-y-6" id="main-content">
+            <section id="dashboard-view" class="space-y-6">
+                <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Alertas recientes</h3>
+                        <button onclick="showPanel('alertas')" class="text-xs text-primary font-medium hover:underline">Ver todas</button>
+                    </div>
+                    <div id="alertas-list">
+                        {% if ultimas_alertas %}
+                        <div class="flex flex-col gap-3">
+                            {% for alerta in ultimas_alertas %}
+                            <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex-1">
+                                        <p class="text-xs text-slate-400">{{ alerta.alumno_nombre }} • {{ alerta.numero_control }}</p>
+                                        <p class="text-base font-semibold text-slate-900 dark:text-white">{{ alerta.titulo }}</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ alerta.descripcion }}</p>
+                                    </div>
+                                    <span class="text-[10px] uppercase px-2 py-1 rounded-full bg-orange-100 text-orange-700">{{ alerta.nivel }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="p-4 text-center text-slate-500">No hay alertas recientes.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Próximas citas</h3>
+                        <button onclick="showPanel('citas')" class="text-xs text-primary font-medium hover:underline">Ver todas</button>
+                    </div>
+                    <div id="citas-list">
+                        {% if proximas_citas %}
+                        <div class="flex flex-col gap-3">
+                            {% for cita in proximas_citas %}
+                            <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex-1">
+                                        <p class="text-xs text-slate-400">{{ cita.alumno_nombre }}</p>
+                                        <p class="text-base font-semibold text-slate-900 dark:text-white">{{ cita.motivo }}</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400">{{ cita.fecha }} • {{ cita.hora }}</p>
+                                    </div>
+                                    <span class="text-[10px] uppercase px-2 py-1 rounded-full bg-blue-100 text-blue-700">{{ cita.estado }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="p-4 text-center text-slate-500">No hay citas programadas.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between mb-3 px-1">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Reportes recientes</h3>
+                        <button onclick="showPanel('reportes')" class="text-xs text-primary font-medium hover:underline">Ver todos</button>
+                    </div>
+                    <div id="reportes-dashboard">
+                        {% if ultimos_reportes %}
+                        <div class="flex flex-col gap-3">
+                            {% for reporte in ultimos_reportes %}
+                            <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                                <p class="text-xs text-slate-400">{{ reporte.alumno_nombre }}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">{{ reporte.tipo }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">{{ reporte.descripcion }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="p-4 text-center text-slate-500">No hay reportes recientes.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="showPanel('casos')" class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                        <span class="material-symbols-outlined text-blue-600">folder_open</span>
+                        <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Casos</p>
+                        <p class="text-xs text-slate-500">Seguimiento y sesiones</p>
+                    </button>
+                    <button onclick="showPanel('gestion')" class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                        <span class="material-symbols-outlined text-purple-600">tune</span>
+                        <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Gestión</p>
+                        <p class="text-xs text-slate-500">Herramientas y reportes</p>
+                    </button>
+                </div>
+            </section>
+
+            <section id="alertas-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Alertas</h2>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="alertas-estado" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                        <option value="">Estado</option>
+                        <option value="nueva">Nueva</option>
+                        <option value="en_revision">En revisión</option>
+                        <option value="atendida">Atendida</option>
+                        <option value="cerrada">Cerrada</option>
+                    </select>
+                    <select id="alertas-nivel" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                        <option value="">Nivel</option>
+                        <option value="critico">Crítico</option>
+                        <option value="alto">Alto</option>
+                        <option value="medio">Medio</option>
+                        <option value="bajo">Bajo</option>
+                    </select>
+                </div>
+                <button onclick="loadAlertas(true)" class="w-full py-2 rounded-lg bg-primary text-white font-semibold">Actualizar</button>
+                <div id="alertas-view-list" class="flex flex-col gap-3"></div>
+            </section>
+
+            <section id="citas-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Citas de orientación</h2>
+                </div>
+                <div class="flex gap-2">
+                    <select id="citas-estado" class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                        <option value="">Todas</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="completada">Completada</option>
+                        <option value="cancelada">Cancelada</option>
+                    </select>
+                    <button onclick="openCitaModal()" class="px-3 py-2 rounded-lg bg-primary text-white text-sm font-semibold">Nueva</button>
+                </div>
+                <button onclick="loadCitas(true)" class="w-full py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Actualizar</button>
+                <div id="citas-view-list" class="flex flex-col gap-3"></div>
+            </section>
+
+            <section id="casos-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Casos de orientación</h2>
+                </div>
+                <div class="flex gap-2">
+                    <select id="casos-estado" class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                        <option value="">Todos</option>
+                        <option value="abierto">Abierto</option>
+                        <option value="en_proceso">En proceso</option>
+                        <option value="cerrado">Cerrado</option>
+                    </select>
+                    <button onclick="openCasoModal()" class="px-3 py-2 rounded-lg bg-primary text-white text-sm font-semibold">Nuevo</button>
+                </div>
+                <button onclick="loadCasos(true)" class="w-full py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Actualizar</button>
+                <div id="casos-list" class="flex flex-col gap-3"></div>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Herramientas de caso</summary>
+                    <div class="mt-3 space-y-4">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input id="caso-tool-id" type="number" placeholder="ID Caso" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                            <input id="caso-tool-alumno" type="number" placeholder="ID Alumno" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        </div>
+
+                        <details class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                            <summary class="cursor-pointer text-sm font-semibold">Timeline de intervenciones</summary>
+                            <div class="mt-3 space-y-2">
+                                <button onclick="loadTimeline()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar timeline</button>
+                                <div id="timeline-list" class="space-y-2"></div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input id="timeline-tipo" type="text" placeholder="Tipo" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                    <input id="timeline-titulo" type="text" placeholder="Título" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                </div>
+                                <textarea id="timeline-descripcion" placeholder="Descripción" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                                <input id="timeline-resultado" type="text" placeholder="Resultado" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                <button onclick="addTimeline()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Agregar evento</button>
+                            </div>
+                        </details>
+
+                        <details class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                            <summary class="cursor-pointer text-sm font-semibold">Sesiones y acuerdos</summary>
+                            <div class="mt-3 space-y-2">
+                                <button onclick="loadSesiones()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar sesiones</button>
+                                <div id="sesiones-list" class="space-y-2"></div>
+                                <input id="sesion-fecha" type="date" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input id="sesion-hora-inicio" type="time" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                    <input id="sesion-hora-fin" type="time" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                </div>
+                                <textarea id="sesion-temas" placeholder="Temas tratados" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                                <textarea id="sesion-observaciones" placeholder="Observaciones" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                                <textarea id="sesion-acuerdos" placeholder='Acuerdos JSON (ej: [{"descripcion":"...","responsable":"ambos","fecha_limite":"2025-01-20"}])' class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                                <input id="sesion-proximos" type="text" placeholder="Próximos pasos" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                <input id="sesion-estado" type="text" placeholder="Estado emocional" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                <button onclick="addSesion()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Agregar sesión</button>
+                                <button onclick="loadAcuerdos()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar acuerdos</button>
+                                <div id="acuerdos-list" class="space-y-2"></div>
+                            </div>
+                        </details>
+
+                        <details class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                            <summary class="cursor-pointer text-sm font-semibold">Evidencias</summary>
+                            <div class="mt-3 space-y-2">
+                                <button onclick="loadEvidencias()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar evidencias</button>
+                                <div id="evidencias-list" class="space-y-2"></div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input id="evidencia-tipo" type="text" placeholder="Tipo" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                    <input id="evidencia-titulo" type="text" placeholder="Título" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                </div>
+                                <textarea id="evidencia-descripcion" placeholder="Descripción" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                                <textarea id="evidencia-contenido" placeholder="Contenido" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                                <button onclick="addEvidencia()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Agregar evidencia</button>
+                            </div>
+                        </details>
+
+                        <details class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                            <summary class="cursor-pointer text-sm font-semibold">Escalamiento</summary>
+                            <div class="mt-3 space-y-2">
+                                <button onclick="loadEscalamientos()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar escalamientos</button>
+                                <div id="escalamiento-list" class="space-y-2"></div>
+                                <select id="escalamiento-destino" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                                    <option value="coordinacion">Coordinación</option>
+                                    <option value="direccion">Dirección</option>
+                                    <option value="psicologia">Psicología</option>
+                                </select>
+                                <textarea id="escalamiento-motivo" placeholder="Motivo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                                <label class="flex items-center gap-2 text-xs text-slate-500">
+                                    <input id="escalamiento-urgente" type="checkbox" class="rounded" /> Urgente
+                                </label>
+                                <button onclick="addEscalamiento()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Escalar caso</button>
+                            </div>
+                        </details>
+
+                        <details class="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                            <summary class="cursor-pointer text-sm font-semibold">Exportación de expediente</summary>
+                            <div class="mt-3 space-y-2">
+                                <button onclick="loadExportaciones()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Ver exportaciones</button>
+                                <div id="exportaciones-list" class="space-y-2"></div>
+                                <input id="exportacion-tipo" type="text" placeholder="Tipo exportación" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                                <textarea id="exportacion-motivo" placeholder="Motivo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                                <button onclick="solicitarExportacion()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Solicitar exportación</button>
+                            </div>
+                        </details>
+                    </div>
+                </details>
+            </section>
+
+            <section id="reportes-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Reportes</h2>
+                </div>
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Reportes institucionales</summary>
+                    <div class="mt-3 space-y-2">
+                        <button onclick="loadReportesInstitucionales()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar reportes</button>
+                        <div id="reportes-institucionales-list" class="space-y-2"></div>
+                        <input id="reporte-inst-titulo" type="text" placeholder="Título" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="reporte-inst-tipo" type="text" placeholder="Tipo de reporte" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <div class="grid grid-cols-2 gap-2">
+                            <input id="reporte-inst-inicio" type="date" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                            <input id="reporte-inst-fin" type="date" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        </div>
+                        <button onclick="crearReporteInstitucional()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Solicitar reporte</button>
+                    </div>
+                </details>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Reporte de conducta / incumplimiento</summary>
+                    <div class="mt-3 space-y-2">
+                        <input id="reporte-alumno-id" type="number" placeholder="ID Alumno" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <select id="reporte-tipo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                            <option value="conducta">Conducta</option>
+                            <option value="incumplimiento">Incumplimiento</option>
+                        </select>
+                        <textarea id="reporte-descripcion" placeholder="Descripción" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                        <button onclick="enviarReporteConducta()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Enviar reporte</button>
+                        <div id="reporte-conducta-msg" class="text-xs text-slate-500"></div>
+                    </div>
+                </details>
+            </section>
+
+            <section id="gestion-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Gestión integral</h2>
+                </div>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Clasificación de riesgo</summary>
+                    <div class="mt-3 space-y-2">
+                        <select id="riesgo-nivel" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                            <option value="">Todos</option>
+                            <option value="critico">Crítico</option>
+                            <option value="alto">Alto</option>
+                            <option value="medio">Medio</option>
+                            <option value="bajo">Bajo</option>
+                            <option value="muy_bajo">Muy bajo</option>
+                        </select>
+                        <button onclick="loadRiesgo()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar clasificación</button>
+                        <div id="riesgo-list" class="space-y-2"></div>
+                        <input id="riesgo-alumno" type="number" placeholder="ID Alumno" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <button onclick="calcularRiesgo()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Calcular riesgo</button>
+                    </div>
+                </details>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Historial unificado</summary>
+                    <div class="mt-3 space-y-2">
+                        <input id="historial-alumno" type="number" placeholder="ID Alumno" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <button onclick="loadHistorial()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar historial</button>
+                        <div id="historial-list" class="space-y-2"></div>
+                        <input id="historial-tipo" type="text" placeholder="Tipo de evento" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="historial-titulo" type="text" placeholder="Título" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <textarea id="historial-descripcion" placeholder="Descripción" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                        <select id="historial-relevancia" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                            <option value="baja">Baja</option>
+                            <option value="media" selected>Media</option>
+                            <option value="alta">Alta</option>
+                        </select>
+                        <button onclick="addHistorial()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Agregar evento</button>
+                    </div>
+                </details>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Planes de intervención</summary>
+                    <div class="mt-3 space-y-2">
+                        <button onclick="loadPlanes()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar planes</button>
+                        <div id="planes-list" class="space-y-2"></div>
+                        <input id="plan-nombre" type="text" placeholder="Nombre" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="plan-tipo" type="text" placeholder="Tipo de problema" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <textarea id="plan-descripcion" placeholder="Descripción" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                        <textarea id="plan-objetivos" placeholder='Objetivos JSON (ej: ["...","..."])' class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                        <textarea id="plan-actividades" placeholder='Actividades JSON' class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                        <textarea id="plan-indicadores" placeholder='Indicadores JSON' class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                        <button onclick="addPlan()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Crear plan</button>
+                    </div>
+                </details>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Comunicación multirol</summary>
+                    <div class="mt-3 space-y-2">
+                        <button onclick="loadComunicaciones()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar comunicaciones</button>
+                        <div id="comunicacion-list" class="space-y-2"></div>
+                        <input id="comunicacion-alumno" type="number" placeholder="ID Alumno" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="comunicacion-asunto" type="text" placeholder="Asunto" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <textarea id="comunicacion-participantes" placeholder='Participantes JSON (ej: [{"rol":"tutor","id":12}])' class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                        <button onclick="crearComunicacion()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Crear comunicación</button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input id="comunicacion-id" type="number" placeholder="ID Comunicación" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                            <input id="comunicacion-mensaje" type="text" placeholder="Mensaje" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        </div>
+                        <button onclick="enviarMensajeComunicacion()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Enviar mensaje</button>
+                    </div>
+                </details>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Indicadores de progreso</summary>
+                    <div class="mt-3 space-y-2">
+                        <input id="indicadores-alumno" type="number" placeholder="ID Alumno" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <button onclick="loadIndicadores()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar indicadores</button>
+                        <div id="indicadores-list" class="space-y-2"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input id="indicadores-inicio" type="date" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                            <input id="indicadores-fin" type="date" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        </div>
+                        <input id="indicadores-academico" type="number" placeholder="Indicador académico" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="indicadores-asistencia" type="number" placeholder="Indicador asistencia" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="indicadores-bienestar" type="number" placeholder="Indicador bienestar" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="indicadores-tendencia" type="text" placeholder="Tendencia" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <textarea id="indicadores-observaciones" placeholder="Observaciones" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                        <button onclick="addIndicador()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Agregar indicador</button>
+                    </div>
+                </details>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Recordatorios</summary>
+                    <div class="mt-3 space-y-2">
+                        <button onclick="loadRecordatorios()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar recordatorios</button>
+                        <div id="recordatorios-list" class="space-y-2"></div>
+                        <input id="recordatorio-caso" type="number" placeholder="ID Caso (opcional)" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="recordatorio-alumno" type="number" placeholder="ID Alumno (opcional)" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="recordatorio-titulo" type="text" placeholder="Título" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="recordatorio-tipo" type="text" placeholder="Tipo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="recordatorio-fecha" type="datetime-local" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <button onclick="addRecordatorio()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Agregar recordatorio</button>
+                    </div>
+                </details>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Predicción de deserción</summary>
+                    <div class="mt-3 space-y-2">
+                        <button onclick="loadPredicciones()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar predicciones</button>
+                        <div id="prediccion-list" class="space-y-2"></div>
+                        <input id="prediccion-alumno" type="number" placeholder="ID Alumno" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <button onclick="calcularPrediccion()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Calcular predicción</button>
+                    </div>
+                </details>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Avisos y justificantes</summary>
+                    <div class="mt-3 space-y-2">
+                        <input id="aviso-destinatario" type="text" placeholder="Destinatario" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <select id="aviso-tipo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                            <option value="aviso">Aviso</option>
+                            <option value="recordatorio">Recordatorio</option>
+                        </select>
+                        <textarea id="aviso-mensaje" placeholder="Mensaje" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                        <input id="aviso-fecha" type="date" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <button onclick="enviarAviso()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Enviar aviso</button>
+                        <div class="h-px bg-slate-200 dark:bg-slate-700"></div>
+                        <input id="justificante-alumno" type="text" placeholder="Nombre alumno" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="justificante-fecha" type="date" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <textarea id="justificante-motivo" placeholder="Motivo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                        <button onclick="generarJustificante()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Generar justificante</button>
+                    </div>
+                </details>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Horarios y asistencias</summary>
+                    <div class="mt-3 space-y-2">
+                        <input id="horario-grupo" type="text" placeholder="Grupo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <button onclick="buscarHorarios()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Buscar horarios</button>
+                        <div id="horarios-list" class="space-y-2"></div>
+                        <div class="h-px bg-slate-200 dark:bg-slate-700"></div>
+                        <input id="asistencia-grupo" type="text" placeholder="Grupo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <input id="asistencia-fecha" type="date" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                        <button onclick="loadAlumnosGrupo()" class="w-full py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Cargar alumnos</button>
+                        <div id="asistencia-list" class="space-y-2"></div>
+                        <button onclick="registrarAsistencias()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Registrar asistencias</button>
+                    </div>
+                </details>
+
+                <details class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <summary class="cursor-pointer text-sm font-semibold">Orientadores (CRUD)</summary>
+                    <div class="mt-3 space-y-2">
+                        <div class="flex gap-2">
+                            <input id="orientadores-search" type="text" placeholder="Buscar" class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                            <select id="orientadores-activo" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                                <option value="">Todos</option>
+                                <option value="1">Activos</option>
+                                <option value="0">Inactivos</option>
+                            </select>
+                        </div>
+                        <button onclick="loadOrientadores()" class="w-full py-2 rounded-lg bg-primary text-white text-sm">Cargar orientadores</button>
+                        <div id="orientadores-list" class="space-y-2"></div>
+                        <button onclick="openOrientadorModal()" class="w-full py-2 rounded-lg bg-slate-900 text-white text-sm">Nuevo orientador</button>
+                    </div>
+                </details>
+            </section>
+
+            <section id="perfil-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+                <div class="flex items-center gap-2 mb-2">
+                    <button onclick="showPanel('dashboard')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mi perfil</h2>
+                </div>
+                <div class="rounded-2xl p-5 bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <div class="h-16 w-16 rounded-full border-2 border-white dark:border-surface-dark shadow-sm bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white text-xl font-semibold" id="profile-avatar-card">
+                            {{ iniciales }}
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold">{{ nombre }}</h3>
+                            <p class="text-xs text-slate-400">Orientador</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="rounded-2xl p-5 bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <h4 class="text-sm font-semibold text-slate-900 dark:text-white mb-3">Foto de perfil</h4>
+                    <div class="flex items-center gap-3">
+                        <input id="orientador-photo" type="file" accept="image/*" class="flex-1 text-sm text-slate-600 dark:text-slate-300" />
+                        <button type="button" onclick="uploadProfilePhoto()" class="px-3 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-blue-600 transition">Subir</button>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Formatos permitidos: jpg, png, jpeg, gif, webp.</p>
+                    <div id="upload-foto-msg" class="text-xs text-slate-500 mt-2"></div>
+                </div>
+                <a href="/logout" class="flex items-center gap-3 p-3 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                    <span class="material-symbols-outlined text-red-500">logout</span>
+                    <span class="font-medium text-slate-900 dark:text-white">Cerrar sesión</span>
+                </a>
+            </section>
+        </main>
+
+        <nav class="fixed bottom-0 left-0 right-0 z-30 max-w-md mx-auto bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg">
+            <div class="flex h-16 items-center justify-between px-1" id="bottom-nav"></div>
+        </nav>
+    </div>
+
+    <div id="orientador-modal" class="hidden fixed inset-0 z-40 bg-black/40 items-center justify-center p-4">
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold" id="orientador-modal-title">Nuevo orientador</h3>
+                <button onclick="closeOrientadorModal()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="mt-3 space-y-3">
+                <input id="orientador-id" type="hidden" />
+                <input id="orientador-nombre" type="text" placeholder="Nombre completo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-email" type="email" placeholder="Email" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-numero" type="text" placeholder="Número de control" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-curp" type="text" placeholder="CURP" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-telefono" type="text" placeholder="Teléfono" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-direccion" type="text" placeholder="Dirección" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="orientador-password" type="password" placeholder="Contraseña (opcional al editar)" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <div class="flex gap-2">
+                    <button onclick="saveOrientador()" class="flex-1 py-2 rounded-lg bg-primary text-white font-semibold">Guardar</button>
+                    <button onclick="closeOrientadorModal()" class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cita-modal" class="hidden fixed inset-0 z-40 bg-black/40 items-center justify-center p-4">
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold" id="cita-modal-title">Nueva cita</h3>
+                <button onclick="closeCitaModal()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="mt-3 space-y-3">
+                <input id="cita-id" type="hidden" />
+                <input id="cita-alumno-id" type="number" placeholder="ID Alumno" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="cita-fecha" type="date" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="cita-hora" type="time" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="cita-motivo" type="text" placeholder="Motivo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <select id="cita-estado" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="confirmada">Confirmada</option>
+                    <option value="completada">Completada</option>
+                    <option value="cancelada">Cancelada</option>
+                </select>
+                <textarea id="cita-notas" placeholder="Notas" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                <div class="flex gap-2">
+                    <button onclick="saveCita()" class="flex-1 py-2 rounded-lg bg-primary text-white font-semibold">Guardar</button>
+                    <button onclick="closeCitaModal()" class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="caso-modal" class="hidden fixed inset-0 z-40 bg-black/40 items-center justify-center p-4">
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold" id="caso-modal-title">Nuevo caso</h3>
+                <button onclick="closeCasoModal()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="mt-3 space-y-3">
+                <input id="caso-alumno" type="number" placeholder="ID Alumno" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="caso-titulo" type="text" placeholder="Título" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <select id="caso-tipo" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                    <option value="conducta">Conducta</option>
+                    <option value="academico">Académico</option>
+                    <option value="emocional">Emocional</option>
+                    <option value="familiar">Familiar</option>
+                    <option value="otro">Otro</option>
+                </select>
+                <select id="caso-prioridad" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                    <option value="baja">Baja</option>
+                    <option value="media" selected>Media</option>
+                    <option value="alta">Alta</option>
+                    <option value="urgente">Urgente</option>
+                </select>
+                <textarea id="caso-descripcion" placeholder="Descripción" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                <textarea id="caso-motivo" placeholder="Motivo de consulta" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                <div class="flex gap-2">
+                    <button onclick="saveCaso()" class="flex-1 py-2 rounded-lg bg-primary text-white font-semibold">Guardar</button>
+                    <button onclick="closeCasoModal()" class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="caso-update-modal" class="hidden fixed inset-0 z-40 bg-black/40 items-center justify-center p-4">
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 w-full max-w-md shadow-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold">Actualizar caso</h3>
+                <button onclick="closeCasoUpdateModal()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="mt-3 space-y-3">
+                <input id="caso-update-id" type="hidden" />
+                <select id="caso-update-estado" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                    <option value="abierto">Abierto</option>
+                    <option value="en_proceso">En proceso</option>
+                    <option value="cerrado">Cerrado</option>
+                </select>
+                <select id="caso-update-prioridad" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm">
+                    <option value="baja">Baja</option>
+                    <option value="media">Media</option>
+                    <option value="alta">Alta</option>
+                    <option value="urgente">Urgente</option>
+                </select>
+                <textarea id="caso-update-diagnostico" placeholder="Diagnóstico inicial" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                <textarea id="caso-update-plan" placeholder="Plan de acción" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                <input id="caso-update-proxima" type="date" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <textarea id="caso-update-motivo" placeholder="Motivo de cierre" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></textarea>
+                <div class="flex gap-2">
+                    <button onclick="updateCaso()" class="flex-1 py-2 rounded-lg bg-primary text-white font-semibold">Guardar</button>
+                    <button onclick="closeCasoUpdateModal()" class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm z-50"></div>
+
+    <script>
+        const navItems = [
+            { key: 'dashboard', icon: 'home', label: 'Inicio', action: () => showPanel('dashboard') },
+            { key: 'alertas', icon: 'warning', label: 'Alertas', action: () => showPanel('alertas') },
+            { key: 'casos', icon: 'folder_open', label: 'Casos', action: () => showPanel('casos') },
+            { key: 'gestion', icon: 'tune', label: 'Gestión', action: () => showPanel('gestion') },
+            { key: 'perfil', icon: 'person', label: 'Perfil', action: () => showPanel('perfil') }
+        ];
+
+        let activeNav = 'dashboard';
+        let citasCache = [];
+        let casosCache = [];
+
+        function renderBottomNav() {
+            const nav = document.getElementById('bottom-nav');
+            nav.innerHTML = navItems.map(item => `
+                <a href="#" onclick="setActiveNav('${item.key}'); return false;"
+                    class="flex flex-1 flex-col items-center justify-center gap-0.5 ${activeNav === item.key ? 'text-primary font-bold' : 'text-slate-400'} transition-colors hover:text-primary dark:text-slate-500 dark:hover:text-primary hover:bg-primary/10 dark:hover:bg-primary/10 rounded-xl py-1 mx-0.5">
+                    <span class="material-symbols-outlined text-[26px]">${item.icon}</span>
+                    <span class="text-[11px] font-semibold">${item.label}</span>
+                </a>
+            `).join('');
+        }
+
+        function setActiveNav(key) {
+            activeNav = key;
+            renderBottomNav();
+            const item = navItems.find(i => i.key === key);
+            if (item && typeof item.action === 'function') item.action();
+        }
+
+        function showPanel(panelName) {
+            const sections = ['dashboard-view', 'alertas-view', 'citas-view', 'casos-view', 'reportes-view', 'gestion-view', 'perfil-view'];
+            sections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+            if (panelName === 'dashboard') {
+                document.getElementById('dashboard-view').classList.remove('hidden');
+                document.getElementById('header-stats').classList.remove('hidden');
+            } else {
+                document.getElementById('header-stats').classList.add('hidden');
+                const target = document.getElementById(`${panelName}-view`);
+                if (target) target.classList.remove('hidden');
+            }
+
+            if (panelName === 'alertas') loadAlertas(true);
+            if (panelName === 'citas') loadCitas(true);
+            if (panelName === 'casos') loadCasos(true);
+            if (panelName === 'reportes') loadReportesInstitucionales();
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm z-50 ${isError ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 2500);
+        }
+
+        async function apiFetch(url, options = {}) {
+            const response = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                ...options
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Error en la solicitud');
+            return data;
+        }
+
+        async function loadAlertas(fromView = false) {
+            try {
+                const estado = document.getElementById('alertas-estado')?.value || '';
+                const nivel = document.getElementById('alertas-nivel')?.value || '';
+                const params = new URLSearchParams();
+                if (estado) params.append('estado', estado);
+                if (nivel) params.append('nivel', nivel);
+                const data = await apiFetch(`/api/orientador/alertas?${params.toString()}`);
+                const alertas = Array.isArray(data) ? data : [];
+                const container = document.getElementById(fromView ? 'alertas-view-list' : 'alertas-list');
+                if (!container) return;
+                if (!alertas.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay alertas.</div>';
+                    return;
+                }
+                container.innerHTML = alertas.map(alerta => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">${alerta.alumno_nombre || 'Alumno'} • ${alerta.tipo_alerta || ''}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">${alerta.titulo || 'Alerta'}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${alerta.descripcion || ''}</p>
+                            </div>
+                            <span class="text-[10px] uppercase px-2 py-1 rounded-full bg-orange-100 text-orange-700">${alerta.nivel || 'medio'}</span>
+                        </div>
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="asignarAlerta(${alerta.id})" class="flex-1 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">Asignar</button>
+                            <button onclick="atenderAlerta(${alerta.id})" class="flex-1 py-1.5 rounded-lg bg-primary text-white text-xs">Atender</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function asignarAlerta(id) {
+            try {
+                await apiFetch(`/api/orientador/alertas/${id}/asignar`, { method: 'POST', body: '{}' });
+                showToast('Alerta asignada');
+                loadAlertas(true);
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function atenderAlerta(id) {
+            try {
+                await apiFetch(`/api/orientador/alertas/${id}/atender`, { method: 'POST', body: JSON.stringify({ estado: 'atendida' }) });
+                showToast('Alerta atendida');
+                loadAlertas(true);
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadCitas(fromView = false) {
+            try {
+                const estado = document.getElementById('citas-estado')?.value || '';
+                const params = new URLSearchParams();
+                if (estado) params.append('estado', estado);
+                const data = await apiFetch(`/api/orientador/citas?${params.toString()}`);
+                const citas = data.citas || [];
+                citasCache = citas;
+                const container = document.getElementById(fromView ? 'citas-view-list' : 'citas-list');
+                if (!container) return;
+                if (!citas.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay citas.</div>';
+                    return;
+                }
+                container.innerHTML = citas.map(cita => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1">
+                                <p class="text-xs text-slate-400">${cita.alumno_nombre || ''}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">${cita.motivo || ''}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">${cita.fecha || ''} • ${cita.hora || ''}</p>
+                            </div>
+                            <span class="text-[10px] uppercase px-2 py-1 rounded-full bg-blue-100 text-blue-700">${cita.estado || ''}</span>
+                        </div>
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="editCita(${cita.id})" class="flex-1 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">Editar</button>
+                            <button onclick="deleteCita(${cita.id})" class="flex-1 py-1.5 rounded-lg bg-red-500 text-white text-xs">Cancelar</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function openCitaModal() {
+            document.getElementById('cita-modal-title').textContent = 'Nueva cita';
+            document.getElementById('cita-id').value = '';
+            document.getElementById('cita-alumno-id').value = '';
+            document.getElementById('cita-fecha').value = '';
+            document.getElementById('cita-hora').value = '';
+            document.getElementById('cita-motivo').value = '';
+            document.getElementById('cita-estado').value = 'pendiente';
+            document.getElementById('cita-notas').value = '';
+            document.getElementById('cita-modal').classList.remove('hidden');
+            document.getElementById('cita-modal').classList.add('flex');
+        }
+
+        function closeCitaModal() {
+            const modal = document.getElementById('cita-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function editCita(id) {
+            const cita = citasCache.find(c => c.id === id);
+            if (!cita) return;
+            document.getElementById('cita-modal-title').textContent = 'Editar cita';
+            document.getElementById('cita-id').value = cita.id;
+            document.getElementById('cita-alumno-id').value = cita.alumno_id || '';
+            document.getElementById('cita-fecha').value = cita.fecha || '';
+            document.getElementById('cita-hora').value = cita.hora || '';
+            document.getElementById('cita-motivo').value = cita.motivo || '';
+            document.getElementById('cita-estado').value = cita.estado || 'pendiente';
+            document.getElementById('cita-notas').value = cita.notas || '';
+            document.getElementById('cita-modal').classList.remove('hidden');
+            document.getElementById('cita-modal').classList.add('flex');
+        }
+
+        async function saveCita() {
+            try {
+                const id = document.getElementById('cita-id').value;
+                const payload = {
+                    alumno_id: Number(document.getElementById('cita-alumno-id').value),
+                    fecha: document.getElementById('cita-fecha').value,
+                    hora: document.getElementById('cita-hora').value,
+                    motivo: document.getElementById('cita-motivo').value,
+                    estado: document.getElementById('cita-estado').value,
+                    notas: document.getElementById('cita-notas').value
+                };
+                if (!payload.alumno_id || !payload.fecha || !payload.hora || !payload.motivo) {
+                    showToast('Completa los campos obligatorios', true);
+                    return;
+                }
+                if (id) {
+                    await apiFetch(`/api/orientador/citas/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                } else {
+                    await apiFetch('/api/orientador/citas', { method: 'POST', body: JSON.stringify(payload) });
+                }
+                showToast('Cita guardada');
+                closeCitaModal();
+                loadCitas(true);
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function deleteCita(id) {
+            if (!confirm('¿Cancelar cita?')) return;
+            try {
+                await apiFetch(`/api/orientador/citas/${id}`, { method: 'DELETE' });
+                showToast('Cita cancelada');
+                loadCitas(true);
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadCasos(fromView = false) {
+            try {
+                const estado = document.getElementById('casos-estado')?.value || '';
+                const params = new URLSearchParams();
+                if (estado) params.append('estado', estado);
+                const data = await apiFetch(`/api/orientador/casos?${params.toString()}`);
+                const casos = Array.isArray(data) ? data : [];
+                casosCache = casos;
+                const container = document.getElementById('casos-list');
+                if (!casos.length) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-500">No hay casos.</div>';
+                    return;
+                }
+                container.innerHTML = casos.map(caso => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="text-xs text-slate-400">${caso.alumno_nombre || ''} • ${caso.numero_caso || ''}</p>
+                        <p class="text-base font-semibold text-slate-900 dark:text-white">${caso.titulo || ''}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${caso.tipo_caso || ''} • ${caso.prioridad || ''} • ${caso.estado || ''}</p>
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="openCasoUpdateModal(${caso.id})" class="flex-1 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">Actualizar</button>
+                            <button onclick="setCasoTools(${caso.id}, ${caso.alumno_id})" class="flex-1 py-1.5 rounded-lg bg-primary text-white text-xs">Herramientas</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function openCasoModal() {
+            document.getElementById('caso-modal').classList.remove('hidden');
+            document.getElementById('caso-modal').classList.add('flex');
+        }
+
+        function closeCasoModal() {
+            const modal = document.getElementById('caso-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function saveCaso() {
+            try {
+                const payload = {
+                    alumno_id: Number(document.getElementById('caso-alumno').value),
+                    tipo_caso: document.getElementById('caso-tipo').value,
+                    prioridad: document.getElementById('caso-prioridad').value,
+                    titulo: document.getElementById('caso-titulo').value,
+                    descripcion: document.getElementById('caso-descripcion').value,
+                    motivo_consulta: document.getElementById('caso-motivo').value
+                };
+                if (!payload.alumno_id || !payload.titulo) {
+                    showToast('Completa los campos obligatorios', true);
+                    return;
+                }
+                await apiFetch('/api/orientador/casos', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Caso creado');
+                closeCasoModal();
+                loadCasos(true);
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function openCasoUpdateModal(id) {
+            const caso = casosCache.find(c => c.id === id);
+            if (!caso) return;
+            document.getElementById('caso-update-id').value = id;
+            document.getElementById('caso-update-estado').value = caso.estado || 'abierto';
+            document.getElementById('caso-update-prioridad').value = caso.prioridad || 'media';
+            document.getElementById('caso-update-diagnostico').value = caso.diagnostico_inicial || '';
+            document.getElementById('caso-update-plan').value = caso.plan_accion || '';
+            document.getElementById('caso-update-proxima').value = caso.proxima_sesion || '';
+            document.getElementById('caso-update-motivo').value = '';
+            const modal = document.getElementById('caso-update-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCasoUpdateModal() {
+            const modal = document.getElementById('caso-update-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function updateCaso() {
+            try {
+                const id = document.getElementById('caso-update-id').value;
+                const payload = {
+                    estado: document.getElementById('caso-update-estado').value,
+                    prioridad: document.getElementById('caso-update-prioridad').value,
+                    diagnostico_inicial: document.getElementById('caso-update-diagnostico').value,
+                    plan_accion: document.getElementById('caso-update-plan').value,
+                    proxima_sesion: document.getElementById('caso-update-proxima').value,
+                    motivo_cierre: document.getElementById('caso-update-motivo').value
+                };
+                await apiFetch(`/api/orientador/casos/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                showToast('Caso actualizado');
+                closeCasoUpdateModal();
+                loadCasos(true);
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function setCasoTools(casoId, alumnoId) {
+            document.getElementById('caso-tool-id').value = casoId || '';
+            document.getElementById('caso-tool-alumno').value = alumnoId || '';
+            showToast('Caso seleccionado');
+        }
+
+        function getCasoToolIds() {
+            const casoId = Number(document.getElementById('caso-tool-id').value);
+            const alumnoId = Number(document.getElementById('caso-tool-alumno').value);
+            return { casoId, alumnoId };
+        }
+
+        async function loadTimeline() {
+            try {
+                const { casoId } = getCasoToolIds();
+                if (!casoId) return showToast('Ingresa ID de caso', true);
+                const data = await apiFetch(`/api/orientador/timeline/${casoId}`);
+                const list = document.getElementById('timeline-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin eventos</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-xs text-slate-400">${item.tipo_evento || ''} • ${item.fecha_evento || ''}</p>
+                        <p class="text-sm font-semibold">${item.titulo || ''}</p>
+                        <p class="text-xs text-slate-500">${item.descripcion || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function addTimeline() {
+            try {
+                const { casoId, alumnoId } = getCasoToolIds();
+                if (!casoId || !alumnoId) return showToast('Ingresa ID de caso y alumno', true);
+                const payload = {
+                    caso_id: casoId,
+                    alumno_id: alumnoId,
+                    tipo_evento: document.getElementById('timeline-tipo').value,
+                    titulo: document.getElementById('timeline-titulo').value,
+                    descripcion: document.getElementById('timeline-descripcion').value,
+                    resultado: document.getElementById('timeline-resultado').value
+                };
+                await apiFetch('/api/orientador/timeline', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Evento agregado');
+                loadTimeline();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadSesiones() {
+            try {
+                const { casoId } = getCasoToolIds();
+                if (!casoId) return showToast('Ingresa ID de caso', true);
+                const data = await apiFetch(`/api/orientador/sesiones/${casoId}`);
+                const list = document.getElementById('sesiones-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin sesiones</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-xs text-slate-400">Sesión #${item.numero_sesion || ''} • ${item.fecha_sesion || ''}</p>
+                        <p class="text-sm font-semibold">${item.tipo_sesion || ''}</p>
+                        <p class="text-xs text-slate-500">${item.observaciones || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function addSesion() {
+            try {
+                const { casoId } = getCasoToolIds();
+                if (!casoId) return showToast('Ingresa ID de caso', true);
+                let acuerdos = [];
+                try {
+                    acuerdos = JSON.parse(document.getElementById('sesion-acuerdos').value || '[]');
+                } catch {
+                    return showToast('JSON de acuerdos inválido', true);
+                }
+                const payload = {
+                    fecha_sesion: document.getElementById('sesion-fecha').value,
+                    hora_inicio: document.getElementById('sesion-hora-inicio').value,
+                    hora_fin: document.getElementById('sesion-hora-fin').value,
+                    temas_tratados: document.getElementById('sesion-temas').value,
+                    observaciones: document.getElementById('sesion-observaciones').value,
+                    acuerdos,
+                    proximos_pasos: document.getElementById('sesion-proximos').value,
+                    estado_emocional_alumno: document.getElementById('sesion-estado').value
+                };
+                await apiFetch(`/api/orientador/sesiones/${casoId}`, { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Sesión creada');
+                loadSesiones();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadAcuerdos() {
+            try {
+                const { casoId } = getCasoToolIds();
+                if (!casoId) return showToast('Ingresa ID de caso', true);
+                const data = await apiFetch(`/api/orientador/acuerdos/${casoId}`);
+                const list = document.getElementById('acuerdos-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin acuerdos</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60 space-y-2">
+                        <p class="text-xs text-slate-400">${item.descripcion || ''} • ${item.estado || ''}</p>
+                        <div class="flex gap-2">
+                            <select id="acuerdo-estado-${item.id}" class="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-2 py-1 text-xs">
+                                <option value="pendiente">Pendiente</option>
+                                <option value="cumplido">Cumplido</option>
+                                <option value="no_cumplido">No cumplido</option>
+                            </select>
+                            <button onclick="updateAcuerdo(${item.id})" class="px-2 py-1 rounded-lg bg-primary text-white text-xs">Actualizar</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function updateAcuerdo(id) {
+            try {
+                const estado = document.getElementById(`acuerdo-estado-${id}`).value;
+                await apiFetch(`/api/orientador/acuerdos/${id}/estado`, { method: 'PUT', body: JSON.stringify({ estado }) });
+                showToast('Acuerdo actualizado');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadEvidencias() {
+            try {
+                const { casoId } = getCasoToolIds();
+                if (!casoId) return showToast('Ingresa ID de caso', true);
+                const data = await apiFetch(`/api/orientador/evidencias/${casoId}`);
+                const list = document.getElementById('evidencias-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin evidencias</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-xs text-slate-400">${item.tipo_evidencia || ''}</p>
+                        <p class="text-sm font-semibold">${item.titulo || ''}</p>
+                        <p class="text-xs text-slate-500">${item.descripcion || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function addEvidencia() {
+            try {
+                const { casoId, alumnoId } = getCasoToolIds();
+                if (!casoId || !alumnoId) return showToast('Ingresa ID de caso y alumno', true);
+                const payload = {
+                    alumno_id: alumnoId,
+                    tipo_evidencia: document.getElementById('evidencia-tipo').value,
+                    titulo: document.getElementById('evidencia-titulo').value,
+                    descripcion: document.getElementById('evidencia-descripcion').value,
+                    contenido_texto: document.getElementById('evidencia-contenido').value
+                };
+                await apiFetch(`/api/orientador/evidencias/${casoId}`, { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Evidencia agregada');
+                loadEvidencias();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadEscalamientos() {
+            try {
+                const data = await apiFetch('/api/orientador/escalamiento');
+                const list = document.getElementById('escalamiento-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin escalamientos</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-xs text-slate-400">${item.caso_titulo || ''}</p>
+                        <p class="text-sm font-semibold">${item.nivel_destino || ''}</p>
+                        <p class="text-xs text-slate-500">${item.motivo_escalamiento || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function addEscalamiento() {
+            try {
+                const { casoId, alumnoId } = getCasoToolIds();
+                if (!casoId || !alumnoId) return showToast('Ingresa ID de caso y alumno', true);
+                const payload = {
+                    caso_id: casoId,
+                    alumno_id: alumnoId,
+                    nivel_destino: document.getElementById('escalamiento-destino').value,
+                    motivo_escalamiento: document.getElementById('escalamiento-motivo').value,
+                    urgente: document.getElementById('escalamiento-urgente').checked
+                };
+                await apiFetch('/api/orientador/escalamiento', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Escalamiento creado');
+                loadEscalamientos();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadReportesInstitucionales() {
+            try {
+                const data = await apiFetch('/api/orientador/reportes');
+                const list = document.getElementById('reportes-institucionales-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin reportes</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800">
+                        <p class="text-xs text-slate-400">${item.tipo_reporte || ''}</p>
+                        <p class="text-sm font-semibold">${item.titulo || ''}</p>
+                        <p class="text-xs text-slate-500">${item.estado || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function crearReporteInstitucional() {
+            try {
+                const payload = {
+                    titulo: document.getElementById('reporte-inst-titulo').value,
+                    tipo_reporte: document.getElementById('reporte-inst-tipo').value,
+                    periodo_inicio: document.getElementById('reporte-inst-inicio').value,
+                    periodo_fin: document.getElementById('reporte-inst-fin').value,
+                    formato: 'pdf'
+                };
+                await apiFetch('/api/orientador/reportes', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Reporte solicitado');
+                loadReportesInstitucionales();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function enviarReporteConducta() {
+            try {
+                const payload = {
+                    alumno_id: Number(document.getElementById('reporte-alumno-id').value),
+                    tipo: document.getElementById('reporte-tipo').value,
+                    descripcion: document.getElementById('reporte-descripcion').value
+                };
+                if (!payload.alumno_id || !payload.descripcion) {
+                    return showToast('Completa los campos', true);
+                }
+                await apiFetch('/api/enviar_reporte', { method: 'POST', body: JSON.stringify(payload) });
+                document.getElementById('reporte-conducta-msg').textContent = 'Reporte enviado';
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadRiesgo() {
+            try {
+                const nivel = document.getElementById('riesgo-nivel').value;
+                const params = nivel ? `?nivel=${nivel}` : '';
+                const data = await apiFetch(`/api/orientador/riesgo${params}`);
+                const list = document.getElementById('riesgo-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin datos</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-xs text-slate-400">${item.alumno_nombre || ''}</p>
+                        <p class="text-sm font-semibold">${item.nivel_riesgo || ''} • ${item.puntuacion_total || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function calcularRiesgo() {
+            try {
+                const alumnoId = Number(document.getElementById('riesgo-alumno').value);
+                if (!alumnoId) return showToast('Ingresa ID alumno', true);
+                await apiFetch(`/api/orientador/riesgo/${alumnoId}/calcular`, { method: 'POST', body: '{}' });
+                showToast('Riesgo calculado');
+                loadRiesgo();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadHistorial() {
+            try {
+                const alumnoId = Number(document.getElementById('historial-alumno').value);
+                if (!alumnoId) return showToast('Ingresa ID alumno', true);
+                const data = await apiFetch(`/api/orientador/historial/${alumnoId}`);
+                const list = document.getElementById('historial-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin historial</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-xs text-slate-400">${item.tipo_evento || ''} • ${item.fecha_evento || ''}</p>
+                        <p class="text-sm font-semibold">${item.titulo || ''}</p>
+                        <p class="text-xs text-slate-500">${item.descripcion || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function addHistorial() {
+            try {
+                const payload = {
+                    alumno_id: Number(document.getElementById('historial-alumno').value),
+                    tipo_evento: document.getElementById('historial-tipo').value,
+                    titulo: document.getElementById('historial-titulo').value,
+                    descripcion: document.getElementById('historial-descripcion').value,
+                    relevancia: document.getElementById('historial-relevancia').value
+                };
+                if (!payload.alumno_id || !payload.tipo_evento || !payload.titulo) {
+                    return showToast('Completa los campos', true);
+                }
+                await apiFetch('/api/orientador/historial', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Historial agregado');
+                loadHistorial();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadPlanes() {
+            try {
+                const data = await apiFetch('/api/orientador/planes');
+                const list = document.getElementById('planes-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin planes</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-semibold">${item.nombre || ''}</p>
+                            <p class="text-xs text-slate-500">${item.tipo_problema || ''}</p>
+                        </div>
+                        <button onclick="usarPlan(${item.id})" class="px-2 py-1 rounded-lg bg-primary text-white text-xs">Usar</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function addPlan() {
+            try {
+                const payload = {
+                    nombre: document.getElementById('plan-nombre').value,
+                    descripcion: document.getElementById('plan-descripcion').value,
+                    tipo_problema: document.getElementById('plan-tipo').value,
+                    objetivos: JSON.parse(document.getElementById('plan-objetivos').value || '[]'),
+                    actividades: JSON.parse(document.getElementById('plan-actividades').value || '[]'),
+                    indicadores_exito: JSON.parse(document.getElementById('plan-indicadores').value || '[]')
+                };
+                await apiFetch('/api/orientador/planes', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Plan creado');
+                loadPlanes();
+            } catch (error) {
+                showToast('JSON inválido o datos incompletos', true);
+            }
+        }
+
+        async function usarPlan(id) {
+            try {
+                await apiFetch(`/api/orientador/planes/${id}/usar`, { method: 'POST', body: '{}' });
+                showToast('Plan marcado como usado');
+                loadPlanes();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadComunicaciones() {
+            try {
+                const data = await apiFetch('/api/orientador/comunicacion');
+                const list = document.getElementById('comunicacion-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin comunicaciones</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-xs text-slate-400">${item.alumno_nombre || ''}</p>
+                        <p class="text-sm font-semibold">${item.asunto || ''}</p>
+                        <p class="text-xs text-slate-500">${item.estado || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function crearComunicacion() {
+            try {
+                const payload = {
+                    alumno_id: Number(document.getElementById('comunicacion-alumno').value),
+                    asunto: document.getElementById('comunicacion-asunto').value,
+                    participantes: JSON.parse(document.getElementById('comunicacion-participantes').value || '[]'),
+                    tipo: 'consulta'
+                };
+                await apiFetch('/api/orientador/comunicacion', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Comunicación creada');
+                loadComunicaciones();
+            } catch (error) {
+                showToast('JSON inválido o datos incompletos', true);
+            }
+        }
+
+        async function enviarMensajeComunicacion() {
+            try {
+                const id = Number(document.getElementById('comunicacion-id').value);
+                const contenido = document.getElementById('comunicacion-mensaje').value;
+                if (!id || !contenido) return showToast('Completa los campos', true);
+                await apiFetch(`/api/orientador/comunicacion/${id}/mensaje`, { method: 'POST', body: JSON.stringify({ contenido }) });
+                showToast('Mensaje enviado');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadIndicadores() {
+            try {
+                const alumnoId = Number(document.getElementById('indicadores-alumno').value);
+                if (!alumnoId) return showToast('Ingresa ID alumno', true);
+                const data = await apiFetch(`/api/orientador/indicadores/${alumnoId}`);
+                const list = document.getElementById('indicadores-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin indicadores</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-xs text-slate-400">${item.periodo_inicio || ''} - ${item.periodo_fin || ''}</p>
+                        <p class="text-sm font-semibold">Acad: ${item.indicador_academico || 0} • Asist: ${item.indicador_asistencia || 0}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function addIndicador() {
+            try {
+                const payload = {
+                    alumno_id: Number(document.getElementById('indicadores-alumno').value),
+                    periodo_inicio: document.getElementById('indicadores-inicio').value,
+                    periodo_fin: document.getElementById('indicadores-fin').value,
+                    indicador_academico: Number(document.getElementById('indicadores-academico').value || 0),
+                    indicador_asistencia: Number(document.getElementById('indicadores-asistencia').value || 0),
+                    indicador_bienestar: Number(document.getElementById('indicadores-bienestar').value || 0),
+                    tendencia: document.getElementById('indicadores-tendencia').value,
+                    observaciones: document.getElementById('indicadores-observaciones').value
+                };
+                await apiFetch('/api/orientador/indicadores', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Indicador agregado');
+                loadIndicadores();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadRecordatorios() {
+            try {
+                const data = await apiFetch('/api/orientador/recordatorios');
+                const list = document.getElementById('recordatorios-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin recordatorios</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-semibold">${item.titulo || ''}</p>
+                            <p class="text-xs text-slate-500">${item.fecha_recordatorio || ''}</p>
+                        </div>
+                        <button onclick="deleteRecordatorio(${item.id})" class="px-2 py-1 rounded-lg bg-red-500 text-white text-xs">Eliminar</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function addRecordatorio() {
+            try {
+                const payload = {
+                    caso_id: document.getElementById('recordatorio-caso').value || null,
+                    alumno_id: document.getElementById('recordatorio-alumno').value || null,
+                    tipo: document.getElementById('recordatorio-tipo').value,
+                    titulo: document.getElementById('recordatorio-titulo').value,
+                    fecha_recordatorio: document.getElementById('recordatorio-fecha').value
+                };
+                await apiFetch('/api/orientador/recordatorios', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Recordatorio agregado');
+                loadRecordatorios();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function deleteRecordatorio(id) {
+            try {
+                await apiFetch(`/api/orientador/recordatorios/${id}`, { method: 'DELETE' });
+                showToast('Recordatorio eliminado');
+                loadRecordatorios();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadPredicciones() {
+            try {
+                const data = await apiFetch('/api/orientador/prediccion-desercion');
+                const list = document.getElementById('prediccion-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin predicciones</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-xs text-slate-400">${item.alumno_nombre || ''}</p>
+                        <p class="text-sm font-semibold">${item.nivel_riesgo || ''} • ${item.probabilidad_desercion || 0}%</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function calcularPrediccion() {
+            try {
+                const alumnoId = Number(document.getElementById('prediccion-alumno').value);
+                if (!alumnoId) return showToast('Ingresa ID alumno', true);
+                await apiFetch(`/api/orientador/prediccion-desercion/${alumnoId}/calcular`, { method: 'POST', body: '{}' });
+                showToast('Predicción calculada');
+                loadPredicciones();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadExportaciones() {
+            try {
+                const data = await apiFetch('/api/orientador/exportaciones');
+                const list = document.getElementById('exportaciones-list');
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin exportaciones</div>';
+                    return;
+                }
+                list.innerHTML = data.map(item => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-xs text-slate-400">${item.alumno_nombre || ''}</p>
+                        <p class="text-sm font-semibold">${item.tipo_exportacion || ''}</p>
+                        <p class="text-xs text-slate-500">${item.estado || ''}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function solicitarExportacion() {
+            try {
+                const { casoId, alumnoId } = getCasoToolIds();
+                if (!alumnoId) return showToast('Ingresa ID alumno', true);
+                const payload = {
+                    alumno_id: alumnoId,
+                    caso_id: casoId || null,
+                    tipo_exportacion: document.getElementById('exportacion-tipo').value,
+                    motivo: document.getElementById('exportacion-motivo').value,
+                    formato: 'pdf'
+                };
+                await apiFetch('/api/orientador/exportar', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Exportación solicitada');
+                loadExportaciones();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function enviarAviso() {
+            try {
+                const payload = {
+                    destinatario: document.getElementById('aviso-destinatario').value,
+                    tipo: document.getElementById('aviso-tipo').value,
+                    mensaje: document.getElementById('aviso-mensaje').value,
+                    fecha: document.getElementById('aviso-fecha').value
+                };
+                await apiFetch('/api/orientador/avisos', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Aviso enviado');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function generarJustificante() {
+            try {
+                const payload = {
+                    alumno: document.getElementById('justificante-alumno').value,
+                    fecha: document.getElementById('justificante-fecha').value,
+                    motivo: document.getElementById('justificante-motivo').value
+                };
+                await apiFetch('/api/orientador/justificantes', { method: 'POST', body: JSON.stringify(payload) });
+                showToast('Justificante generado');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function buscarHorarios() {
+            try {
+                const grupo = document.getElementById('horario-grupo').value.trim().toUpperCase();
+                const list = document.getElementById('horarios-list');
+                if (!grupo) return showToast('Ingresa grupo', true);
+                const data = await apiFetch(`/api/buscar_horarios?grupo=${encodeURIComponent(grupo)}`);
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin horarios</div>';
+                    return;
+                }
+                list.innerHTML = data.map(h => {
+                    const url = `/uploads/${encodeURIComponent(h.archivo_ruta)}`;
+                    return `
+                        <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold">${h.grupo}</p>
+                                <a href="${url}" target="_blank" class="text-xs text-primary">Abrir</a>
+                            </div>
+                            <button onclick="eliminarHorario(${h.id}, '${h.archivo_ruta}')" class="px-2 py-1 rounded-lg bg-red-500 text-white text-xs">Eliminar</button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function eliminarHorario(id, archivo) {
+            if (!confirm('¿Eliminar horario?')) return;
+            try {
+                await apiFetch('/api/eliminar_horario', { method: 'POST', body: JSON.stringify({ id, archivo_ruta: archivo }) });
+                showToast('Horario eliminado');
+                buscarHorarios();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadAlumnosGrupo() {
+            try {
+                const grupo = document.getElementById('asistencia-grupo').value.trim();
+                const list = document.getElementById('asistencia-list');
+                if (!grupo) return showToast('Ingresa grupo', true);
+                const data = await apiFetch(`/api/orientador/grupo/${encodeURIComponent(grupo)}/alumnos`);
+                if (!data.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin alumnos</div>';
+                    return;
+                }
+                list.innerHTML = data.map(a => `
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" data-id="${a.id}" checked class="rounded" />
+                        ${a.nombre} (${a.numero_control || 'N/C'})
+                    </label>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function registrarAsistencias() {
+            try {
+                const grupo = document.getElementById('asistencia-grupo').value.trim();
+                const fecha = document.getElementById('asistencia-fecha').value;
+                const checks = Array.from(document.querySelectorAll('#asistencia-list input[type="checkbox"]'));
+                const asistencias = checks.map(c => ({ alumno_id: Number(c.dataset.id), presente: c.checked }));
+                if (!grupo || !fecha || !asistencias.length) return showToast('Completa los datos', true);
+                await apiFetch('/api/orientador/asistencias', { method: 'POST', body: JSON.stringify({ grupo, fecha, asistencias }) });
+                showToast('Asistencias registradas');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function loadOrientadores() {
+            try {
+                const q = document.getElementById('orientadores-search').value || '';
+                const activo = document.getElementById('orientadores-activo').value || '';
+                const params = new URLSearchParams();
+                if (q) params.append('q', q);
+                if (activo !== '') params.append('activo', activo);
+                const data = await apiFetch(`/api/orientadores?${params.toString()}`);
+                const list = document.getElementById('orientadores-list');
+                const items = data.orientadores || [];
+                if (!items.length) {
+                    list.innerHTML = '<div class="text-xs text-slate-500">Sin orientadores</div>';
+                    return;
+                }
+                list.innerHTML = items.map(o => `
+                    <div class="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60">
+                        <p class="text-sm font-semibold">${o.nombre}</p>
+                        <p class="text-xs text-slate-500">${o.email}</p>
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="editOrientador(${o.id})" class="flex-1 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs">Editar</button>
+                            <button onclick="deleteOrientador(${o.id})" class="flex-1 py-1 rounded-lg bg-red-500 text-white text-xs">Desactivar</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        function openOrientadorModal() {
+            document.getElementById('orientador-id').value = '';
+            document.getElementById('orientador-modal-title').textContent = 'Nuevo orientador';
+            document.getElementById('orientador-nombre').value = '';
+            document.getElementById('orientador-email').value = '';
+            document.getElementById('orientador-numero').value = '';
+            document.getElementById('orientador-curp').value = '';
+            document.getElementById('orientador-telefono').value = '';
+            document.getElementById('orientador-direccion').value = '';
+            document.getElementById('orientador-password').value = '';
+            const modal = document.getElementById('orientador-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeOrientadorModal() {
+            const modal = document.getElementById('orientador-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function editOrientador(id) {
+            try {
+                const data = await apiFetch(`/api/orientadores/${id}`);
+                const orientador = data.orientador;
+                document.getElementById('orientador-id').value = orientador.id;
+                document.getElementById('orientador-modal-title').textContent = 'Editar orientador';
+                document.getElementById('orientador-nombre').value = orientador.nombre || '';
+                document.getElementById('orientador-email').value = orientador.email || '';
+                document.getElementById('orientador-numero').value = orientador.numero_control || '';
+                document.getElementById('orientador-curp').value = orientador.curp || '';
+                document.getElementById('orientador-telefono').value = orientador.telefono || '';
+                document.getElementById('orientador-direccion').value = orientador.direccion || '';
+                document.getElementById('orientador-password').value = '';
+                const modal = document.getElementById('orientador-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function saveOrientador() {
+            try {
+                const id = document.getElementById('orientador-id').value;
+                const payload = {
+                    nombre: document.getElementById('orientador-nombre').value,
+                    email: document.getElementById('orientador-email').value,
+                    numero_control: document.getElementById('orientador-numero').value,
+                    curp: document.getElementById('orientador-curp').value,
+                    telefono: document.getElementById('orientador-telefono').value,
+                    direccion: document.getElementById('orientador-direccion').value,
+                    password: document.getElementById('orientador-password').value
+                };
+                if (id) {
+                    await apiFetch(`/api/orientadores/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+                } else {
+                    await apiFetch('/api/orientadores', { method: 'POST', body: JSON.stringify(payload) });
+                }
+                showToast('Orientador guardado');
+                closeOrientadorModal();
+                loadOrientadores();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function deleteOrientador(id) {
+            if (!confirm('¿Desactivar orientador?')) return;
+            try {
+                await apiFetch(`/api/orientadores/${id}`, { method: 'DELETE' });
+                showToast('Orientador desactivado');
+                loadOrientadores();
+            } catch (error) {
+                showToast(error.message, true);
+            }
+        }
+
+        async function uploadProfilePhoto() {
+            const input = document.getElementById('orientador-photo');
+            const msg = document.getElementById('upload-foto-msg');
+            if (!input || !input.files || !input.files[0]) {
+                msg.textContent = 'Selecciona una imagen';
+                return;
+            }
+            const formData = new FormData();
+            formData.append('photo', input.files[0]);
+            try {
+                const response = await fetch('/api/profile/upload-photo', { method: 'POST', body: formData });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.error || 'Error al subir foto');
+                msg.textContent = 'Foto actualizada';
+            } catch (error) {
+                msg.textContent = error.message;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderBottomNav();
+        });
+    </script>
+</body>
+
+</html><!DOCTYPE html>
+<html class="light" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Panel Orientador</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
     <link
