@@ -2185,7 +2185,9 @@
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
-            loadDashboard();
+            const params = new URLSearchParams(window.location.search);
+            const panel = params.get('panel') || 'dashboard';
+            showPanel(panel);
         });
     </script>
 </div>

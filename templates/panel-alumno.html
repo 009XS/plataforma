@@ -256,7 +256,7 @@
                     {% endfor %}
                 </div>
 
-                <button onclick="window.location.href='/tareas'"
+                <button onclick="showPanel('dashboard')"
                     class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
                     Ver todas las tareas
                     <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
@@ -479,6 +479,102 @@
                 <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Documentos</p>
                 <p class="text-xs text-slate-500">Constancias/Boletas</p>
             </button>
+            <button onclick="showPanel('logros')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-yellow-600">emoji_events</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Logros</p>
+                <p class="text-xs text-slate-500">Diarios y semanales</p>
+            </button>
+            <button onclick="showPanel('insignias')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-amber-600">workspace_premium</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Insignias</p>
+                <p class="text-xs text-slate-500">Colección personal</p>
+            </button>
+            <button onclick="showPanel('ranking')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-indigo-600">leaderboard</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Ranking</p>
+                <p class="text-xs text-slate-500">Posiciones</p>
+            </button>
+            <button onclick="showPanel('mensajeria')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-cyan-600">mail</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Mensajería</p>
+                <p class="text-xs text-slate-500">Inbox interno</p>
+            </button>
+            <button onclick="showPanel('notificaciones-internas')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-orange-600">notifications</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Notifs internas</p>
+                <p class="text-xs text-slate-500">Centro interno</p>
+            </button>
+            <button onclick="showPanel('foros')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-teal-600">forum</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Foros</p>
+                <p class="text-xs text-slate-500">Comunidad</p>
+            </button>
+            <button onclick="showPanel('flashcards')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-emerald-600">style</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Flashcards</p>
+                <p class="text-xs text-slate-500">Memorización</p>
+            </button>
+            <button onclick="showPanel('ia-tutor')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-fuchsia-600">smart_toy</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Tutor IA</p>
+                <p class="text-xs text-slate-500">Asistencia guiada</p>
+            </button>
+            <button onclick="showPanel('playground')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-purple-600">terminal</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Playground</p>
+                <p class="text-xs text-slate-500">Código rápido</p>
+            </button>
+            <button onclick="showPanel('snippets')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-slate-600">code</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Snippets</p>
+                <p class="text-xs text-slate-500">Compartir código</p>
+            </button>
+            <button onclick="showPanel('tienda')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-orange-600">store</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Tienda</p>
+                <p class="text-xs text-slate-500">Recompensas</p>
+            </button>
+            <button onclick="showPanel('learning-paths')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-blue-600">route</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Learning Paths</p>
+                <p class="text-xs text-slate-500">Trayectorias</p>
+            </button>
+            <button onclick="showPanel('labs')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-lime-600">science</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Labs Virtuales</p>
+                <p class="text-xs text-slate-500">Prácticas</p>
+            </button>
+            <button onclick="showPanel('external-resources')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-cyan-600">travel_explore</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Recursos</p>
+                <p class="text-xs text-slate-500">Externos</p>
+            </button>
+            <button onclick="showPanel('eventos')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-rose-600">event</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Eventos</p>
+                <p class="text-xs text-slate-500">Calendario</p>
+            </button>
+            <button onclick="showPanel('coursera')"
+                class="p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-slate-800 shadow-sm text-left">
+                <span class="material-symbols-outlined text-sky-600">school</span>
+                <p class="mt-2 text-sm font-bold text-slate-900 dark:text-white">Coursera</p>
+                <p class="text-xs text-slate-500">Recomendaciones</p>
+            </button>
         </div>
     </div>
 
@@ -605,10 +701,10 @@
             </button>
             <h2 class="text-xl font-bold text-slate-900 dark:text-white">Exámenes</h2>
         </div>
-        <a href="/examenes" class="w-full inline-flex items-center justify-center gap-1 py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition">
-            Ir a Exámenes
-            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-        </a>
+        <button onclick="loadExamenes()" class="w-full inline-flex items-center justify-center gap-1 py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition">
+            Actualizar Exámenes
+            <span class="material-symbols-outlined text-[18px]">refresh</span>
+        </button>
         <div id="examenes-list" class="flex flex-col gap-3"></div>
     </div>
 
@@ -669,6 +765,231 @@
             <button onclick="descargarConstancia()" class="w-full py-3 rounded-lg bg-emerald-500 text-white font-bold shadow-lg hover:bg-emerald-600 transition">Generar constancia</button>
             <button onclick="descargarBoleta()" class="w-full py-3 rounded-lg bg-blue-500 text-white font-bold shadow-lg hover:bg-blue-600 transition">Descargar boleta</button>
         </div>
+    </div>
+
+    <!-- Logros View -->
+    <div id="logros-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Logros</h2>
+        </div>
+        <div id="logros-hoy" class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm"></div>
+        <div id="logros-semana" class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm"></div>
+        <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-2">Recompensas disponibles</h3>
+            <div id="logros-recompensas" class="flex flex-col gap-3"></div>
+        </div>
+        <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-2">Historial de canjes</h3>
+            <div id="logros-historial" class="flex flex-col gap-3"></div>
+        </div>
+    </div>
+
+    <!-- Insignias View -->
+    <div id="insignias-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mis Insignias</h2>
+        </div>
+        <div id="insignias-stats" class="text-xs text-slate-500"></div>
+        <div id="insignias-list" class="grid grid-cols-2 gap-3"></div>
+    </div>
+
+    <!-- Ranking View -->
+    <div id="ranking-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Ranking</h2>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="loadRanking('semanal')" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs">Semanal</button>
+            <button onclick="loadRanking('mensual')" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs">Mensual</button>
+            <button onclick="loadRanking('global')" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs">Global</button>
+        </div>
+        <div id="ranking-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <!-- Mensajería View -->
+    <div id="mensajeria-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mensajería</h2>
+        </div>
+        <div id="mensajeria-list" class="flex flex-col gap-3"></div>
+        <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+            <h3 class="text-sm font-bold mb-2">Nuevo mensaje</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <input id="msg-destinatario" type="number" placeholder="ID destinatario" class="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm" />
+                <select id="msg-tipo" class="rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm">
+                    <option value="usuario">Usuario</option>
+                    <option value="materia">Materia</option>
+                </select>
+            </div>
+            <input id="msg-asunto" type="text" placeholder="Asunto" class="w-full mt-2 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm" />
+            <textarea id="msg-contenido" rows="3" placeholder="Mensaje" class="w-full mt-2 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm"></textarea>
+            <button onclick="enviarMensaje()" class="w-full mt-2 py-2 rounded-lg bg-primary text-white font-bold">Enviar</button>
+        </div>
+    </div>
+
+    <!-- Notificaciones internas View -->
+    <div id="notificaciones-internas-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Notificaciones internas</h2>
+        </div>
+        <button onclick="marcarTodasNotificacionesInternas()" class="w-full py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Marcar todo como leído</button>
+        <div id="notificaciones-internas-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <!-- Foros View -->
+    <div id="foros-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Foros</h2>
+        </div>
+        <button onclick="crearPostForo()" class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition">Nuevo post</button>
+        <div id="foros-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <!-- Flashcards View -->
+    <div id="flashcards-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Flashcards</h2>
+        </div>
+        <button onclick="crearFlashcard()" class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition">Nueva flashcard</button>
+        <div id="flashcards-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <!-- Tutor IA View -->
+    <div id="ia-tutor-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Tutor IA</h2>
+        </div>
+        <div id="ia-chat" class="flex flex-col gap-3"></div>
+        <div class="flex gap-2">
+            <input id="ia-input" type="text" placeholder="Pregunta al tutor..." class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+            <button onclick="enviarPreguntaIA()" class="px-3 py-2 rounded-xl bg-primary text-white">Enviar</button>
+        </div>
+    </div>
+
+    <!-- Playground View -->
+    <div id="playground-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Playground</h2>
+        </div>
+        <textarea id="playground-code" rows="10" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" placeholder="Escribe tu código aquí..."></textarea>
+        <div class="flex gap-2">
+            <button onclick="loadPlayground()" class="flex-1 py-2 rounded-lg bg-slate-100 dark:bg-slate-800">Cargar</button>
+            <button onclick="savePlayground()" class="flex-1 py-2 rounded-lg bg-primary text-white">Guardar</button>
+        </div>
+    </div>
+
+    <!-- Snippets View -->
+    <div id="snippets-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Snippets</h2>
+        </div>
+        <textarea id="snippet-code" rows="6" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" placeholder="Código a compartir..."></textarea>
+        <button onclick="shareSnippet()" class="w-full py-2 rounded-lg bg-primary text-white">Compartir</button>
+        <div class="flex gap-2">
+            <input id="snippet-id" type="text" placeholder="ID de snippet" class="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+            <button onclick="loadSnippet()" class="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800">Ver</button>
+        </div>
+        <pre id="snippet-viewer" class="whitespace-pre-wrap text-xs bg-slate-100 dark:bg-slate-800 rounded-xl p-3"></pre>
+    </div>
+
+    <!-- Tienda View -->
+    <div id="tienda-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Tienda</h2>
+        </div>
+        <div id="tienda-balance" class="text-xs text-slate-500"></div>
+        <div id="tienda-list" class="grid grid-cols-2 gap-3"></div>
+    </div>
+
+    <!-- Learning Paths View -->
+    <div id="learning-paths-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Learning Paths</h2>
+        </div>
+        <div id="learning-paths-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <!-- Labs View -->
+    <div id="labs-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Labs Virtuales</h2>
+        </div>
+        <select id="labs-materia" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></select>
+        <div id="labs-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <!-- Recursos Externos View -->
+    <div id="external-resources-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Recursos Externos</h2>
+        </div>
+        <select id="external-materia" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></select>
+        <div id="external-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <!-- Eventos View -->
+    <div id="eventos-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Eventos</h2>
+        </div>
+        <div id="eventos-list" class="flex flex-col gap-3"></div>
+    </div>
+
+    <!-- Coursera View -->
+    <div id="coursera-view" class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-20 overflow-y-auto z-20">
+        <div class="flex items-center gap-2 mb-2">
+            <button onclick="showPanel('more')" class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Coursera</h2>
+        </div>
+        <select id="coursera-materia" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm"></select>
+        <div id="coursera-list" class="flex flex-col gap-3"></div>
     </div>
     <script>
 
@@ -1815,6 +2136,11 @@
 
             // --- Dashboard Inicio: cargar datos dinámicamente ---
             loadDashboard();
+
+            const panelParam = new URLSearchParams(window.location.search).get('panel');
+            if (panelParam) {
+                showPanel(panelParam);
+            }
         });
 
         let tareasCache = [];
@@ -2035,7 +2361,7 @@
 
             html += `
                     </div>
-                    <button onclick="window.location.href='/tareas'" class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
+                    <button onclick="showPanel('dashboard')" class="w-full mt-4 py-3 text-sm font-medium text-primary hover:text-primary/80 transition flex items-center justify-center gap-1">
                         Ver todas las tareas
                         <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
                     </button>
@@ -3226,6 +3552,491 @@
             }
         }
 
+        async function loadLogros() {
+            const hoy = document.getElementById('logros-hoy');
+            const semana = document.getElementById('logros-semana');
+            const recompensas = document.getElementById('logros-recompensas');
+            const historial = document.getElementById('logros-historial');
+            hoy.innerHTML = 'Cargando...';
+            semana.innerHTML = '';
+            recompensas.innerHTML = '';
+            historial.innerHTML = '';
+            try {
+                const data = await apiGet('/api/alumno/logros');
+                const lh = data.logros_hoy || {};
+                const ls = data.logros_semana || {};
+                hoy.innerHTML = `
+                    <p class="font-bold text-slate-900 dark:text-white mb-1">Hoy</p>
+                    <div class="text-xs text-slate-500">Tareas: ${lh.tareas_completadas || 0} • Exámenes: ${lh.examenes_completados || 0}</div>
+                    <div class="text-xs text-slate-500">Minutos estudio: ${lh.minutos_estudio || 0} • Preguntas: ${lh.preguntas_respondidas || 0}</div>
+                    <div class="text-xs text-slate-500">Racha: ${lh.racha_dias || 0} días</div>
+                `;
+                semana.innerHTML = `
+                    <p class="font-bold text-slate-900 dark:text-white mb-1">Semana</p>
+                    <div class="text-xs text-slate-500">Tareas: ${ls?.tareas_completadas || 0} • Exámenes: ${ls?.examenes_completados || 0}</div>
+                    <div class="text-xs text-slate-500">Minutos estudio: ${ls?.minutos_estudio || 0} • Preguntas: ${ls?.preguntas_respondidas || 0}</div>
+                `;
+                const recompensasList = data.recompensas || [];
+                recompensas.innerHTML = recompensasList.length ? recompensasList.map(r => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${r.nombre}</p>
+                        <p class="text-xs text-slate-500">${r.descripcion || ''}</p>
+                        <p class="text-xs text-slate-400">Costo: ${r.costo_educoins} EduCoins</p>
+                    </div>
+                `).join('') : '<div class="p-4 text-center text-slate-500">Sin recompensas disponibles.</div>';
+
+                const historialList = data.historial || [];
+                historial.innerHTML = historialList.length ? historialList.map(h => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${h.nombre}</p>
+                        <p class="text-xs text-slate-500">${h.descripcion || ''}</p>
+                        <p class="text-xs text-slate-400">${h.fecha_canje || ''}</p>
+                    </div>
+                `).join('') : '<div class="p-4 text-center text-slate-500">Sin canjes.</div>';
+            } catch (e) {
+                hoy.innerHTML = '<p class="text-sm text-red-500">Error al cargar logros.</p>';
+            }
+        }
+
+        async function loadInsignias() {
+            const list = document.getElementById('insignias-list');
+            const stats = document.getElementById('insignias-stats');
+            list.innerHTML = '<div class="col-span-2 text-center text-slate-400">Cargando...</div>';
+            try {
+                const data = await apiGet('/api/alumno/insignias');
+                const insignias = data.insignias || [];
+                const resumen = (data.stats || []).map(s => `${s.rareza}: ${s.count}`).join(' • ');
+                stats.textContent = resumen || 'Sin estadísticas aún.';
+                list.innerHTML = insignias.length ? insignias.map(i => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-3 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="text-xs font-bold text-slate-900 dark:text-white">${i.nombre}</p>
+                        <p class="text-[10px] text-slate-500">${i.rareza || ''}</p>
+                    </div>
+                `).join('') : '<div class="col-span-2 text-center text-slate-500">No hay insignias.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="col-span-2 text-center text-red-500">Error al cargar insignias.</div>';
+            }
+        }
+
+        async function loadRanking(periodo = 'semanal') {
+            const list = document.getElementById('ranking-list');
+            list.innerHTML = '<div class="text-center text-slate-400">Cargando...</div>';
+            try {
+                const data = await apiGet(`/api/alumno/ranking?periodo=${periodo}`);
+                const ranking = data.ranking || [];
+                list.innerHTML = ranking.length ? ranking.map((r, idx) => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-3 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-slate-500">#${idx + 1}</span>
+                            <div>
+                                <p class="text-sm font-bold text-slate-900 dark:text-white">${r.nombre}</p>
+                                <p class="text-xs text-slate-500">${r.rango || ''}</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold text-primary">${r.xp_periodo || 0} XP</span>
+                    </div>
+                `).join('') : '<div class="text-center text-slate-500">Sin datos de ranking.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-center text-red-500">Error al cargar ranking.</div>';
+            }
+        }
+
+        async function loadMensajeria() {
+            const list = document.getElementById('mensajeria-list');
+            list.innerHTML = '<div class="text-center text-slate-400">Cargando...</div>';
+            try {
+                const mensajes = await apiGet('/api/messages');
+                list.innerHTML = mensajes.length ? mensajes.map(m => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${m.asunto || 'Sin asunto'}</p>
+                        <p class="text-xs text-slate-500">De: ${m.remitente_nombre || 'Sistema'}</p>
+                        <p class="text-xs text-slate-400">${m.fecha_envio || ''}</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300 mt-2">${m.contenido || ''}</p>
+                    </div>
+                `).join('') : '<div class="text-center text-slate-500">Sin mensajes.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-center text-red-500">Error al cargar mensajes.</div>';
+            }
+        }
+
+        async function loadNotificacionesInternas() {
+            const list = document.getElementById('notificaciones-internas-list');
+            list.innerHTML = '<div class="text-center text-slate-400">Cargando...</div>';
+            try {
+                const data = await apiGet('/api/notificaciones_internas');
+                const noLeidas = data.no_leidas || [];
+                const leidas = data.leidas || [];
+                const renderItem = (n, unread) => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm ${unread ? 'ring-1 ring-orange-300' : ''}">
+                        <p class="font-medium text-slate-900 dark:text-white">${n.tipo_texto || 'Notificación'}</p>
+                        <p class="text-xs text-slate-500">${n.titulo || n.asunto || ''}</p>
+                        <p class="text-xs text-slate-400">${n.tiempo_relativo || ''}</p>
+                        <p class="text-sm text-slate-600 dark:text-slate-300 mt-2">${n.mensaje || n.contenido || ''}</p>
+                    </div>
+                `;
+                const htmlNoLeidas = noLeidas.map(n => renderItem(n, true)).join('');
+                const htmlLeidas = leidas.map(n => renderItem(n, false)).join('');
+                list.innerHTML = (htmlNoLeidas || htmlLeidas) ? `${htmlNoLeidas}${htmlLeidas}` : '<div class="text-center text-slate-500">Sin notificaciones.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-center text-red-500">Error al cargar notificaciones.</div>';
+            }
+        }
+
+        async function marcarTodasNotificacionesInternas() {
+            try {
+                await apiPost('/api/notificaciones/marcar-todas-leidas');
+                showToast('Notificaciones marcadas', 'success');
+                loadNotificacionesInternas();
+            } catch (e) {
+                showToast('No se pudo marcar', 'error');
+            }
+        }
+
+        async function enviarMensaje() {
+            const destinatarioId = document.getElementById('msg-destinatario').value;
+            const tipo = document.getElementById('msg-tipo').value;
+            const asunto = document.getElementById('msg-asunto').value;
+            const contenido = document.getElementById('msg-contenido').value;
+            if (!destinatarioId || !contenido) {
+                showToast('Completa destinatario y mensaje', 'warning');
+                return;
+            }
+            try {
+                await apiPost('/api/send_message', { destinatario_id: destinatarioId, destinatario_tipo: tipo, asunto, contenido });
+                showToast('Mensaje enviado', 'success');
+                document.getElementById('msg-contenido').value = '';
+                loadMensajeria();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function loadForos() {
+            const list = document.getElementById('foros-list');
+            list.innerHTML = '<div class="text-center text-slate-400">Cargando...</div>';
+            try {
+                const posts = await apiGet('/api/get_posts');
+                list.innerHTML = posts.length ? posts.map(p => `
+                    <button onclick="verPostForo(${p.id})" class="text-left bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-bold text-slate-900 dark:text-white">${p.title}</p>
+                        <p class="text-xs text-slate-500">${p.nombre} • ${p.date || ''}</p>
+                        <p class="text-sm text-slate-600 dark:text-slate-300 mt-2 line-clamp-2">${p.content}</p>
+                    </button>
+                `).join('') : '<div class="text-center text-slate-500">No hay posts.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-center text-red-500">Error al cargar foros.</div>';
+            }
+        }
+
+        async function crearPostForo() {
+            const { value: formValues } = await Swal.fire({
+                title: 'Nuevo post',
+                html: `
+                    <input id="foro-title" class="swal2-input" placeholder="Título">
+                    <textarea id="foro-content" class="swal2-textarea" placeholder="Contenido"></textarea>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Publicar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const title = document.getElementById('foro-title').value;
+                    const content = document.getElementById('foro-content').value;
+                    if (!title || !content) {
+                        Swal.showValidationMessage('Título y contenido son requeridos');
+                        return false;
+                    }
+                    return { title, content };
+                }
+            });
+            if (formValues) {
+                await apiPost('/api/create_post', formValues);
+                showToast('Post creado', 'success');
+                loadForos();
+            }
+        }
+
+        async function verPostForo(postId) {
+            try {
+                const data = await apiGet(`/api/foros/${postId}`);
+                const post = data.post;
+                const comments = data.comments || [];
+                const commentsHtml = comments.map(c => `<div class="text-xs text-slate-500"><strong>${c.nombre}</strong>: ${c.content}</div>`).join('') || '<div class="text-xs text-slate-400">Sin comentarios.</div>';
+                const { value: comentario } = await Swal.fire({
+                    title: post.title,
+                    html: `<div class="text-left"><p class="text-sm mb-2">${post.content}</p>${commentsHtml}</div>`,
+                    input: 'text',
+                    inputPlaceholder: 'Escribe un comentario',
+                    showCancelButton: true,
+                    confirmButtonText: 'Comentar'
+                });
+                if (comentario) {
+                    await apiPost(`/api/foros/${postId}/comentarios`, { content: comentario });
+                    showToast('Comentario enviado', 'success');
+                }
+            } catch (e) {
+                showToast('Error al abrir el post', 'error');
+            }
+        }
+
+        async function loadFlashcards() {
+            const list = document.getElementById('flashcards-list');
+            list.innerHTML = '<div class="text-center text-slate-400">Cargando...</div>';
+            try {
+                const data = await apiGet('/api/flashcards');
+                const cards = data.flashcards || data || [];
+                list.innerHTML = (cards || []).length ? cards.map(c => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${c.pregunta}</p>
+                        <p class="text-xs text-slate-500">${c.respuesta}</p>
+                    </div>
+                `).join('') : '<div class="text-center text-slate-500">Sin flashcards.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-center text-red-500">Error al cargar flashcards.</div>';
+            }
+        }
+
+        async function crearFlashcard() {
+            const { value: formValues } = await Swal.fire({
+                title: 'Nueva flashcard',
+                html: `
+                    <input id="fc-pregunta" class="swal2-input" placeholder="Pregunta">
+                    <input id="fc-respuesta" class="swal2-input" placeholder="Respuesta">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Crear',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const pregunta = document.getElementById('fc-pregunta').value;
+                    const respuesta = document.getElementById('fc-respuesta').value;
+                    if (!pregunta || !respuesta) {
+                        Swal.showValidationMessage('Completa pregunta y respuesta');
+                        return false;
+                    }
+                    return { pregunta, respuesta };
+                }
+            });
+            if (formValues) {
+                await apiPost('/api/flashcards', formValues);
+                showToast('Flashcard creada', 'success');
+                loadFlashcards();
+            }
+        }
+
+        async function enviarPreguntaIA() {
+            const input = document.getElementById('ia-input');
+            const chat = document.getElementById('ia-chat');
+            const message = input.value.trim();
+            if (!message) return;
+            chat.insertAdjacentHTML('beforeend', `<div class="text-right text-sm"><span class="inline-block bg-primary text-white px-3 py-2 rounded-xl">${message}</span></div>`);
+            input.value = '';
+            try {
+                const data = await apiPost('/api/chat/gemini', { message });
+                chat.insertAdjacentHTML('beforeend', `<div class="text-left text-sm"><span class="inline-block bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-xl">${data.response}</span></div>`);
+            } catch (e) {
+                showToast('Error en tutor IA', 'error');
+            }
+        }
+
+        async function loadPlayground() {
+            try {
+                const data = await apiGet('/api/load_playground');
+                document.getElementById('playground-code').value = data.code || '';
+            } catch (e) {
+                showToast('Error al cargar playground', 'error');
+            }
+        }
+
+        async function savePlayground() {
+            try {
+                const code = document.getElementById('playground-code').value;
+                await apiPost('/api/save_playground', { code });
+                showToast('Playground guardado', 'success');
+            } catch (e) {
+                showToast('Error al guardar', 'error');
+            }
+        }
+
+        async function shareSnippet() {
+            try {
+                const code = document.getElementById('snippet-code').value;
+                if (!code) {
+                    showToast('Agrega código', 'warning');
+                    return;
+                }
+                const data = await apiPost('/api/share_snippet', { code });
+                document.getElementById('snippet-id').value = (data.share_url || '').split('/').pop();
+                showToast('Snippet compartido', 'success');
+            } catch (e) {
+                showToast('Error al compartir', 'error');
+            }
+        }
+
+        async function loadSnippet() {
+            const id = document.getElementById('snippet-id').value.trim();
+            const viewer = document.getElementById('snippet-viewer');
+            if (!id) return;
+            viewer.textContent = 'Cargando...';
+            try {
+                const data = await apiGet(`/api/snippets/${id}`);
+                viewer.textContent = data.code || '';
+            } catch (e) {
+                viewer.textContent = 'No se encontró el snippet.';
+            }
+        }
+
+        async function loadTienda() {
+            const list = document.getElementById('tienda-list');
+            const balance = document.getElementById('tienda-balance');
+            list.innerHTML = '<div class="col-span-2 text-center text-slate-400">Cargando...</div>';
+            try {
+                const data = await apiGet('/api/tienda');
+                balance.textContent = `EduCoins: ${data.educoins}`;
+                const items = data.items || [];
+                list.innerHTML = items.length ? items.map(i => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-3 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="text-xs font-bold text-slate-900 dark:text-white">${i.nombre || 'Item'}</p>
+                        <p class="text-[10px] text-slate-500">${i.descripcion || ''}</p>
+                        <p class="text-[10px] text-slate-400">${i.precio_educoins} EduCoins</p>
+                        <button onclick="comprarItem(${i.id})" class="mt-2 w-full py-1 text-xs bg-primary text-white rounded">Comprar</button>
+                    </div>
+                `).join('') : '<div class="col-span-2 text-center text-slate-500">Sin items.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="col-span-2 text-center text-red-500">Error al cargar tienda.</div>';
+            }
+        }
+
+        async function comprarItem(itemId) {
+            try {
+                await apiPost('/api/tienda/comprar', { item_id: itemId });
+                showToast('Compra exitosa', 'success');
+                loadTienda();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function loadLearningPaths() {
+            const list = document.getElementById('learning-paths-list');
+            list.innerHTML = '<div class="text-center text-slate-400">Cargando...</div>';
+            try {
+                const data = await apiGet('/api/learning_paths');
+                let paths = data.paths || data || [];
+                if (!Array.isArray(paths)) {
+                    paths = Object.keys(paths).map(key => ({ id: key, nombre: key, descripcion: (paths[key] || []).join(', ') }));
+                }
+                list.innerHTML = paths.length ? paths.map(p => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${p.nombre || p.title || 'Path'}</p>
+                        <p class="text-xs text-slate-500">${p.descripcion || ''}</p>
+                        <button onclick="enrollPath('${p.id}')" class="mt-2 text-xs text-primary">Inscribirme</button>
+                    </div>
+                `).join('') : '<div class="text-center text-slate-500">Sin rutas disponibles.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-center text-red-500">Error al cargar rutas.</div>';
+            }
+        }
+
+        async function enrollPath(pathId) {
+            try {
+                if (isNaN(parseInt(pathId, 10))) {
+                    showToast('Ruta no disponible para inscripción', 'warning');
+                    return;
+                }
+                await fetch(`/enroll-path/${pathId}`, { method: 'POST' });
+                showToast('Inscripción realizada', 'success');
+            } catch (e) {
+                showToast('Error al inscribir', 'error');
+            }
+        }
+
+        const materiasData = {{ materias|tojson|safe }};
+
+        function fillMateriaSelect(selectId) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            select.innerHTML = (materiasData || []).map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+        }
+
+        async function loadLabs() {
+            fillMateriaSelect('labs-materia');
+            const select = document.getElementById('labs-materia');
+            select.onchange = () => loadLabs();
+            const materiaId = select.value;
+            const list = document.getElementById('labs-list');
+            list.innerHTML = '<div class="text-center text-slate-400">Cargando...</div>';
+            try {
+                const data = await apiGet(`/api/virtual_labs/${materiaId}`);
+                const labs = data.labs || [];
+                list.innerHTML = labs.length ? labs.map(l => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${l.titulo || 'Lab'}</p>
+                        <p class="text-xs text-slate-500">${l.descripcion || ''}</p>
+                    </div>
+                `).join('') : '<div class="text-center text-slate-500">Sin labs.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-center text-red-500">Error al cargar labs.</div>';
+            }
+        }
+
+        async function loadExternalResources() {
+            fillMateriaSelect('external-materia');
+            const select = document.getElementById('external-materia');
+            select.onchange = () => loadExternalResources();
+            const materiaId = select.value;
+            const list = document.getElementById('external-list');
+            list.innerHTML = '<div class="text-center text-slate-400">Cargando...</div>';
+            try {
+                const data = await apiGet(`/api/external_resources/${materiaId}`);
+                const resources = data.resources || {};
+                const items = [...(resources.videos || []), ...(resources.exercises || [])];
+                list.innerHTML = items.length ? items.map(r => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-3 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="text-sm text-slate-900 dark:text-white">${r}</p>
+                    </div>
+                `).join('') : '<div class="text-center text-slate-500">Sin recursos.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-center text-red-500">Error al cargar recursos.</div>';
+            }
+        }
+
+        async function loadEventos() {
+            const list = document.getElementById('eventos-list');
+            list.innerHTML = '<div class="text-center text-slate-400">Cargando...</div>';
+            try {
+                const eventos = await apiGet('/api/events');
+                list.innerHTML = (eventos || []).length ? eventos.map(ev => `
+                    <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${ev.title || ev.titulo || 'Evento'}</p>
+                        <p class="text-xs text-slate-500">${ev.date || ev.fecha || ''}</p>
+                        <p class="text-xs text-slate-400">${ev.description || ev.descripcion || ''}</p>
+                    </div>
+                `).join('') : '<div class="text-center text-slate-500">Sin eventos.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-center text-red-500">Error al cargar eventos.</div>';
+            }
+        }
+
+        async function loadCoursera() {
+            fillMateriaSelect('coursera-materia');
+            const select = document.getElementById('coursera-materia');
+            select.onchange = () => loadCoursera();
+            const materiaId = select.value;
+            const list = document.getElementById('coursera-list');
+            list.innerHTML = '<div class="text-center text-slate-400">Cargando...</div>';
+            try {
+                const data = await apiGet(`/api/coursera/${materiaId}`);
+                const courses = data.courses || [];
+                list.innerHTML = courses.length ? courses.map(c => `
+                    <a href="https://${c.url}" target="_blank" rel="noreferrer" class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <p class="font-medium text-slate-900 dark:text-white">${c.title}</p>
+                        <p class="text-xs text-primary">${c.url}</p>
+                    </a>
+                `).join('') : '<div class="text-center text-slate-500">Sin cursos.</div>';
+            } catch (e) {
+                list.innerHTML = '<div class="text-center text-red-500">Error al cargar cursos.</div>';
+            }
+        }
+
         async function abrirExportacion() {
             const { value: formValues } = await Swal.fire({
                 title: 'Nueva exportación',
@@ -3388,7 +4199,10 @@
                 'misiones-view', 'hoy-view', 'objetivos-view', 'habitos-view', 'notificaciones-view',
                 'recomendaciones-view', 'progreso-view', 'riesgo-view', 'funciones-view',
                 'recompensas-view', 'balance-view', 'examenes-view', 'encuestas-view',
-                'feedback-view', 'exportaciones-view', 'ayuda-view', 'documentos-view'
+                'feedback-view', 'exportaciones-view', 'ayuda-view', 'documentos-view',
+                'logros-view', 'insignias-view', 'ranking-view', 'mensajeria-view', 'notificaciones-internas-view', 'foros-view',
+                'flashcards-view', 'ia-tutor-view', 'playground-view', 'snippets-view', 'tienda-view',
+                'learning-paths-view', 'labs-view', 'external-resources-view', 'eventos-view', 'coursera-view'
             ];
 
             // Ocultar todo
@@ -3506,6 +4320,68 @@
                     break;
                 case 'documentos':
                     show('documentos-view');
+                    break;
+                case 'logros':
+                    show('logros-view');
+                    loadLogros();
+                    break;
+                case 'insignias':
+                    show('insignias-view');
+                    loadInsignias();
+                    break;
+                case 'ranking':
+                    show('ranking-view');
+                    loadRanking('semanal');
+                    break;
+                case 'mensajeria':
+                    show('mensajeria-view');
+                    loadMensajeria();
+                    break;
+                case 'notificaciones-internas':
+                    show('notificaciones-internas-view');
+                    loadNotificacionesInternas();
+                    break;
+                case 'foros':
+                    show('foros-view');
+                    loadForos();
+                    break;
+                case 'flashcards':
+                    show('flashcards-view');
+                    loadFlashcards();
+                    break;
+                case 'ia-tutor':
+                    show('ia-tutor-view');
+                    break;
+                case 'playground':
+                    show('playground-view');
+                    loadPlayground();
+                    break;
+                case 'snippets':
+                    show('snippets-view');
+                    break;
+                case 'tienda':
+                    show('tienda-view');
+                    loadTienda();
+                    break;
+                case 'learning-paths':
+                    show('learning-paths-view');
+                    loadLearningPaths();
+                    break;
+                case 'labs':
+                    show('labs-view');
+                    loadLabs();
+                    break;
+                case 'external-resources':
+                    show('external-resources-view');
+                    loadExternalResources();
+                    break;
+                case 'eventos':
+                    show('eventos-view');
+                    loadEventos();
+                    break;
+                case 'coursera':
+                    show('coursera-view');
+                    loadCoursera();
                     break;
                 default:
                     dashboard.classList.remove('hidden');

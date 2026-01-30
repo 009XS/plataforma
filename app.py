@@ -19,82 +19,23 @@ except TypeError:
         return _orig_hmac_new(*args, **kwargs)
     hmac.new = _patched_hmac_new
 
-from gevent import monkey
-monkey.patch_all()
-import os
-import re
-import json
-import uuid
-import time
-import random
-import schedule  # Para tareas programadas
-import csv
-
-import pymysql
-pymysql.install_as_MySQLdb()
-import traceback
-from io import StringIO
 from pathlib import Path
-from datetime import datetime, timedelta
-
-from functools import wraps
-from flask import Response
-import logging
-
-logging.basicConfig(filename='auditoria.log', level=logging.INFO)
-
-
 from flask import (
     Flask, render_template, request, redirect,
     url_for, session, jsonify, flash,
-    send_file, send_from_directory, current_app
+    send_file, send_from_directory, current_app, Response
 )
-
-try:
-    from flask_mysqldb import MySQL
-except ImportError:
-    print("[WARN] flask_mysqldb no instalado. Usando fallback con PyMySQL.")
-    class MySQL:
-        def __init__(self, app=None):
-            if app is not None:
-                self.init_app(app)
-        
-        def init_app(self, app):
-            app.teardown_appcontext(self.teardown)
-            
-        def connect(self):
-            import MySQLdb
-            from flask import current_app
-            import pymysql.cursors
-            
-            # Obtener cursor class desde config o usar DictCursor por defecto
-            cursor_class_name = current_app.config.get('MYSQL_CURSORCLASS', 'DictCursor')
-            if hasattr(pymysql.cursors, cursor_class_name):
-                cursor_class = getattr(pymysql.cursors, cursor_class_name)
-            else:
-                cursor_class = pymysql.cursors.DictCursor
-                
-            return MySQLdb.connect(
-                host=current_app.config['MYSQL_HOST'],
-                user=current_app.config['MYSQL_USER'],
-                password=current_app.config['MYSQL_PASSWORD'],
-                database=current_app.config['MYSQL_DB'],
-                cursorclass=cursor_class,
-                autocommit=True
-            )
-            
-        @property
-        def connection(self):
-            from flask import g
-            if 'db' not in g:
-                g.db = self.connect()
-            return g.db
-            
-        def teardown(self, exception):
-            from flask import g
-            db = g.pop('db', None)
-            if db is not None:
-                db.close()
+import json
+import uuid
+import time
+from datetime import datetime, timedelta
+import schedule
+import csv
+import traceback
+import logging
+import pymysql
+pymysql.install_as_MySQLdb()
+from flask_mysqldb import MySQL
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_apscheduler import APScheduler
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1899,6 +1840,142 @@ def api_messages():
     """, (session['user_id'],))
     msgs = cursor.fetchall()
     return jsonify(msgs)
+
+@app.route('/api/alumno/logros', methods=['GET'])
+@login_required
+@role_required('alumno')
+def api_alumno_logros():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    cursor.execute("""
+        SELECT * FROM logros_diarios
+        WHERE usuario_id = %s AND fecha = CURDATE()
+    """, (session['user_id'],))
+    logros_hoy = cursor.fetchone()
+
+    if not logros_hoy:
+        cursor.execute("""
+            INSERT INTO logros_diarios (usuario_id, fecha)
+            VALUES (%s, CURDATE())
+        """, (session['user_id'],))
+        mysql.connection.commit()
+        logros_hoy = {
+            'tareas_completadas': 0,
+            'examenes_completados': 0,
+            'minutos_estudio': 0,
+            'preguntas_respondidas': 0,
+            'racha_dias': 0
+        }
+
+    cursor.execute("""
+        SELECT * FROM logros_semanales
+        WHERE usuario_id = %s 
+        AND YEARWEEK(fecha_inicio, 1) = YEARWEEK(CURDATE(), 1)
+    """, (session['user_id'],))
+    logros_semana = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT * FROM recompensas
+        WHERE activo = 1 AND costo_educoins <= (SELECT educoins FROM usuarios WHERE id = %s)
+        ORDER BY costo_educoins
+    """, (session['user_id'],))
+    recompensas = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT r.nombre, r.descripcion, ur.fecha_canje
+        FROM usuario_recompensas ur
+        JOIN recompensas r ON ur.recompensa_id = r.id
+        WHERE ur.usuario_id = %s
+        ORDER BY ur.fecha_canje DESC
+        LIMIT 10
+    """, (session['user_id'],))
+    historial = cursor.fetchall()
+
+    cursor.close()
+    return jsonify({
+        'logros_hoy': logros_hoy,
+        'logros_semana': logros_semana,
+        'recompensas': recompensas,
+        'historial': historial
+    })
+
+@app.route('/api/alumno/insignias', methods=['GET'])
+@login_required
+@role_required('alumno')
+def api_alumno_insignias():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT i.*, ui.fecha_obtencion, i.rareza
+        FROM usuario_insignias ui
+        JOIN insignias i ON ui.insignia_id = i.id
+        WHERE ui.usuario_id = %s
+        ORDER BY i.rareza DESC, ui.fecha_obtencion DESC
+    """, (session['user_id'],))
+    insignias = cursor.fetchall()
+
+    cursor.execute("""
+        SELECT i.rareza, COUNT(*) as count
+        FROM usuario_insignias ui
+        JOIN insignias i ON ui.insignia_id = i.id
+        WHERE ui.usuario_id = %s
+        GROUP BY i.rareza
+    """, (session['user_id'],))
+    stats = cursor.fetchall()
+
+    cursor.close()
+    return jsonify({'insignias': insignias, 'stats': stats})
+
+@app.route('/api/snippets/<share_id>', methods=['GET'])
+def api_snippet(share_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT code FROM code_snippets WHERE share_id = %s", (share_id,))
+    snippet = cursor.fetchone()
+    cursor.close()
+    if not snippet:
+        return jsonify({'error': 'Snippet not found'}), 404
+    return jsonify({'code': snippet['code']})
+
+@app.route('/api/tienda', methods=['GET'])
+@login_required
+@role_required('alumno')
+def api_tienda_items():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT * FROM tienda_items WHERE stock != 0")
+    items = cursor.fetchall()
+    cursor.execute("SELECT educoins FROM usuarios WHERE id = %s", (session['user_id'],))
+    educoins = cursor.fetchone()['educoins']
+    cursor.close()
+    return jsonify({'items': items, 'educoins': educoins})
+
+@app.route('/api/tienda/comprar', methods=['POST'])
+@login_required
+@role_required('alumno')
+def api_tienda_comprar():
+    data = request.json or {}
+    item_id = data.get('item_id')
+    if not item_id:
+        return jsonify({'error': 'item_id requerido'}), 400
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT precio_educoins, stock FROM tienda_items WHERE id = %s", (item_id,))
+    item = cursor.fetchone()
+    if not item or item['stock'] == 0:
+        cursor.close()
+        return jsonify({'error': 'Item no disponible'}), 400
+
+    cursor.execute("SELECT educoins FROM usuarios WHERE id = %s", (session['user_id'],))
+    user_coins = cursor.fetchone()['educoins']
+    if user_coins < item['precio_educoins']:
+        cursor.close()
+        return jsonify({'error': 'EduCoins insuficientes'}), 400
+
+    cursor.execute("UPDATE usuarios SET educoins = educoins - %s WHERE id = %s", (item['precio_educoins'], session['user_id']))
+    if item['stock'] > 0:
+        cursor.execute("UPDATE tienda_items SET stock = stock - 1 WHERE id = %s", (item_id,))
+    cursor.execute("INSERT INTO usuario_compras (usuario_id, item_id) VALUES (%s, %s)", (session['user_id'], item_id))
+    mysql.connection.commit()
+    cursor.close()
+    return jsonify({'success': True})
 
 @app.route('/api/portfolio', methods=['GET', 'POST'])
 @login_required
@@ -3982,128 +4059,6 @@ def api_docente_historial_intervenciones():
         """, (session['user_id'],))
     return jsonify(cursor.fetchall())
 
-@app.route('/api/docente/intervenciones/historial/<int:id>', methods=['PUT'])
-@login_required
-@role_required('docente')
-def api_docente_actualizar_intervencion(id):
-    data = request.json
-    cursor = mysql.connection.cursor()
-    cursor.execute("""
-        UPDATE historial_intervenciones SET resultado = %s, notas_seguimiento = %s, fecha_seguimiento = %s
-        WHERE id = %s AND docente_id = %s
-    """, (data.get('resultado'), data.get('notas_seguimiento'), data.get('fecha_seguimiento'), id, session['user_id']))
-    mysql.connection.commit()
-    return jsonify({'status': 'ok'})
-
-# 15. CONTROL DE CARGA LABORAL
-@app.route('/api/docente/carga-laboral', methods=['GET'])
-@login_required
-@role_required('docente')
-def api_docente_carga_laboral():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    hoy = datetime.now().date()
-    cursor.execute("SELECT * FROM carga_laboral_docente WHERE docente_id = %s AND fecha = %s", (session['user_id'], hoy))
-    carga = cursor.fetchone()
-    if not carga:
-        _calcular_carga_laboral_docente(session['user_id'])
-        cursor.execute("SELECT * FROM carga_laboral_docente WHERE docente_id = %s AND fecha = %s", (session['user_id'], hoy))
-        carga = cursor.fetchone()
-    return jsonify(carga or {'estado_carga': 'normal', 'carga_porcentaje': 0})
-
-def _calcular_carga_laboral_docente(docente_id):
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        hoy = datetime.now().date()
-        cursor.execute("SELECT COUNT(*) as total FROM materias WHERE docente_id = %s AND activo = 1", (docente_id,))
-        materias = cursor.fetchone()['total']
-        cursor.execute("""
-            SELECT COUNT(DISTINCT mat.estudiante_id) as total FROM matriculas mat
-            JOIN materias m ON mat.materia_id = m.id WHERE m.docente_id = %s
-        """, (docente_id,))
-        alumnos = cursor.fetchone()['total']
-        cursor.execute("""
-            SELECT COUNT(*) as total FROM entregas_tareas e
-            JOIN tareas t ON e.tarea_id = t.id WHERE t.docente_id = %s AND e.calificacion IS NULL
-        """, (docente_id,))
-        tareas_calificar = cursor.fetchone()['total']
-        cursor.execute("SELECT COUNT(*) as total FROM alertas_docente WHERE docente_id = %s AND leida = 0", (docente_id,))
-        alertas = cursor.fetchone()['total']
-        carga = min(100, (materias * 10) + (alumnos * 0.5) + (tareas_calificar * 2) + (alertas * 3))
-        estado = 'liviana' if carga < 30 else 'normal' if carga < 60 else 'alta' if carga < 80 else 'sobrecarga'
-        cursor.execute("""
-            INSERT INTO carga_laboral_docente (docente_id, fecha, materias_activas, total_alumnos, tareas_por_calificar, alertas_pendientes, carga_porcentaje, estado_carga)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE materias_activas = %s, total_alumnos = %s, tareas_por_calificar = %s, alertas_pendientes = %s, carga_porcentaje = %s, estado_carga = %s
-        """, (docente_id, hoy, materias, alumnos, tareas_calificar, alertas, carga, estado, materias, alumnos, tareas_calificar, alertas, carga, estado))
-        mysql.connection.commit()
-    except Exception as e:
-        print(f"Error calculando carga laboral: {e}")
-
-# FUNCIONES AUTOMÁTICAS DOCENTE
-def detectar_rezago_alumnos(docente_id):
-    """Detecta automáticamente alumnos con rezago en las materias del docente"""
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("SELECT id FROM materias WHERE docente_id = %s AND activo = 1", (docente_id,))
-        materias = cursor.fetchall()
-        for mat in materias:
-            cursor.execute("""
-                SELECT mat.estudiante_id, COUNT(t.id) as tareas_pendientes FROM matriculas mat
-                JOIN tareas t ON mat.materia_id = t.materia_id
-                LEFT JOIN entregas_tareas e ON t.id = e.tarea_id AND e.estudiante_id = mat.estudiante_id
-                WHERE mat.materia_id = %s AND t.fecha_vencimiento < NOW() AND e.id IS NULL
-                GROUP BY mat.estudiante_id HAVING tareas_pendientes >= 2
-            """, (mat['id'],))
-            rezagados = cursor.fetchall()
-            for r in rezagados:
-                severidad = 'leve' if r['tareas_pendientes'] < 3 else 'moderado' if r['tareas_pendientes'] < 5 else 'severo'
-                cursor.execute("""
-                    INSERT INTO deteccion_rezago (alumno_id, docente_id, materia_id, tipo_rezago, severidad, tareas_pendientes)
-                    VALUES (%s, %s, %s, 'tareas_atrasadas', %s, %s)
-                    ON DUPLICATE KEY UPDATE severidad = %s, tareas_pendientes = %s, fecha_deteccion = NOW()
-                """, (r['estudiante_id'], docente_id, mat['id'], severidad, r['tareas_pendientes'], severidad, r['tareas_pendientes']))
-        mysql.connection.commit()
-    except Exception as e:
-        print(f"Error detectando rezago: {e}")
-
-def generar_alertas_docente(docente_id):
-    """Genera alertas automáticas para alumnos en riesgo"""
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute("""
-            SELECT r.alumno_id, r.materia_id, u.nombre FROM deteccion_rezago r
-            JOIN usuarios u ON r.alumno_id = u.id
-            WHERE r.docente_id = %s AND r.atendido = 0 AND r.severidad IN ('moderado', 'severo')
-        """, (docente_id,))
-        rezagados = cursor.fetchall()
-        for r in rezagados:
-            cursor.execute("""
-                INSERT IGNORE INTO alertas_docente (docente_id, alumno_id, materia_id, tipo_alerta, nivel, titulo, descripcion)
-                VALUES (%s, %s, %s, 'rezago', 'advertencia', %s, 'Este alumno tiene tareas pendientes y requiere atención.')
-            """, (docente_id, r['alumno_id'], r['materia_id'], f"Rezago detectado: {r['nombre']}"))
-        mysql.connection.commit()
-    except Exception as e:
-        print(f"Error generando alertas docente: {e}")
-
-
-# ==================== APIs ORIENTADOR GAMIFICADO (15 FUNCIONALIDADES) ====================
-
-# 1. PANEL DE ALERTAS CENTRALIZADAS
-@app.route('/api/orientador/alertas', methods=['GET'])
-@login_required
-@role_required('orientador')
-def api_orientador_alertas():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    estado = request.args.get('estado')
-    nivel = request.args.get('nivel')
-    query = "SELECT a.*, u.nombre as alumno_nombre FROM alertas_orientador a LEFT JOIN usuarios u ON a.alumno_id = u.id WHERE 1=1"
-    params = []
-    if estado:
-        query += " AND a.estado = %s"
-        params.append(estado)
-    if nivel:
-        query += " AND a.nivel = %s"
-        params.append(nivel)
-    query += " ORDER BY FIELD(a.nivel, 'critico', 'alto', 'medio', 'bajo'), a.fecha_creacion DESC LIMIT 100"
     cursor.execute(query, params)
     return jsonify(cursor.fetchall())
 
@@ -8294,6 +8249,8 @@ def panel_tutor():
         return redirect(url_for('index'))
 
 
+
+
 # ============ APIS TUTOR ============
 
 @app.route('/api/tutor/estudiante/<int:estudiante_id>/detalle')
@@ -8635,6 +8592,71 @@ def panel_docente():
         print(f"Error en panel_docente: {str(e)}")
         flash('Error al cargar el panel. Intenta de nuevo.', 'error')
         return redirect(url_for('index'))
+
+# APIs Materias Docente (CRUD básico)
+@app.route('/api/docente/materias', methods=['POST'])
+@login_required
+@role_required('docente')
+def api_docente_crear_materia():
+    data = request.json or {}
+    nombre = (data.get('nombre') or '').strip()
+    descripcion = (data.get('descripcion') or '').strip()
+    semestre = (data.get('semestre') or '').strip()
+
+    if not nombre or not semestre:
+        return jsonify({'error': 'Nombre y semestre son obligatorios'}), 400
+
+    cursor = mysql.connection.cursor()
+    cursor.execute(
+        "INSERT INTO materias (nombre, descripcion, docente_id, semestre, activo) VALUES (%s, %s, %s, %s, 1)",
+        (nombre, descripcion, session['user_id'], semestre)
+    )
+    mysql.connection.commit()
+    materia_id = cursor.lastrowid
+    cursor.close()
+    return jsonify({'success': True, 'id': materia_id})
+
+@app.route('/api/docente/materias/<int:materia_id>', methods=['PUT'])
+@login_required
+@role_required('docente')
+def api_docente_editar_materia(materia_id):
+    data = request.json or {}
+    nombre = (data.get('nombre') or '').strip()
+    descripcion = (data.get('descripcion') or '').strip()
+    semestre = (data.get('semestre') or '').strip()
+
+    if not nombre or not semestre:
+        return jsonify({'error': 'Nombre y semestre son obligatorios'}), 400
+
+    cursor = mysql.connection.cursor()
+    cursor.execute(
+        "UPDATE materias SET nombre = %s, descripcion = %s, semestre = %s WHERE id = %s AND docente_id = %s",
+        (nombre, descripcion, semestre, materia_id, session['user_id'])
+    )
+    mysql.connection.commit()
+    updated = cursor.rowcount
+    cursor.close()
+
+    if updated == 0:
+        return jsonify({'error': 'Materia no encontrada'}), 404
+    return jsonify({'success': True})
+
+@app.route('/api/docente/materias/<int:materia_id>', methods=['DELETE'])
+@login_required
+@role_required('docente')
+def api_docente_desactivar_materia(materia_id):
+    cursor = mysql.connection.cursor()
+    cursor.execute(
+        "UPDATE materias SET activo = 0 WHERE id = %s AND docente_id = %s",
+        (materia_id, session['user_id'])
+    )
+    mysql.connection.commit()
+    updated = cursor.rowcount
+    cursor.close()
+
+    if updated == 0:
+        return jsonify({'error': 'Materia no encontrada'}), 404
+    return jsonify({'success': True})
 
 # Ruta para gestión de una materia específica
 @app.route('/panel_materia/<int:materia_id>')
@@ -11398,17 +11420,6 @@ def contact_admin():
 
     return jsonify({'success': 'Mensaje enviado'})
 
-# Nueva ruta para user profile
-@app.route('/profile')
-@login_required
-def profile():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM usuarios WHERE id = %s", (session['user_id'],))
-    user = cursor.fetchone()
-    cursor.close()
-
-    return render_template('profile.html', user=user)
-
 # Nueva ruta para update profile
 @app.route('/api/update_profile', methods=['POST'])
 @login_required
@@ -11752,12 +11763,6 @@ def rsvp_event():
     # Guardar RSVP en BD
     return jsonify({'success': 'RSVP registered'})
 
-# Nueva ruta para forums
-@app.route('/forums')
-@login_required
-def forums():
-    return render_template('forums.html')
-
 with app.app_context():
     cursor = mysql.connection.cursor()
     cursor.execute("""
@@ -11801,6 +11806,47 @@ def get_posts():
     posts = cursor.fetchall()
     cursor.close()
     return jsonify(posts)
+
+@app.route('/api/foros/<int:post_id>', methods=['GET'])
+@login_required
+def api_foro_detalle(post_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT fp.*, u.nombre
+        FROM forum_posts fp
+        JOIN usuarios u ON fp.user_id = u.id
+        WHERE fp.id = %s
+    """, (post_id,))
+    post = cursor.fetchone()
+    if not post:
+        cursor.close()
+        return jsonify({'error': 'Post no encontrado'}), 404
+
+    cursor.execute("""
+        SELECT fc.*, u.nombre
+        FROM forum_comments fc
+        JOIN usuarios u ON fc.user_id = u.id
+        WHERE fc.post_id = %s
+        ORDER BY fc.date
+    """, (post_id,))
+    comments = cursor.fetchall()
+    cursor.close()
+    return jsonify({'post': post, 'comments': comments})
+
+@app.route('/api/foros/<int:post_id>/comentarios', methods=['POST'])
+@login_required
+def api_foro_comentar(post_id):
+    data = request.json or {}
+    content = data.get('content', '').strip()
+    if not content:
+        return jsonify({'error': 'Contenido requerido'}), 400
+
+    cursor = mysql.connection.cursor()
+    cursor.execute("INSERT INTO forum_comments (post_id, user_id, content) VALUES (%s, %s, %s)",
+                   (post_id, session['user_id'], content))
+    mysql.connection.commit()
+    cursor.close()
+    return jsonify({'success': True})
 
 # Nueva ruta para comments
 # Similar, agregar tabla comments
@@ -11850,20 +11896,6 @@ def progress_report():
     report = cursor.fetchone()
     cursor.close()
     return jsonify(report)
-
-# Nueva ruta para custom dashboards
-@app.route('/dashboard_custom')
-@login_required
-def dashboard_custom():
-    # Basado en rol, render different
-    if session['user_role'] == 'alumno':
-        return render_template('dashboard_alumno.html')
-    # etc
-
-# Nueva ruta para API documentation
-@app.route('/api/docs')
-def api_docs():
-    return render_template('api_docs.html')
 
 # Nueva ruta para webhook integrations
 @app.route('/webhook', methods=['POST'])
@@ -11915,11 +11947,6 @@ def set_language1():
 # Nueva ruta para SEO optimization
 # Meta tags in templates
 
-# Nueva ruta para sitemap
-@app.route('/sitemap.xml')
-def sitemap():
-    return render_template('sitemap.xml')
-
 # Nueva ruta para robots.txt
 @app.route('/robots.txt')
 def robots():
@@ -11939,11 +11966,6 @@ def health():
 @app.route('/version')
 def version():
     return "1.0.0"
-
-# Nueva ruta para upgrade notice
-@app.route('/upgrade')
-def upgrade():
-    return render_template('upgrade.html')
 
 @app.route('/verify_email', methods=['GET'])
 def verify_email():
@@ -12124,25 +12146,6 @@ def share_snippet():
 #         date DATETIME DEFAULT CURRENT_TIMESTAMP
 #     )
 # """)
-
-# Nueva ruta for view snippet
-@app.route('/snippet/<share_id>')
-def view_snippet(share_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT code FROM code_snippets WHERE share_id = %s", (share_id,))
-    snippet = cursor.fetchone()
-    cursor.close()
-
-    if not snippet:
-        return "Snippet not found", 404
-
-    return render_template('snippet.html', code=snippet['code'])
-
-# Nueva ruta for code playground
-@app.route('/playground')
-@login_required
-def playground():
-    return render_template('playground.html')
 
 # Nueva ruta for save playground
 @app.route('/api/save_playground', methods=['POST'])
@@ -12431,12 +12434,6 @@ def contest_leaderboard():
     board = [{'user': 'Alice', 'score': 300}]
 
     return jsonify(board)
-
-# Nueva ruta for code dojo
-@app.route('/dojo')
-@login_required
-def dojo():
-    return render_template('dojo.html')
 
 # Nueva ruta for dojo challenge
 @app.route('/api/dojo_challenge', methods=['GET'])
@@ -12884,6 +12881,8 @@ def panel_admin():
         return redirect(url_for('index'))
 
 
+
+
 # ============ API RESUMEN ADMIN ============
 
 @app.route('/api/admin/resumen-metricas', methods=['GET'])
@@ -13208,105 +13207,6 @@ def api_admin_grupo_alumnos(grupo_id):
         return jsonify({'error': str(e)}), 500
 
 
-# Add route for creating materia
-@app.route('/crear-materia', methods=['GET', 'POST'])
-@login_required
-@role_required('docente')
-def crear_materia():
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        descripcion = request.form['descripcion']
-        semestre = request.form['semestre']
-        
-        cursor = mysql.connection.cursor()
-        cursor.execute("INSERT INTO materias (nombre, descripcion, docente_id, semestre) VALUES (%s, %s, %s, %s)", (nombre, descripcion, session['user_id'], semestre))
-        mysql.connection.commit()
-        cursor.close()
-        flash('Materia created successfully.', 'success')
-        return redirect(url_for('mis_materias'))
-    
-    return render_template('crear-materia.html')
-
-# Add route for editing materia
-@app.route('/editar-materia/<int:id>', methods=['GET', 'POST'])
-@login_required
-@role_required('docente')
-def editar_materia(id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM materias WHERE id = %s AND docente_id = %s", (id, session['user_id']))
-    materia = cursor.fetchone()
-    if not materia:
-        flash('Materia not found.', 'error')
-        return redirect(url_for('mis_materias'))
-    
-    if request.method =="POST":
-        nombre = request.form['nombre']
-        descripcion = request.form['descripcion']
-        semestre = request.form['semestre']
-        
-        cursor.execute("UPDATE materias SET nombre = %s, descripcion = %s, semestre = %s WHERE id = %s", (nombre, descripcion, semestre, id))
-        mysql.connection.commit()
-        flash('Materia updated.', 'success')
-        return redirect(url_for('mis_materias'))
-    
-    cursor.close()
-    return render_template('editar-materia.html', materia=materia)
-
-# Add route for deleting materia
-@app.route('/eliminar-materia/<int:id>', methods=['POST'])
-@login_required
-@role_required('docente')
-def eliminar_materia(id):
-    cursor = mysql.connection.cursor()
-    cursor.execute("UPDATE materias SET activo = 0 WHERE id = %s AND docente_id = %s", (id, session['user_id']))
-    mysql.connection.commit()
-    cursor.close()
-    flash('Materia deactivated.', 'success')
-    return redirect(url_for('mis_materias'))
-
-# Add routes for tasks management
-@app.route('/crear-tarea/<int:materia_id>', methods=['GET', 'POST'])
-@login_required
-@role_required('docente')
-def crear_tarea(materia_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM materias WHERE id = %s AND docente_id = %s", (materia_id, session['user_id']))
-    materia = cursor.fetchone()
-    if not materia:
-        flash('Materia not found.', 'error')
-        return redirect(url_for('mis_materias'))
-    
-    if request.method == 'POST':
-        titulo = request.form['titulo']
-        descripcion = request.form['descripcion']
-        fecha_vencimiento = request.form['fecha_vencimiento']
-        valor_porcentaje = request.form['valor_porcentaje']
-        
-        cursor.execute("INSERT INTO tareas (titulo, descripcion, materia_id, docente_id, fecha_vencimiento, valor_porcentaje) VALUES (%s, %s, %s, %s, %s, %s)", 
-                       (titulo, descripcion, materia_id, session['user_id'], fecha_vencimiento, valor_porcentaje))
-        mysql.connection.commit()
-        flash('Task created.', 'success')
-        return redirect(url_for('mis_materias'))
-    
-    cursor.close()
-    return render_template('crear-tarea.html', materia=materia)
-
-# More task routes: edit, delete, view deliveries, grade, etc.
-@app.route('/entregas-tarea/<int:tarea_id>')
-@login_required
-@role_required('docente')
-def entregas_tarea(tarea_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-        SELECT et.id, u.nombre as estudiante, et.archivo_nombre, et.fecha_entrega, et.calificacion, et.comentarios, et.plagio_detectado
-        FROM entregas_tareas et
-        JOIN usuarios u ON et.estudiante_id = u.id
-        WHERE et.tarea_id = %s
-        ORDER BY et.fecha_entrega
-    """, (tarea_id,))
-    entregas = cursor.fetchall()
-    cursor.close()
-    return render_template('entregas-tarea.html', entregas=entregas, tarea_id=tarea_id)
 
 @app.route('/calificar-entrega/<int:entrega_id>', methods=['POST'])
 @login_required
@@ -13450,45 +13350,6 @@ def delete_old_files():
 # Add to scheduler
 schedule.every(24).hours.do(delete_old_files)
 
-# Store items and purchases
-@app.route('/tienda')
-@login_required
-@role_required('alumno')
-def tienda():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM tienda_items WHERE stock != 0")
-    items = cursor.fetchall()
-    cursor.execute("SELECT educoins FROM usuarios WHERE id = %s", (session['user_id'],))
-    educoins = cursor.fetchone()['educoins']
-    cursor.close()
-    return render_template('tienda.html', items=items, educoins=educoins)
-
-@app.route('/comprar-item/<int:item_id>', methods=['POST'])
-@login_required
-@role_required('alumno')
-def comprar_item(item_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT precio_educoins, stock FROM tienda_items WHERE id = %s", (item_id,))
-    item = cursor.fetchone()
-    if not item or item['stock'] == 0:
-        flash('Item not available.', 'error')
-        return redirect(url_for('tienda'))
-    
-    cursor.execute("SELECT educoins FROM usuarios WHERE id = %s", (session['user_id'],))
-    user_coins = cursor.fetchone()['educoins']
-    if user_coins < item['precio_educoins']:
-        flash('Not enough EduCoins.', 'error')
-        return redirect(url_for('tienda'))
-    
-    cursor.execute("UPDATE usuarios SET educoins = educoins - %s WHERE id = %s", (item['precio_educoins'], session['user_id']))
-    if item['stock'] > 0:
-        cursor.execute("UPDATE tienda_items SET stock = stock - 1 WHERE id = %s", (item_id,))
-    cursor.execute("INSERT INTO usuario_compras (usuario_id, item_id) VALUES (%s, %s)", (session['user_id'], item_id))
-    mysql.connection.commit()
-    cursor.close()
-    flash('Item purchased.', 'success')
-    return redirect(url_for('tienda'))
-
 # Code challenges routes
 @app.route('/crear-reto/<int:materia_id>', methods=['POST'])
 @login_required
@@ -13571,16 +13432,6 @@ def escanear_qr_asistencia():
     cursor.close()
     return jsonify({'success': 'Attendance registered'})
 
-# Add learning paths routes
-@app.route('/learning-paths')
-@login_required
-def learning_paths1():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM learning_paths ORDER BY nivel")
-    paths = cursor.fetchall()
-    cursor.close()
-    return render_template('learning-paths.html', paths=paths)
-
 @app.route('/enroll-path/<int:path_id>', methods=['POST'])
 @login_required
 @role_required('alumno')
@@ -13590,7 +13441,7 @@ def enroll_path(path_id):
     mysql.connection.commit()
     cursor.close()
     flash('Enrolled in learning path.', 'success')
-    return redirect(url_for('learning_paths'))
+    return redirect(url_for('panel_alumno', panel='learning-paths'))
 
 @app.route('/update-progress/<int:path_id>', methods=['POST'])
 @login_required
@@ -13603,15 +13454,14 @@ def update_progress(path_id):
     cursor.close()
     return jsonify({'success': True})
 
-# Virtual labs routes
-@app.route('/virtual-labs/<int:materia_id>')
+@app.route('/api/virtual_labs/<int:materia_id>', methods=['GET'])
 @login_required
-def virtual_labs(materia_id):
+def api_virtual_labs(materia_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("SELECT * FROM virtual_labs WHERE materia_id = %s", (materia_id,))
     labs = cursor.fetchall()
     cursor.close()
-    return render_template('virtual-labs.html', labs=labs, materia_id=materia_id)
+    return jsonify({'labs': labs})
 
 @app.route('/create-lab/<int:materia_id>', methods=['POST'])
 @login_required
@@ -13628,7 +13478,7 @@ def create_lab(materia_id):
     mysql.connection.commit()
     cursor.close()
     flash('Virtual lab created.', 'success')
-    return redirect(url_for('virtual_labs', materia_id=materia_id))
+    return redirect(url_for('panel_docente', panel='recursos'))
 
 @app.route('/submit-lab/<int:lab_id>', methods=['POST'])
 @login_required
@@ -13644,17 +13494,6 @@ def submit_lab(lab_id):
     cursor.close()
     flash('Lab results submitted.', 'success')
     return jsonify({'success': True})
-
-# Analytics routes
-@app.route('/user-analytics/<int:user_id>')
-@login_required
-@role_required('admin')
-def user_analytics(user_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT metric_type, value, recorded_at FROM user_analytics WHERE user_id = %s ORDER BY recorded_at DESC", (user_id,))
-    analytics = cursor.fetchall()
-    cursor.close()
-    return render_template('user-analytics.html', analytics=analytics, user_id=user_id)
 
 # Log analytics entry on key actions, e.g., in login, add:
 # cursor.execute("INSERT INTO user_analytics (user_id, metric_type, value) VALUES (%s, 'login_count', 1)", (user_id,))
@@ -13685,15 +13524,18 @@ def fetch_khan_academy_content(topic):
     # In real, use browse_page tool, but since this is code, simulate.
     return {"videos": ["video1"], "exercises": ["ex1"]}
 
-@app.route('/external-resources/<int:materia_id>')
+@app.route('/api/external_resources/<int:materia_id>', methods=['GET'])
 @login_required
-def external_resources(materia_id):
+def api_external_resources(materia_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("SELECT nombre FROM materias WHERE id = %s", (materia_id,))
     materia = cursor.fetchone()
+    if not materia:
+        cursor.close()
+        return jsonify({'error': 'Materia no encontrada'}), 404
     resources = fetch_khan_academy_content(materia['nombre'])
     cursor.close()
-    return render_template('external-resources.html', resources=resources, materia=materia)
+    return jsonify({'materia': materia, 'resources': resources})
 
 # User feedback system
 @app.route('/feedback', methods=['POST'])
@@ -13804,25 +13646,6 @@ def recommend_resources_v2(user_id):
     cursor.close()
     return recommendations
 
-@app.route('/recommendations')
-@login_required
-@role_required('alumno')
-def recommendations():
-    recs = recommend_resources(session['user_id'])
-    return render_template('recommendations.html', recs=recs)
-
-# Forums expansion with comments
-@app.route('/forum-post/<int:post_id>')
-@login_required
-def forum_post(post_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT fp.*, u.nombre FROM forum_posts fp JOIN usuarios u ON fp.user_id = u.id WHERE fp.id = %s", (post_id,))
-    post = cursor.fetchone()
-    cursor.execute("SELECT fc.*, u.nombre FROM forum_comments fc JOIN usuarios u ON fc.user_id = u.id WHERE fc.post_id = %s ORDER BY fc.date", (post_id,))
-    comments = cursor.fetchall()
-    cursor.close()
-    return render_template('forum-post.html', post=post, comments=comments)
-
 @app.route('/add-comment/<int:post_id>', methods=['POST'])
 @login_required
 def add_comment(post_id):
@@ -13831,7 +13654,7 @@ def add_comment(post_id):
     cursor.execute("INSERT INTO forum_comments (post_id, user_id, content) VALUES (%s, %s, %s)", (post_id, session['user_id'], content))
     mysql.connection.commit()
     cursor.close()
-    return redirect(url_for('forum_post', post_id=post_id))
+    return redirect(url_for('panel_alumno', panel='foros'))
 
 # Add table for comments
 with app.app_context():
@@ -13848,16 +13671,6 @@ with app.app_context():
     mysql.connection.commit()
     cursor.close()
 
-# Events calendar
-@app.route('/events-calendar')
-@login_required
-def events_calendar():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM events ORDER BY date")
-    events = cursor.fetchall()
-    cursor.close()
-    return render_template('events-calendar.html', events=events)
-
 @app.route('/rsvp-event/<int:event_id>', methods=['POST'])
 @login_required
 def rsvp_event1(event_id):
@@ -13866,7 +13679,7 @@ def rsvp_event1(event_id):
     mysql.connection.commit()
     cursor.close()
     flash('RSVP confirmed.', 'success')
-    return redirect(url_for('events_calendar'))
+    return redirect(url_for('panel_alumno', panel='eventos'))
 
 # Add table for rsvps
 with app.app_context():
@@ -13897,43 +13710,6 @@ def match_mentors_v1(alumno_id):
     cursor.close()
     
     return mentors if mentors else [1, 2]  # fallback mentor ids
-
-@app.route('/request-mentorship')
-@login_required
-@role_required('alumno')
-def request_mentorship():
-    mentors = match_mentors(session['user_id'])
-    return render_template('request-mentorship.html', mentors=mentors)
-
-# Progress tracking dashboards
-@app.route('/progress-dashboard')
-@login_required
-@role_required('alumno')
-def progress_dashboard():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT path_id, progress FROM user_learning_progress WHERE user_id = %s", (session['user_id'],))
-    progress = cursor.fetchall()
-    cursor.close()
-    
-    # Generate charts with matplotlib
-    import matplotlib.pyplot as plt
-    fig, ax = plt.subplots()
-    
-    # Plot progress data
-    if progress:
-        paths = [p['path_id'] for p in progress]
-        values = [p['progress'] for p in progress]
-        ax.bar(paths, values)
-        ax.set_xlabel('Learning Path')
-        ax.set_ylabel('Progress %')
-        ax.set_title('Your Learning Progress')
-    
-    img_path = os.path.join(app.config['UPLOAD_FOLDER'], 'progress.png')
-    fig.savefig(img_path)
-    plt.close(fig)
-    fig.savefig(img_path)
-    cursor.close()
-    return render_template('progress-dashboard.html', progress=progress, chart_url=url_for('uploaded_file', filename='progress.png'))
 
 # Internationalization support (simple, using session lang)
 # ✅ CORRECCIÓN
@@ -13978,44 +13754,6 @@ if app.config['DEBUG']:
 
 # Chunk 2: Lines 1501-3000 (continuing from chunk 1).
 # Adding advanced AI tutors, external integrations (using available tools where possible, but since no internet for installs, simulate or use built-ins), user feedback, certifications, more STEM virtual labs, personalized recommendations, forums expansion, events calendar, mentorship matching, progress tracking dashboards, internationalization support, accessibility features, performance optimizations, error handling, testing routes, and wrapping up the app.
-
-# Advanced AI Tutor routes
-@app.route('/ai-tutor/<int:materia_id>', methods=['GET', 'POST'])
-@login_required
-def ai_tutor(materia_id):
-    """
-    Tutor IA para una materia específica.
-    - GET: Muestra la interfaz del tutor con nombre y descripción de la materia.
-    - POST: Envía una pregunta al modelo GPT-4-turbo y devuelve la respuesta en JSON.
-    """
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    if request.method == 'POST':
-        query = request.form['query']
-        context = request.form.get('context', '')
-        
-        # Usar Gemini API (gratuita)
-        system_context = "You are an expert tutor in this subject. Provide detailed, step-by-step explanations in Spanish."
-        prompt = f"Contexto de la materia: {context}\nPregunta del estudiante: {query}"
-        
-        try:
-            answer = gemini_chat(prompt, system_context)
-        except Exception as e:
-            answer = f"Lo siento, ocurrió un error al contactar al tutor IA: {str(e)}"
-        
-        cursor.close()
-        return jsonify({'answer': answer})
-    
-    # Método GET: cargar datos de la materia para la plantilla
-    cursor.execute("SELECT nombre, descripcion FROM materias WHERE id = %s", (materia_id,))
-    materia = cursor.fetchone()
-    cursor.close()
-    
-    if not materia:
-        flash('Materia no encontrada.', 'error')
-        return redirect(url_for('index'))
-    
-    return render_template('ai-tutor.html', materia=materia)
 
 # Integration with external APIs (simulate since no direct internet, but use tools if needed; for now, mock)
 def fetch_khan_academy_content(topic):
@@ -14184,45 +13922,6 @@ def forbidden(error):
 
 # Additional features: User profile editing
 
-# Admin user management
-@app.route('/admin/users', methods=['GET', 'POST'])
-@login_required
-@role_required('admin')
-def admin_users():
-    if request.method == 'POST':
-        # Add user form
-        nombre = request.form['nombre']
-        email = request.form['email']
-        numero_control = request.form['numero_control']
-        curp = request.form['curp']
-        tipo_usuario = request.form['tipo_usuario']
-        password = generate_password_hash(request.form['password'])
-        
-        cursor = mysql.connection.cursor()
-        cursor.execute("INSERT INTO usuarios (nombre, email, numero_control, curp, tipo_usuario, password_hash) VALUES (%s, %s, %s, %s, %s, %s)",
-                       (nombre, email, numero_control, curp, tipo_usuario, password))
-        mysql.connection.commit()
-        cursor.close()
-        flash('User added.', 'success')
-    
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM usuarios ORDER BY id")
-    users = cursor.fetchall()
-    cursor.close()
-    return render_template('admin-users.html', users=users)
-
-@app.route('/admin/delete-user/<int:user_id>', methods=['POST'])
-@login_required
-@role_required('admin')
-def admin_delete_user(user_id):
-    cursor = mysql.connection.cursor()
-    cursor.execute("DELETE FROM usuarios WHERE id = %s", (user_id
-,))
-    mysql.connection.commit()
-    cursor.close()
-    flash('User deleted.', 'success')
-    return redirect(url_for('admin_users'))
-
 # Logout cleanup
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -14283,22 +13982,6 @@ def stripe_webhook():
     
     return jsonify({'status': 'success'})
 
-# Platform search functionality
-@app.route('/admin/analytics')
-@login_required
-@role_required('admin')
-def admin_analytics():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    # User growth
-    cursor.execute("SELECT DATE(fecha_registro) as date, COUNT(*) as count FROM usuarios GROUP BY date ORDER BY date")
-    growth = cursor.fetchall()
-    # Average XP
-    cursor.execute("SELECT AVG(xp) as avg_xp FROM usuarios WHERE tipo_usuario = 'alumno'")
-    avg_xp = cursor.fetchone()['avg_xp']
-    # More metrics...
-    cursor.close()
-    return render_template('admin-analytics.html', growth=growth, avg_xp=avg_xp)
-
 # Content moderation (using AI)
 @app.route('/moderate-content', methods=['POST'])
 @role_required('admin')
@@ -14318,15 +14001,18 @@ def fetch_coursera_courses(topic):
     """Mock Coursera integration."""
     return [{"title": "Course 1", "url": "coursera.org/course1"}]
 
-@app.route('/coursera-recommendations/<int:materia_id>')
+@app.route('/api/coursera/<int:materia_id>', methods=['GET'])
 @login_required
-def coursera_recommendations(materia_id):
+def api_coursera(materia_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     cursor.execute("SELECT nombre FROM materias WHERE id = %s", (materia_id,))
-    topic = cursor.fetchone()['nombre']
-    courses = fetch_coursera_courses(topic)
+    materia = cursor.fetchone()
+    if not materia:
+        cursor.close()
+        return jsonify({'error': 'Materia no encontrada'}), 404
+    courses = fetch_coursera_courses(materia['nombre'])
     cursor.close()
-    return render_template('coursera.html', courses=courses)
+    return jsonify({'materia': materia, 'courses': courses})
 
 # More socket.io events for real-time updates
 @socketio.on('task_update')
@@ -14366,23 +14052,6 @@ def test_login(client):
     rv = client.post('/login', data={'numeroControl': 'test', 'curp': 'TEST12345678901234', 'role': 'alumno'})
     assert rv.status_code == 302  # Redirect
 """
-# Sistema de notificaciones internas mejorado
-@app.route('/notificaciones')
-@login_required
-def notificaciones():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-        SELECT n.*, u.nombre as remitente 
-        FROM notificaciones n
-        LEFT JOIN usuarios u ON n.remitente_id = u.id
-        WHERE n.destinatario_id = %s 
-        ORDER BY n.fecha DESC 
-        LIMIT 50
-    """, (session['user_id'],))
-    notifs = cursor.fetchall()
-    cursor.close()
-    return render_template('notificaciones.html', notificaciones=notifs)
-
 @app.route('/marcar_notificacion_leida/<int:notif_id>', methods=['POST'])
 @login_required
 def marcar_notificacion_leida(notif_id):
@@ -14393,39 +14062,11 @@ def marcar_notificacion_leida(notif_id):
     cursor.close()
     return jsonify({'success': True})
 
-# Sistema de badges/insignias expandido
-@app.route('/mis-insignias')
+@app.route('/api/alumno/ranking', methods=['GET'])
 @login_required
-def mis_insignias():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-        SELECT i.*, ui.fecha_obtencion, i.rareza
-        FROM usuario_insignias ui
-        JOIN insignias i ON ui.insignia_id = i.id
-        WHERE ui.usuario_id = %s
-        ORDER BY i.rareza DESC, ui.fecha_obtencion DESC
-    """, (session['user_id'],))
-    insignias = cursor.fetchall()
-    
-    # Contar insignias por rareza
-    cursor.execute("""
-        SELECT i.rareza, COUNT(*) as count
-        FROM usuario_insignias ui
-        JOIN insignias i ON ui.insignia_id = i.id
-        WHERE ui.usuario_id = %s
-        GROUP BY i.rareza
-    """, (session['user_id'],))
-    stats = cursor.fetchall()
-    cursor.close()
-    
-    return render_template('mis-insignias.html', insignias=insignias, stats=stats)
-
-# Sistema de ranking global
-@app.route('/ranking')
-@login_required
-def ranking():
+def api_ranking():
     periodo = request.args.get('periodo', 'semanal')
-    
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     if periodo == 'semanal':
         cursor.execute("""
@@ -14453,7 +14094,7 @@ def ranking():
             ORDER BY xp_periodo DESC
             LIMIT 100
         """)
-    else:  # global
+    else:
         cursor.execute("""
             SELECT id, nombre, avatar_url, rango, xp as xp_periodo
             FROM usuarios
@@ -14461,28 +14102,10 @@ def ranking():
             ORDER BY xp DESC
             LIMIT 100
         """)
-    
-    ranking = cursor.fetchall()
-    cursor.close()
-    return render_template('ranking.html', ranking=ranking, periodo=periodo)
 
-# Sistema de equipos/grupos de estudio
-@app.route('/equipos')
-@login_required
-def equipos():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-        SELECT e.*, 
-               (SELECT COUNT(*) FROM equipo_miembros WHERE equipo_id = e.id) as miembros_count,
-               em.rol
-        FROM equipos e
-        LEFT JOIN equipo_miembros em ON e.id = em.equipo_id AND em.usuario_id = %s
-        WHERE e.activo = 1
-        ORDER BY e.fecha_creacion DESC
-    """, (session['user_id'],))
-    equipos = cursor.fetchall()
+    data = cursor.fetchall()
     cursor.close()
-    return render_template('equipos.html', equipos=equipos)
+    return jsonify({'ranking': data, 'periodo': periodo})
 
 @app.route('/crear-equipo', methods=['POST'])
 @login_required
@@ -14510,7 +14133,7 @@ def crear_equipo():
     
     log_accion('crear_equipo', f'Equipo {equipo_id} creado', session['user_id'])
     flash('Equipo creado exitosamente.', 'success')
-    return redirect(url_for('equipos'))
+    return redirect(url_for('panel_alumno', panel='equipos'))
 
 @app.route('/unirse-equipo/<int:equipo_id>', methods=['POST'])
 @login_required
@@ -14529,7 +14152,7 @@ def unirse_equipo(equipo_id):
     
     if equipo['actual'] >= equipo['max_miembros']:
         flash('El equipo está lleno.', 'error')
-        return redirect(url_for('equipos'))
+        return redirect(url_for('panel_alumno', panel='equipos'))
     
     # Unirse
     cursor.execute("""
@@ -14540,40 +14163,7 @@ def unirse_equipo(equipo_id):
     cursor.close()
     
     flash('Te has unido al equipo.', 'success')
-    return redirect(url_for('ver_equipo', equipo_id=equipo_id))
-
-@app.route('/equipo/<int:equipo_id>')
-@login_required
-def ver_equipo(equipo_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-        SELECT e.*, u.nombre as lider_nombre
-        FROM equipos e
-        JOIN usuarios u ON e.lider_id = u.id
-        WHERE e.id = %s
-    """, (equipo_id,))
-    equipo = cursor.fetchone()
-    
-    cursor.execute("""
-        SELECT u.id, u.nombre, u.avatar_url, u.rango, em.rol
-        FROM equipo_miembros em
-        JOIN usuarios u ON em.usuario_id = u.id
-        WHERE em.equipo_id = %s
-    """, (equipo_id,))
-    miembros = cursor.fetchall()
-    
-    # Actividades del equipo
-    cursor.execute("""
-        SELECT * FROM actividades_equipo
-        WHERE equipo_id = %s
-        ORDER BY fecha DESC
-        LIMIT 20
-    """, (equipo_id,))
-    actividades = cursor.fetchall()
-    
-    cursor.close()
-    return render_template('ver-equipo.html', equipo=equipo, miembros=miembros, actividades=actividades)
-
+    return redirect(url_for('panel_alumno', panel='equipos'))
 # Chat de equipo con socket.io
 @socketio.on('join_team_chat')
 def join_team_chat(data):
@@ -14605,23 +14195,6 @@ def team_message(data):
         'timestamp': datetime.now().isoformat()
     }, room=f'team_{equipo_id}')
 
-# Sistema de proyectos colaborativos
-@app.route('/proyectos')
-@login_required
-def proyectos():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-        SELECT p.*, m.nombre as materia_nombre,
-               (SELECT COUNT(*) FROM proyecto_miembros WHERE proyecto_id = p.id) as miembros
-        FROM proyectos p
-        LEFT JOIN materias m ON p.materia_id = m.id
-        WHERE p.activo = 1
-        ORDER BY p.fecha_limite DESC
-    """, )
-    proyectos = cursor.fetchall()
-    cursor.close()
-    return render_template('proyectos.html', proyectos=proyectos)
-
 @app.route('/crear-proyecto', methods=['POST'])
 @login_required
 @role_required('docente')
@@ -14641,33 +14214,7 @@ def crear_proyecto():
     cursor.close()
     
     flash('Proyecto creado.', 'success')
-    return redirect(url_for('proyectos'))
-
-@app.route('/proyecto/<int:proyecto_id>')
-@login_required
-def ver_proyecto(proyecto_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM proyectos WHERE id = %s", (proyecto_id,))
-    proyecto = cursor.fetchone()
-    
-    cursor.execute("""
-        SELECT u.*, pm.rol
-        FROM proyecto_miembros pm
-        JOIN usuarios u ON pm.usuario_id = u.id
-        WHERE pm.proyecto_id = %s
-    """, (proyecto_id,))
-    miembros = cursor.fetchall()
-    
-    cursor.execute("""
-        SELECT * FROM entregas_proyecto
-        WHERE proyecto_id = %s
-        ORDER BY fecha_entrega DESC
-    """, (proyecto_id,))
-    entregas = cursor.fetchall()
-    
-    cursor.close()
-    return render_template('ver-proyecto.html', proyecto=proyecto, miembros=miembros, entregas=entregas)
-
+    return redirect(url_for('panel_alumno', panel='proyectos'))
 @app.route('/entregar-proyecto/<int:proyecto_id>', methods=['POST'])
 @login_required
 def entregar_proyecto(proyecto_id):
@@ -14696,7 +14243,7 @@ def entregar_proyecto(proyecto_id):
     cursor.close()
     
     flash('Proyecto entregado.', 'success')
-    return redirect(url_for('ver_proyecto', proyecto_id=proyecto_id))
+    return redirect(url_for('panel_alumno', panel='proyectos'))
 
 # Sistema de evaluación por pares
 @app.route('/evaluar-proyecto/<int:entrega_id>', methods=['POST'])
@@ -14737,34 +14284,7 @@ def solicitar_tutoria(tutor_id):
     send_push_notification(tutor_id, 'Nueva solicitud de tutoría', f'Tema: {tema}')
     
     flash('Solicitud enviada.', 'success')
-    return redirect(url_for('tutorias'))
-
-@app.route('/mis-tutorias')
-@login_required
-def mis_tutorias():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    if session['user_role'] == 'alumno':
-        cursor.execute("""
-            SELECT st.*, u.nombre as tutor_nombre
-            FROM solicitudes_tutoria st
-            JOIN usuarios u ON st.tutor_id = u.id
-            WHERE st.alumno_id = %s
-            ORDER BY st.fecha_solicitud DESC
-        """, (session['user_id'],))
-    else:
-        cursor.execute("""
-            SELECT st.*, u.nombre as alumno_nombre
-            FROM solicitudes_tutoria st
-            JOIN usuarios u ON st.alumno_id = u.id
-            WHERE st.tutor_id = %s
-            ORDER BY st.fecha_solicitud DESC
-        """, (session['user_id'],))
-    
-    solicitudes = cursor.fetchall()
-    cursor.close()
-    return render_template('mis-tutorias.html', solicitudes=solicitudes)
-
+    return redirect(url_for('panel_alumno', panel='tutorias'))
 @app.route('/aceptar-tutoria/<int:solicitud_id>', methods=['POST'])
 @login_required
 def aceptar_tutoria(solicitud_id):
@@ -14788,59 +14308,7 @@ def aceptar_tutoria(solicitud_id):
     send_push_notification(alumno_id, 'Tutoría aceptada', f'Programada para {fecha_programada}')
     
     flash('Tutoría aceptada.', 'success')
-    return redirect(url_for('mis_tutorias'))
-
-# Sistema de portafolio estudiantil
-@app.route('/portafolio/<int:user_id>')
-@login_required
-def ver_portafolio(user_id):
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Info del usuario
-    cursor.execute("""
-        SELECT u.*, 
-               (SELECT COUNT(*) FROM usuario_insignias WHERE usuario_id = u.id) as total_insignias,
-               (SELECT AVG(calificacion) FROM entregas_tareas WHERE estudiante_id = u.id) as promedio
-        FROM usuarios u
-        WHERE u.id = %s
-    """, (user_id,))
-    usuario = cursor.fetchone()
-    
-    # Proyectos destacados
-    cursor.execute("""
-        SELECT p.titulo, ep.descripcion, ep.fecha_entrega, ep.calificacion
-        FROM entregas_proyecto ep
-        JOIN proyectos p ON ep.proyecto_id = p.id
-        WHERE ep.usuario_id = %s AND ep.destacado = 1
-        ORDER BY ep.calificacion DESC
-        LIMIT 5
-    """, (user_id,))
-    proyectos = cursor.fetchall()
-    
-    # Certificaciones
-    cursor.execute("""
-        SELECT * FROM certificaciones
-        WHERE usuario_id = %s
-        ORDER BY fecha_obtencion DESC
-    """, (user_id,))
-    certificaciones = cursor.fetchall()
-    
-    # Habilidades
-    cursor.execute("""
-        SELECT h.nombre, uh.nivel, uh.verificado
-        FROM usuario_habilidades uh
-        JOIN habilidades h ON uh.habilidad_id = h.id
-        WHERE uh.usuario_id = %s
-        ORDER BY uh.nivel DESC
-    """, (user_id,))
-    habilidades = cursor.fetchall()
-    
-    cursor.close()
-    return render_template('portafolio.html', 
-                         usuario=usuario, 
-                         proyectos=proyectos, 
-                         certificaciones=certificaciones,
-                         habilidades=habilidades)
+    return redirect(url_for('panel_alumno', panel='tutorias'))
 
 @app.route('/agregar-habilidad', methods=['POST'])
 @login_required
@@ -14871,35 +14339,7 @@ def agregar_habilidad():
     cursor.close()
     
     flash('Habilidad agregada.', 'success')
-    return redirect(url_for('ver_portafolio', user_id=session['user_id']))
-
-# Sistema de calendario académico
-@app.route('/calendario')
-@login_required
-def calendario():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Obtener eventos del calendario
-    cursor.execute("""
-        SELECT 'tarea' as tipo, t.id, t.titulo as titulo, t.fecha_vencimiento as fecha, m.nombre as materia
-        FROM tareas t
-        JOIN materias m ON t.materia_id = m.id
-        WHERE t.activo = 1 AND t.fecha_vencimiento >= CURDATE()
-        UNION
-        SELECT 'examen' as tipo, e.id, e.titulo, e.fecha, m.nombre as materia
-        FROM examenes e
-        JOIN materias m ON e.materia_id = m.id
-        WHERE e.activo = 1 AND e.fecha >= CURDATE()
-        UNION
-        SELECT 'evento' as tipo, ev.id, ev.titulo, ev.fecha, 'General' as materia
-        FROM events ev
-        WHERE ev.date >= CURDATE()
-        ORDER BY fecha
-    """)
-    eventos = cursor.fetchall()
-    cursor.close()
-    
-    return render_template('calendario.html', eventos=eventos)
+    return redirect(url_for('panel_alumno', panel='portafolio'))
 
 # API para calendario (FullCalendar.js)
 @app.route('/api/calendario-eventos')
@@ -14953,7 +14393,7 @@ def crear_recordatorio():
     cursor.close()
     
     flash('Recordatorio creado.', 'success')
-    return redirect(url_for('calendario'))
+    return redirect(url_for('panel_alumno', panel='eventos'))
 
 # Cron job para enviar recordatorios
 def enviar_recordatorios():
@@ -14983,20 +14423,6 @@ def enviar_recordatorios():
 # Agregar al scheduler
 schedule.every(15).minutes.do(enviar_recordatorios)
 
-# Sistema de notas personales
-@app.route('/mis-notas')
-@login_required
-def mis_notas():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-        SELECT * FROM notas
-        WHERE usuario_id = %s
-        ORDER BY fecha_modificacion DESC
-    """, (session['user_id'],))
-    notas = cursor.fetchall()
-    cursor.close()
-    return render_template('mis-notas.html', notas=notas)
-
 @app.route('/crear-nota', methods=['POST'])
 @login_required
 def crear_nota():
@@ -15013,7 +14439,7 @@ def crear_nota():
     cursor.close()
     
     flash('Nota creada.', 'success')
-    return redirect(url_for('mis_notas'))
+    return redirect(url_for('panel_alumno', panel='progreso'))
 
 @app.route('/editar-nota/<int:nota_id>', methods=['POST'])
 @login_required
@@ -15033,33 +14459,6 @@ def editar_nota(nota_id):
     
     return jsonify({'success': True})
 
-# Sistema de flashcards para estudio
-@app.route('/flashcards')
-@login_required
-def flashcards():
-    materia_id = request.args.get('materia_id')
-    
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    if materia_id:
-        cursor.execute("""
-            SELECT * FROM flashcards
-            WHERE materia_id = %s AND activo = 1
-            ORDER BY RAND()
-        """, (materia_id,))
-    else:
-        cursor.execute("""
-            SELECT f.*, m.nombre as materia
-            FROM flashcards f
-            JOIN materias m ON f.materia_id = m.id
-            WHERE f.activo = 1
-            ORDER BY RAND()
-            LIMIT 20
-        """)
-    
-    flashcards = cursor.fetchall()
-    cursor.close()
-    return render_template('flashcards.html', flashcards=flashcards)
-
 @app.route('/crear-flashcard', methods=['POST'])
 @login_required
 def crear_flashcard():
@@ -15076,7 +14475,7 @@ def crear_flashcard():
     cursor.close()
     
     flash('Flashcard creada.', 'success')
-    return redirect(url_for('flashcards'))
+    return redirect(url_for('panel_alumno', panel='flashcards'))
 
 ## Sistema de spaced repetition
 @app.route('/registrar-revision-flashcard', methods=['POST'])
@@ -15335,179 +14734,6 @@ def init_additional_tables():
 # SISTEMA DE EXÁMENES EN LÍNEA CON TIEMPO LÍMITE
 # =====================================================================
 
-@app.route('/examenes')
-@login_required
-def examenes():
-    """Vista de exámenes disponibles según rol."""
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    if session['user_role'] == 'docente':
-        # Exámenes creados por el docente
-        cursor.execute("""
-            SELECT e.*, m.nombre as materia_nombre,
-                   (SELECT COUNT(*) FROM respuestas_examen WHERE examen_id = e.id) as total_respuestas,
-                   (SELECT COUNT(DISTINCT estudiante_id) FROM respuestas_examen WHERE examen_id = e.id) as estudiantes_presentaron
-            FROM examenes e
-            JOIN materias m ON e.materia_id = m.id
-            WHERE e.docente_id = %s
-            ORDER BY e.fecha_disponible DESC
-        """, (session['user_id'],))
-    elif session['user_role'] == 'alumno':
-        # Exámenes disponibles para el alumno
-        cursor.execute("""
-            SELECT e.*, m.nombre as materia_nombre,
-                   re.id as respuesta_id, re.calificacion, re.fecha_inicio, re.fecha_fin,
-                   CASE 
-                       WHEN re.id IS NULL THEN 'no_iniciado'
-                       WHEN re.fecha_fin IS NULL AND NOW() > DATE_ADD(re.fecha_inicio, INTERVAL e.tiempo_limite MINUTE) THEN 'expirado'
-                       WHEN re.fecha_fin IS NULL THEN 'en_curso'
-                       ELSE 'completado'
-                   END as estado
-            FROM examenes e
-            JOIN materias m ON e.materia_id = m.id
-            JOIN matriculas mat ON m.id = mat.materia_id
-            LEFT JOIN respuestas_examen re ON e.id = re.examen_id AND re.estudiante_id = %s
-            WHERE mat.estudiante_id = %s 
-            AND e.activo = 1
-            AND e.fecha_disponible <= NOW()
-            AND (e.fecha_limite IS NULL OR e.fecha_limite >= NOW())
-            ORDER BY e.fecha_disponible DESC
-        """, (session['user_id'], session['user_id']))
-    else:
-        examenes = []
-        cursor.close()
-        return render_template('examenes.html', examenes=[])
-    
-    examenes = cursor.fetchall()
-    cursor.close()
-    return render_template('examenes.html', examenes=examenes)
-
-@app.route('/crear-examen/<int:materia_id>', methods=['GET', 'POST'])
-@login_required
-@role_required('docente')
-def crear_examen(materia_id):
-    """Crear nuevo examen con preguntas."""
-    if request.method == 'POST':
-        try:
-            titulo = request.form['titulo'].strip()
-            descripcion = request.form.get('descripcion', '').strip()
-            fecha_disponible = request.form['fecha_disponible']
-            fecha_limite = request.form.get('fecha_limite')
-            tiempo_limite = int(request.form['tiempo_limite'])  # minutos
-            intentos_permitidos = int(request.form.get('intentos_permitidos', 1))
-            mostrar_respuestas = request.form.get('mostrar_respuestas') == 'on'
-            aleatorizar = request.form.get('aleatorizar') == 'on'
-            
-            # Validaciones
-            if not titulo or tiempo_limite <= 0:
-                flash('Título y tiempo límite son requeridos.', 'error')
-                return redirect(request.url)
-            
-            cursor = mysql.connection.cursor()
-            cursor.execute("""
-                INSERT INTO examenes (materia_id, docente_id, titulo, descripcion, 
-                                     fecha_disponible, fecha_limite, tiempo_limite, 
-                                     intentos_permitidos, mostrar_respuestas, aleatorizar)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (materia_id, session['user_id'], titulo, descripcion, 
-                  fecha_disponible, fecha_limite, tiempo_limite, 
-                  intentos_permitidos, mostrar_respuestas, aleatorizar))
-            
-            examen_id = cursor.lastrowid
-            mysql.connection.commit()
-            cursor.close()
-            
-            log_accion('crear_examen', f'Examen {examen_id} creado en materia {materia_id}', session['user_id'], 'examenes')
-            flash('Examen creado. Ahora agrega preguntas.', 'success')
-            return redirect(url_for('editar_preguntas_examen', examen_id=examen_id))
-            
-        except Exception as e:
-            mysql.connection.rollback()
-            flash(f'Error al crear examen: {str(e)}', 'error')
-            return redirect(request.url)
-    
-    # GET: Mostrar formulario
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT id, nombre FROM materias WHERE id = %s AND docente_id = %s", 
-                   (materia_id, session['user_id']))
-    materia = cursor.fetchone()
-    cursor.close()
-    
-    if not materia:
-        flash('Materia no encontrada.', 'error')
-        return redirect(url_for('mis_materias'))
-    
-    return render_template('crear-examen.html', materia=materia)
-
-@app.route('/editar-preguntas-examen/<int:examen_id>', methods=['GET', 'POST'])
-@login_required
-@role_required('docente')
-def editar_preguntas_examen(examen_id):
-    """Editar preguntas de un examen."""
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Verificar propiedad del examen
-    cursor.execute("""
-        SELECT e.*, m.nombre as materia_nombre
-        FROM examenes e
-        JOIN materias m ON e.materia_id = m.id
-        WHERE e.id = %s AND e.docente_id = %s
-    """, (examen_id, session['user_id']))
-    examen = cursor.fetchone()
-    
-    if not examen:
-        cursor.close()
-        flash('Examen no encontrado.', 'error')
-        return redirect(url_for('examenes'))
-    
-    if request.method == 'POST':
-        try:
-            # Procesar preguntas desde JSON
-            preguntas_json = request.form.get('preguntas_json')
-            if preguntas_json:
-                preguntas = json.loads(preguntas_json)
-                
-                # Eliminar preguntas existentes
-                cursor.execute("DELETE FROM preguntas_examen WHERE examen_id = %s", (examen_id,))
-                
-                # Insertar nuevas preguntas
-                for orden, pregunta in enumerate(preguntas, 1):
-                    cursor.execute("""
-                        INSERT INTO preguntas_examen 
-                        (examen_id, tipo, pregunta, opciones, respuesta_correcta, puntos, orden)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    """, (examen_id, pregunta['tipo'], pregunta['pregunta'], 
-                          json.dumps(pregunta.get('opciones', [])), 
-                          pregunta.get('respuesta_correcta', ''), 
-                          pregunta.get('puntos', 1), orden))
-                
-                mysql.connection.commit()
-                flash(f'{len(preguntas)} preguntas guardadas.', 'success')
-                log_accion('editar_preguntas', f'{len(preguntas)} preguntas en examen {examen_id}', 
-                          session['user_id'], 'examenes')
-            
-        except Exception as e:
-            mysql.connection.rollback()
-            flash(f'Error al guardar preguntas: {str(e)}', 'error')
-        
-        return redirect(url_for('editar_preguntas_examen', examen_id=examen_id))
-    
-    # GET: Obtener preguntas existentes
-    cursor.execute("""
-        SELECT * FROM preguntas_examen
-        WHERE examen_id = %s
-        ORDER BY orden
-    """, (examen_id,))
-    preguntas = cursor.fetchall()
-    
-    # Parsear opciones JSON
-    for pregunta in preguntas:
-        if pregunta['opciones']:
-            pregunta['opciones'] = json.loads(pregunta['opciones'])
-    
-    cursor.close()
-    return render_template('editar-preguntas-examen.html', examen=examen, preguntas=preguntas)
-
 @app.route('/api/examen/<int:examen_id>', methods=['PUT'])
 @login_required
 @role_required('docente')
@@ -15598,13 +14824,13 @@ def iniciar_examen(examen_id):
     if not examen:
         cursor.close()
         flash('Examen no disponible.', 'error')
-        return redirect(url_for('examenes'))
+        return redirect(url_for('panel_alumno', panel='examenes'))
     
     # Verificar intentos
     if examen['intentos_realizados'] >= examen['intentos_permitidos']:
         cursor.close()
         flash('Has agotado tus intentos permitidos.', 'error')
-        return redirect(url_for('examenes'))
+        return redirect(url_for('panel_alumno', panel='examenes'))
     
     # Verificar si ya hay un intento en curso
     cursor.execute("""
@@ -15615,7 +14841,7 @@ def iniciar_examen(examen_id):
     
     if intento_existente:
         cursor.close()
-        return redirect(url_for('presentar_examen', respuesta_id=intento_existente['id']))
+        return redirect(url_for('panel_alumno', panel='examenes', respuesta_id=intento_existente['id']))
     
     # Crear nuevo intento
     cursor.execute("""
@@ -15627,70 +14853,7 @@ def iniciar_examen(examen_id):
     cursor.close()
     
     log_accion('iniciar_examen', f'Examen {examen_id} iniciado', session['user_id'], 'examenes')
-    return redirect(url_for('presentar_examen', respuesta_id=respuesta_id))
-
-@app.route('/presentar-examen/<int:respuesta_id>')
-@login_required
-@role_required('alumno')
-def presentar_examen(respuesta_id):
-    """Presentar examen activo."""
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Obtener respuesta y verificar propiedad
-    cursor.execute("""
-        SELECT re.*, e.titulo, e.tiempo_limite, e.aleatorizar,
-               TIMESTAMPDIFF(SECOND, re.fecha_inicio, NOW()) as tiempo_transcurrido
-        FROM respuestas_examen re
-        JOIN examenes e ON re.examen_id = e.id
-        WHERE re.id = %s AND re.estudiante_id = %s AND re.fecha_fin IS NULL
-    """, (respuesta_id, session['user_id']))
-    respuesta = cursor.fetchone()
-    
-    if not respuesta:
-        cursor.close()
-        flash('Respuesta no encontrada o ya completada.', 'error')
-        return redirect(url_for('examenes'))
-    
-    # Verificar tiempo límite
-    tiempo_restante = (respuesta['tiempo_limite'] * 60) - respuesta['tiempo_transcurrido']
-    if tiempo_restante <= 0:
-        # Auto-enviar examen
-        cursor.execute("""
-            UPDATE respuestas_examen
-            SET fecha_fin = NOW(), auto_enviado = 1
-            WHERE id = %s
-        """, (respuesta_id,))
-        mysql.connection.commit()
-        cursor.close()
-        flash('El tiempo se agotó. El examen fue enviado automáticamente.', 'warning')
-        return redirect(url_for('resultado_examen', respuesta_id=respuesta_id))
-    
-    # Obtener preguntas
-    cursor.execute("""
-        SELECT * FROM preguntas_examen
-        WHERE examen_id = %s
-        ORDER BY {}
-    """.format('RAND()' if respuesta['aleatorizar'] else 'orden'), (respuesta['examen_id'],))
-    preguntas = cursor.fetchall()
-    
-    # Parsear opciones y cargar respuestas guardadas
-    for pregunta in preguntas:
-        if pregunta['opciones']:
-            pregunta['opciones'] = json.loads(pregunta['opciones'])
-        
-        # Obtener respuesta guardada si existe
-        cursor.execute("""
-            SELECT respuesta FROM detalle_respuestas_examen
-            WHERE respuesta_examen_id = %s AND pregunta_id = %s
-        """, (respuesta_id, pregunta['id']))
-        guardada = cursor.fetchone()
-        pregunta['respuesta_guardada'] = guardada['respuesta'] if guardada else None
-    
-    cursor.close()
-    return render_template('presentar-examen.html', 
-                         respuesta=respuesta, 
-                         preguntas=preguntas, 
-                         tiempo_restante=tiempo_restante)
+    return redirect(url_for('panel_alumno', panel='examenes', respuesta_id=respuesta_id))
 
 @app.route('/guardar-respuesta-examen', methods=['POST'])
 @login_required
@@ -15749,7 +14912,7 @@ def enviar_examen(respuesta_id):
     if not respuesta:
         cursor.close()
         flash('No se puede enviar esta respuesta.', 'error')
-        return redirect(url_for('examenes'))
+        return redirect(url_for('panel_alumno', panel='examenes'))
     
     try:
         # Marcar como finalizado
@@ -15817,123 +14980,16 @@ def enviar_examen(respuesta_id):
                   session['user_id'], 'examenes')
         
         flash(f'Examen enviado. Calificación: {calificacion:.2f}%. +{xp_ganado} XP, +{educoins_ganados} EduCoins', 'success')
-        return redirect(url_for('resultado_examen', respuesta_id=respuesta_id))
+        return redirect(url_for('panel_alumno', panel='examenes', respuesta_id=respuesta_id))
         
     except Exception as e:
         mysql.connection.rollback()
         cursor.close()
         flash(f'Error al enviar examen: {str(e)}', 'error')
-        return redirect(url_for('presentar_examen', respuesta_id=respuesta_id))
-
-@app.route('/resultado-examen/<int:respuesta_id>')
-@login_required
-def resultado_examen(respuesta_id):
-    """Ver resultados de examen completado."""
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Obtener respuesta
-    cursor.execute("""
-        SELECT re.*, e.titulo, e.mostrar_respuestas, m.nombre as materia
-        FROM respuestas_examen re
-        JOIN examenes e ON re.examen_id = e.id
-        JOIN materias m ON e.materia_id = m.id
-        WHERE re.id = %s AND (re.estudiante_id = %s OR e.docente_id = %s)
-    """, (respuesta_id, session['user_id'], session['user_id']))
-    respuesta = cursor.fetchone()
-    
-    if not respuesta:
-        cursor.close()
-        flash('Resultado no encontrado.', 'error')
-        return redirect(url_for('examenes'))
-    
-    # Obtener detalles si se permite mostrar respuestas
-    preguntas_detalle = []
-    if respuesta['mostrar_respuestas'] or session['user_role'] == 'docente':
-        cursor.execute("""
-            SELECT pe.pregunta, pe.tipo, pe.opciones, pe.respuesta_correcta, pe.puntos,
-                   dre.respuesta as respuesta_dada,
-                   CASE WHEN LOWER(TRIM(dre.respuesta)) = LOWER(TRIM(pe.respuesta_correcta)) 
-                        THEN 1 ELSE 0 END as correcta
-            FROM preguntas_examen pe
-            LEFT JOIN detalle_respuestas_examen dre 
-                ON pe.id = dre.pregunta_id AND dre.respuesta_examen_id = %s
-            WHERE pe.examen_id = %s
-            ORDER BY pe.orden
-        """, (respuesta_id, respuesta['examen_id']))
-        preguntas_detalle = cursor.fetchall()
-        
-        for pregunta in preguntas_detalle:
-            if pregunta['opciones']:
-                pregunta['opciones'] = json.loads(pregunta['opciones'])
-    
-    cursor.close()
-    return render_template('resultado-examen.html', respuesta=respuesta, preguntas=preguntas_detalle)
-
+        return redirect(url_for('panel_alumno', panel='examenes', respuesta_id=respuesta_id))
 # =====================================================================
 # SISTEMA DE REPORTES Y ANALÍTICAS AVANZADAS
 # =====================================================================
-
-@app.route('/admin/reportes')
-@login_required
-@role_required('admin')
-def admin_reportes():
-    """Dashboard de reportes avanzados."""
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Métricas generales
-    cursor.execute("""
-        SELECT 
-            (SELECT COUNT(*) FROM usuarios WHERE activo = 1) as usuarios_activos,
-            (SELECT COUNT(*) FROM tareas WHERE activo = 1) as tareas_activas,
-            (SELECT COUNT(*) FROM examenes WHERE activo = 1) as examenes_activos,
-            (SELECT AVG(calificacion) FROM respuestas_examen WHERE calificacion IS NOT NULL) as promedio_examenes
-    """)
-    metricas = cursor.fetchone()
-    
-    # Actividad por mes (últimos 6 meses)
-    cursor.execute("""
-        SELECT DATE_FORMAT(fecha_registro, '%Y-%m') as mes,
-               COUNT(*) as nuevos_usuarios
-        FROM usuarios
-        WHERE fecha_registro >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-        GROUP BY mes
-        ORDER BY mes
-    """)
-    actividad_mensual = cursor.fetchall()
-    
-    # Top 10 estudiantes por XP
-    cursor.execute("""
-        SELECT nombre, xp, rango, educoins
-        FROM usuarios
-        WHERE tipo_usuario = 'alumno' AND activo = 1
-        ORDER BY xp DESC
-        LIMIT 10
-    """)
-    top_estudiantes = cursor.fetchall()
-    
-    # Materias con más actividad
-    cursor.execute("""
-        SELECT m.nombre, 
-               COUNT(DISTINCT t.id) as tareas,
-               COUNT(DISTINCT e.id) as examenes,
-               COUNT(DISTINCT mat.estudiante_id) as estudiantes
-        FROM materias m
-        LEFT JOIN tareas t ON m.id = t.materia_id AND t.activo = 1
-        LEFT JOIN examenes e ON m.id = e.materia_id AND e.activo = 1
-        LEFT JOIN matriculas mat ON m.id = mat.materia_id
-        WHERE m.activo = 1
-        GROUP BY m.id
-        ORDER BY (COUNT(DISTINCT t.id) + COUNT(DISTINCT e.id)) DESC
-        LIMIT 10
-    """)
-    materias_activas = cursor.fetchall()
-    
-    cursor.close()
-    return render_template('admin-reportes.html', 
-                         metricas=metricas, 
-                         actividad_mensual=actividad_mensual,
-                         top_estudiantes=top_estudiantes,
-                         materias_activas=materias_activas)
 
 @app.route('/api/reportes/rendimiento-por-materia')
 @login_required
@@ -16106,70 +15162,7 @@ def exportar_reporte(tipo):
         
     except Exception as e:
         flash(f'Error al exportar: {str(e)}', 'error')
-        return redirect(url_for('admin_reportes'))
-
-@app.route('/logros')
-@login_required
-@role_required('alumno')
-def logros():
-    """Vista de logros y recompensas del usuario."""
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Logros diarios
-    cursor.execute("""
-        SELECT * FROM logros_diarios
-        WHERE usuario_id = %s AND fecha = CURDATE()
-    """, (session['user_id'],))
-    logros_hoy = cursor.fetchone()
-
-    if not logros_hoy:
-        # Crear registro de hoy
-        cursor.execute("""
-            INSERT INTO logros_diarios (usuario_id, fecha)
-            VALUES (%s, CURDATE())
-        """, (session['user_id'],))
-        mysql.connection.commit()
-        logros_hoy = {
-            'tareas_completadas': 0,
-            'examenes_completados': 0,
-            'minutos_estudio': 0,
-            'preguntas_respondidas': 0,
-            'racha_dias': 0
-        }
-
-    # Logros semanales
-    cursor.execute("""
-        SELECT * FROM logros_semanales
-        WHERE usuario_id = %s 
-        AND YEARWEEK(fecha_inicio, 1) = YEARWEEK(CURDATE(), 1)
-    """, (session['user_id'],))
-    logros_semana = cursor.fetchone()
-
-    # Recompensas disponibles
-    cursor.execute("""
-        SELECT * FROM recompensas
-        WHERE activo = 1 AND costo_educoins <= (SELECT educoins FROM usuarios WHERE id = %s)
-        ORDER BY costo_educoins
-    """, (session['user_id'],))
-    recompensas = cursor.fetchall()
-
-    # Historial de recompensas canjeadas
-    cursor.execute("""
-        SELECT r.nombre, r.descripcion, ur.fecha_canje
-        FROM usuario_recompensas ur
-        JOIN recompensas r ON ur.recompensa_id = r.id
-        WHERE ur.usuario_id = %s
-        ORDER BY ur.fecha_canje DESC
-        LIMIT 10
-    """, (session['user_id'],))
-    historial = cursor.fetchall()
-
-    cursor.close()
-    return render_template('logros.html', 
-                         logros_hoy=logros_hoy, 
-                         logros_semana=logros_semana,
-                         recompensas=recompensas,
-                         historial=historial)
+        return redirect(url_for('panel_admin'))
 
 @app.route('/actualizar-logro-diario', methods=['POST'])
 @login_required
@@ -16284,7 +15277,7 @@ def canjear_recompensa(recompensa_id):
         if not recompensa:
             cursor.close()
             flash('Recompensa no encontrada.', 'error')
-            return redirect(url_for('logros'))
+            return redirect(url_for('panel_alumno', panel='logros'))
 
         cursor.execute("SELECT educoins FROM usuarios WHERE id = %s", (session['user_id'],))
         usuario = cursor.fetchone()
@@ -16292,7 +15285,7 @@ def canjear_recompensa(recompensa_id):
         if usuario['educoins'] < recompensa['costo_educoins']:
             cursor.close()
             flash('No tienes suficientes EduCoins.', 'error')
-            return redirect(url_for('logros'))
+            return redirect(url_for('panel_alumno', panel='logros'))
 
         cursor.execute("""
             UPDATE usuarios
@@ -16317,13 +15310,13 @@ def canjear_recompensa(recompensa_id):
                   session['user_id'], 'recompensas')
         
         flash(f'Recompensa "{recompensa["nombre"]}" canjeada exitosamente!', 'success')
-        return redirect(url_for('logros'))
+        return redirect(url_for('panel_alumno', panel='logros'))
         
     except Exception as e:
         mysql.connection.rollback()
         cursor.close()
         flash(f'Error al canjear: {str(e)}', 'error')
-        return redirect(url_for('logros'))
+        return redirect(url_for('panel_alumno', panel='logros'))
 
 # Initialize additional tables for exams, rewards, and achievements
 with app.app_context():
@@ -17206,159 +16199,6 @@ def crear_tablas_usuarios_grupos():
 # Ejecutar al iniciar la app
 with app.app_context():
     crear_tablas_usuarios_grupos()
-@app.route('/mensajeria')
-@login_required
-def mensajeria():
-    """Centro de mensajería unificado con chats individuales y grupales."""
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        user_id = session['user_id']
-        user_role = session['user_role']
-
-        # Obtener conversaciones activas del usuario
-        cursor.execute("""
-            SELECT DISTINCT
-                CASE 
-                    WHEN c.tipo = 'individual' THEN 
-                        (SELECT CONCAT(u.nombre, ' ', u.apellido) 
-                         FROM usuarios u 
-                         WHERE u.id = IF(c.usuario1_id = %s, c.usuario2_id, c.usuario1_id))
-                    WHEN c.tipo = 'grupo_materia' THEN 
-                        (SELECT CONCAT('Grupo: ', m.nombre) FROM materias m WHERE m.id = c.referencia_id)
-                    WHEN c.tipo = 'grupo_escolar' THEN
-                        (SELECT CONCAT('Clase: ', g.nombre) FROM grupos g WHERE g.id = c.referencia_id)
-                END as nombre_chat,
-                c.id as conversacion_id,
-                c.tipo,
-                c.referencia_id,
-                (SELECT COUNT(*) FROM mensajes_chat mc 
-                 WHERE mc.conversacion_id = c.id 
-                 AND mc.leido = 0 
-                 AND mc.remitente_id != %s) as no_leidos,
-                (SELECT mensaje FROM mensajes_chat mc 
-                 WHERE mc.conversacion_id = c.id 
-                 ORDER BY mc.fecha_envio DESC LIMIT 1) as ultimo_mensaje,
-                (SELECT fecha_envio FROM mensajes_chat mc 
-                 WHERE mc.conversacion_id = c.id 
-                 ORDER BY mc.fecha_envio DESC LIMIT 1) as fecha_ultimo_mensaje,
-                CASE 
-                    WHEN c.tipo = 'individual' THEN 
-                        (SELECT u.avatar_url FROM usuarios u 
-                         WHERE u.id = IF(c.usuario1_id = %s, c.usuario2_id, c.usuario1_id))
-                    ELSE 'grupo_default.png'
-                END as avatar
-            FROM conversaciones c
-            WHERE (c.usuario1_id = %s OR c.usuario2_id = %s 
-                   OR EXISTS (
-                       SELECT 1 FROM conversacion_participantes cp 
-                       WHERE cp.conversacion_id = c.id AND cp.usuario_id = %s
-                   ))
-            AND c.activo = 1
-            ORDER BY fecha_ultimo_mensaje DESC NULLS LAST
-        """, (user_id, user_id, user_id, user_id, user_id, user_id))
-        
-        conversaciones = cursor.fetchall()
-        
-        # Contactos disponibles según rol
-        contactos = []
-        if user_role == 'alumno':
-            # Alumnos pueden mensajear a docentes de sus materias y compañeros de grupo
-            cursor.execute("""
-                SELECT DISTINCT u.id, CONCAT(u.nombre, ' ', u.apellido) as nombre, 
-                       u.tipo_usuario as rol, u.avatar_url,
-                       (SELECT 1 FROM conversaciones c 
-                        WHERE ((c.usuario1_id = %s AND c.usuario2_id = u.id) 
-                               OR (c.usuario1_id = u.id AND c.usuario2_id = %s))
-                        AND c.tipo = 'individual') as tiene_conversacion
-                FROM usuarios u
-                WHERE u.activo = 1 AND u.id != %s
-                AND (
-                    (u.tipo_usuario = 'docente' AND EXISTS (
-                        SELECT 1 FROM materias m 
-                        JOIN matriculas mat ON m.id = mat.materia_id
-                        WHERE m.docente_id = u.id AND mat.estudiante_id = %s
-                    ))
-                    OR (u.tipo_usuario = 'alumno' AND u.grupo_id = (
-                        SELECT grupo_id FROM usuarios WHERE id = %s
-                    ))
-                )
-                ORDER BY u.nombre, u.apellido
-            """, (user_id, user_id, user_id, user_id, user_id))
-        elif user_role == 'docente':
-            # Docentes pueden mensajear a alumnos de sus materias y otros docentes
-            cursor.execute("""
-                SELECT DISTINCT u.id, CONCAT(u.nombre, ' ', u.apellido) as nombre,
-                       u.tipo_usuario as rol, u.avatar_url,
-                       (SELECT 1 FROM conversaciones c 
-                        WHERE ((c.usuario1_id = %s AND c.usuario2_id = u.id) 
-                               OR (c.usuario1_id = u.id AND c.usuario2_id = %s))
-                        AND c.tipo = 'individual') as tiene_conversacion
-                FROM usuarios u
-                WHERE u.activo = 1 AND u.id != %s
-                AND (
-                    (u.tipo_usuario = 'alumno' AND EXISTS (
-                        SELECT 1 FROM materias m
-                        JOIN matriculas mat ON m.id = mat.materia_id
-                        WHERE m.docente_id = %s AND mat.estudiante_id = u.id
-                    ))
-                    OR u.tipo_usuario IN ('docente', 'orientador', 'admin')
-                )
-                ORDER BY u.nombre, u.apellido
-            """, (user_id, user_id, user_id, user_id))
-        else:
-            # Admin, tutor, orientador pueden mensajear a cualquiera
-            cursor.execute("""
-                SELECT u.id, CONCAT(u.nombre, ' ', u.apellido) as nombre,
-                       u.tipo_usuario as rol, u.avatar_url,
-                       (SELECT 1 FROM conversaciones c 
-                        WHERE ((c.usuario1_id = %s AND c.usuario2_id = u.id) 
-                               OR (c.usuario1_id = u.id AND c.usuario2_id = %s))
-                        AND c.tipo = 'individual') as tiene_conversacion
-                FROM usuarios u
-                WHERE u.activo = 1 AND u.id != %s
-                ORDER BY u.nombre, u.apellido
-            """, (user_id, user_id, user_id))
-        
-        contactos = cursor.fetchall()
-        
-        # Grupos de chat disponibles (materias y grupos escolares)
-        grupos_chat = []
-        if user_role in ['alumno', 'docente']:
-            cursor.execute("""
-                SELECT DISTINCT 
-                    CONCAT('materia_', m.id) as grupo_id,
-                    m.nombre,
-                    'Materia' as tipo,
-                    (SELECT COUNT(*) FROM matriculas WHERE materia_id = m.id) as miembros
-                FROM materias m
-                WHERE m.activo = 1
-                AND (
-                    (m.docente_id = %s)
-                    OR EXISTS (SELECT 1 FROM matriculas WHERE materia_id = m.id AND estudiante_id = %s)
-                )
-                UNION
-                SELECT DISTINCT
-                    CONCAT('grupo_', g.id) as grupo_id,
-                    CONCAT('Grupo ', g.nombre) as nombre,
-                    'Grupo Escolar' as tipo,
-                    (SELECT COUNT(*) FROM usuarios WHERE grupo_id = g.id AND activo = 1) as miembros
-                FROM grupos g
-                JOIN usuarios u ON u.grupo_id = g.id
-                WHERE g.activo = 1 AND u.id = %s
-                ORDER BY tipo, nombre
-            """, (user_id, user_id, user_id))
-            grupos_chat = cursor.fetchall()
-        
-        cursor.close()
-        
-        return render_template('mensajeria.html',
-                             conversaciones=conversaciones,
-                             contactos=contactos,
-                             grupos_chat=grupos_chat)
-        
-    except Exception as e:
-        flash(f'Error cargando mensajería: {str(e)}', 'error')
-        return redirect(url_for('index'))
 
 @app.route('/api/crear-conversacion', methods=['POST'])
 @login_required
@@ -17790,15 +16630,13 @@ def subir_archivo_chat():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/notificaciones-internas')
+@app.route('/api/notificaciones_internas', methods=['GET'])
 @login_required
-def notificaciones_internas():
-    """Centro de notificaciones del usuario."""
+def api_notificaciones_internas():
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         user_id = session['user_id']
 
-        # Obtener notificaciones no leídas
         cursor.execute("""
             SELECT n.*, 
                    CASE n.tipo
@@ -17820,10 +16658,9 @@ def notificaciones_internas():
             LIMIT 50
         """, (user_id,))
         no_leidas = cursor.fetchall()
-        
-        # Obtener notificaciones leídas recientes
+
         cursor.execute("""
-            SELECT n.*,
+            SELECT n.*, 
                    CASE n.tipo
                        WHEN 'tarea_nueva' THEN 'Nueva tarea asignada'
                        WHEN 'tarea_calificada' THEN 'Tarea calificada'
@@ -17844,8 +16681,7 @@ def notificaciones_internas():
             LIMIT 30
         """, (user_id,))
         leidas = cursor.fetchall()
-        
-        # Formatear tiempo relativo
+
         for notif in no_leidas + leidas:
             mins = notif['minutos_desde']
             if mins < 1:
@@ -17856,16 +16692,11 @@ def notificaciones_internas():
                 notif['tiempo_relativo'] = f'Hace {mins // 60} h'
             else:
                 notif['tiempo_relativo'] = f'Hace {mins // 1440} días'
-        
+
         cursor.close()
-        
-        return render_template('notificaciones-internas.html',
-                             no_leidas=no_leidas,
-                             leidas=leidas)
-        
+        return jsonify({'no_leidas': no_leidas, 'leidas': leidas})
     except Exception as e:
-        flash(f'Error cargando notificaciones: {str(e)}', 'error')
-        return redirect(url_for('index'))
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/notificaciones/marcar-todas-leidas', methods=['POST'])
 @login_required
@@ -17930,263 +16761,6 @@ def crear_notificacion_interna(destinatario_id, tipo, titulo, mensaje, url=None,
     except Exception as e:
         print(f"Error creando notificación: {str(e)}")
 
-@app.route('/tareas')
-@login_required
-def lista_tareas():
-    """Lista de tareas según rol con filtrado estricto."""
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        user_id = session['user_id']
-        user_role = session['user_role']
-
-        if user_role == 'alumno':
-            # Alumnos ven tareas de sus materias y grupo
-            cursor.execute("""
-                SELECT t.id, t.titulo, t.descripcion, t.fecha_vencimiento,
-                       t.valor_porcentaje, t.fecha_creacion,
-                       m.nombre as materia_nombre,
-                       g.nombre as grupo_nombre,
-                       CONCAT(d.nombre, ' ', d.apellido) as docente_nombre,
-                       et.id as entrega_id,
-                       et.calificacion,
-                       et.fecha_entrega,
-                       et.comentarios as comentario_docente,
-                       CASE 
-                           WHEN et.id IS NOT NULL THEN 'entregada'
-                           WHEN t.fecha_vencimiento < NOW() THEN 'vencida'
-                           WHEN t.fecha_vencimiento < DATE_ADD(NOW(), INTERVAL 2 DAY) THEN 'proxima'
-                           ELSE 'pendiente'
-                       END as estado,
-                       DATEDIFF(t.fecha_vencimiento, NOW()) as dias_restantes
-                FROM tareas t
-                JOIN materias m ON t.materia_id = m.id
-                LEFT JOIN grupos g ON m.grupo_id = g.id
-                JOIN usuarios d ON t.docente_id = d.id
-                LEFT JOIN entregas_tareas et ON t.id = et.tarea_id AND et.estudiante_id = %s
-                WHERE t.activo = 1
-                AND (
-                    EXISTS (
-                        SELECT 1 FROM matriculas mat
-                        WHERE mat.materia_id = m.id AND mat.estudiante_id = %s
-                    )
-                    OR (m.grupo_id IS NOT NULL AND m.grupo_id = (
-                        SELECT grupo_id FROM usuarios WHERE id = %s
-                    ))
-                )
-                ORDER BY 
-                    CASE 
-                        WHEN et.id IS NULL AND t.fecha_vencimiento >= NOW() THEN 1
-                        WHEN et.id IS NULL AND t.fecha_vencimiento < NOW() THEN 2
-                        ELSE 3
-                    END,
-                    t.fecha_vencimiento ASC
-            """, (user_id, user_id, user_id))
-            
-        elif user_role == 'docente':
-            # Docentes ven sus tareas creadas
-            cursor.execute("""
-                SELECT t.id, t.titulo, t.descripcion, t.fecha_vencimiento,
-                       t.valor_porcentaje, t.fecha_creacion,
-                       m.nombre as materia_nombre,
-                       g.nombre as grupo_nombre,
-                       COUNT(DISTINCT et.estudiante_id) as total_entregas,
-                       COUNT(DISTINCT CASE WHEN et.calificacion IS NOT NULL THEN et.estudiante_id END) as entregas_calificadas,
-                       (SELECT COUNT(*) FROM matriculas WHERE materia_id = m.id) as total_estudiantes,
-                       CASE 
-                           WHEN t.fecha_vencimiento < NOW() THEN 'vencida'
-                           WHEN t.fecha_vencimiento < DATE_ADD(NOW(), INTERVAL 2 DAY) THEN 'proxima'
-                           ELSE 'activa'
-                       END as estado
-                FROM tareas t
-                JOIN materias m ON t.materia_id = m.id
-                LEFT JOIN grupos g ON m.grupo_id = g.id
-                LEFT JOIN entregas_tareas et ON t.id = et.tarea_id
-                WHERE t.docente_id = %s
-                AND t.activo = 1
-                GROUP BY t.id
-                ORDER BY t.fecha_vencimiento DESC
-            """, (user_id,))
-        
-        else:
-            # Admin, tutor, orientador ven todas las tareas
-            cursor.execute("""
-                SELECT t.id, t.titulo, t.descripcion, t.fecha_vencimiento,
-                       t.valor_porcentaje, t.fecha_creacion,
-                       m.nombre as materia_nombre,
-                       g.nombre as grupo_nombre,
-                       CONCAT(d.nombre, ' ', d.apellido) as docente_nombre,
-                       COUNT(DISTINCT et.estudiante_id) as total_entregas,
-                       (SELECT COUNT(*) FROM matriculas WHERE materia_id = m.id) as total_estudiantes
-                FROM tareas t
-                JOIN materias m ON t.materia_id = m.id
-                LEFT JOIN grupos g ON m.grupo_id = g.id
-                JOIN usuarios d ON t.docente_id = d.id
-                LEFT JOIN entregas_tareas et ON t.id = et.tarea_id
-                WHERE t.activo = 1
-                GROUP BY t.id
-                ORDER BY t.fecha_vencimiento DESC
-                LIMIT 100
-            """)
-        
-        tareas = cursor.fetchall()
-        
-        # Obtener grupos y materias para filtros (si es docente)
-        grupos_filtro = []
-        materias_filtro = []
-        
-        if user_role == 'docente':
-            cursor.execute("""
-                SELECT DISTINCT g.id, g.nombre
-                FROM grupos g
-                JOIN materias m ON g.id = m.grupo_id
-                WHERE m.docente_id = %s AND g.activo = 1
-                ORDER BY g.nombre
-            """, (user_id,))
-            grupos_filtro = cursor.fetchall()
-            
-            cursor.execute("""
-                SELECT id, nombre
-                FROM materias
-                WHERE docente_id = %s AND activo = 1
-                ORDER BY nombre
-            """, (user_id,))
-            materias_filtro = cursor.fetchall()
-        
-        cursor.close()
-        
-        return render_template('tareas.html',
-                             tareas=tareas,
-                             grupos_filtro=grupos_filtro,
-                             materias_filtro=materias_filtro)
-        
-    except Exception as e:
-        flash(f'Error cargando tareas: {str(e)}', 'error')
-        return redirect(url_for('index'))
-
-@app.route('/tarea/<int:tarea_id>')
-@login_required
-def ver_tarea_detalle(tarea_id):
-    """Ver detalles completos de una tarea."""
-    try:
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        user_id = session['user_id']
-        user_role = session['user_role']
-
-        # Obtener datos de la tarea
-        cursor.execute("""
-            SELECT t.*, 
-                   m.nombre as materia_nombre,
-                   g.nombre as grupo_nombre,
-                   g.id as grupo_id,
-                   CONCAT(d.nombre, ' ', d.apellido) as docente_nombre,
-                   d.email as docente_email,
-                   CASE 
-                       WHEN t.fecha_vencimiento < NOW() THEN 'vencida'
-                       WHEN t.fecha_vencimiento < DATE_ADD(NOW(), INTERVAL 2 DAY) THEN 'proxima'
-                       ELSE 'activa'
-                   END as estado,
-                   TIMESTAMPDIFF(HOUR, NOW(), t.fecha_vencimiento) as horas_restantes
-            FROM tareas t
-            JOIN materias m ON t.materia_id = m.id
-            LEFT JOIN grupos g ON m.grupo_id = g.id
-            JOIN usuarios d ON t.docente_id = d.id
-            WHERE t.id = %s AND t.activo = 1
-        """, (tarea_id,))
-        
-        tarea = cursor.fetchone()
-        
-        if not tarea:
-            cursor.close()
-            flash('Tarea no encontrada.', 'error')
-            return redirect(url_for('lista_tareas'))
-        
-        # Verificar permisos
-        if user_role == 'alumno':
-            cursor.execute("""
-                SELECT 1 FROM matriculas
-                WHERE materia_id = %s AND estudiante_id = %s
-            """, (tarea['materia_id'], user_id))
-            
-            if not cursor.fetchone():
-                # Verificar si es por grupo
-                cursor.execute("""
-                    SELECT 1 FROM usuarios
-                    WHERE id = %s AND grupo_id = %s
-                """, (user_id, tarea.get('grupo_id')))
-                
-                if not cursor.fetchone():
-                    cursor.close()
-                    flash('No tienes acceso a esta tarea.', 'error')
-                    return redirect(url_for('lista_tareas'))
-            
-            # Obtener entrega del alumno
-            cursor.execute("""
-                SELECT * FROM entregas_tareas
-                WHERE tarea_id = %s AND estudiante_id = %s
-                ORDER BY fecha_entrega DESC
-                LIMIT 1
-            """, (tarea_id, user_id))
-            mi_entrega = cursor.fetchone()
-            
-        elif user_role == 'docente':
-            if tarea['docente_id'] != user_id:
-                cursor.close()
-                flash('No tienes acceso a esta tarea.', 'error')
-                return redirect(url_for('lista_tareas'))
-            
-            # Obtener estadísticas de entregas
-            cursor.execute("""
-                SELECT 
-                    COUNT(DISTINCT et.estudiante_id) as total_entregas,
-                    COUNT(DISTINCT CASE WHEN et.calificacion IS NOT NULL THEN et.estudiante_id END) as entregas_calificadas,
-                    AVG(et.calificacion) as promedio,
-                    (SELECT COUNT(*) FROM matriculas WHERE materia_id = %s) as total_estudiantes
-                FROM entregas_tareas et
-                WHERE et.tarea_id = %s
-            """, (tarea['materia_id'], tarea_id))
-            estadisticas = cursor.fetchone()
-            
-            # Obtener todas las entregas
-            cursor.execute("""
-                SELECT et.*,
-                       CONCAT(u.nombre, ' ', u.apellido) as estudiante_nombre,
-                       u.numero_control,
-                       u.grupo_id
-                FROM entregas_tareas et
-                JOIN usuarios u ON et.estudiante_id = u.id
-                WHERE et.tarea_id = %s
-                ORDER BY et.fecha_entrega DESC
-            """, (tarea_id,))
-            entregas = cursor.fetchall()
-            
-            mi_entrega = None
-        
-        else:
-            mi_entrega = None
-            estadisticas = None
-            entregas = []
-        
-        # Obtener recursos adjuntos a la tarea
-        cursor.execute("""
-            SELECT * FROM recursos
-            WHERE referencia_tipo = 'tarea' AND referencia_id = %s
-            ORDER BY fecha_creacion DESC
-        """, (tarea_id,))
-        recursos_adjuntos = cursor.fetchall()
-        
-        cursor.close()
-        
-        return render_template('tarea-detalle.html',
-                             tarea=tarea,
-                             mi_entrega=mi_entrega if user_role == 'alumno' else None,
-                             estadisticas=estadisticas if user_role == 'docente' else None,
-                             entregas=entregas if user_role == 'docente' else [],
-                             recursos_adjuntos=recursos_adjuntos)
-        
-    except Exception as e:
-        flash(f'Error cargando tarea: {str(e)}', 'error')
-        return redirect(url_for('lista_tareas'))
-
 @app.route('/upload_entrega', methods=['POST'])
 @login_required
 def upload_entrega():
@@ -18234,115 +16808,6 @@ def upload_entrega():
             return jsonify({'success': False, 'message': str(e)}), 500
     
     return jsonify({'success': False, 'message': 'File type not allowed'}), 400
-
-@app.route('/crear-tarea', methods=['GET', 'POST'])
-@login_required
-@role_required('docente')
-def crear_tarea_nueva():
-    """Crear nueva tarea con recursos adjuntos."""
-    if request.method == 'POST':
-        try:
-            titulo = request.form.get('titulo', '').strip()
-            descripcion = request.form.get('descripcion', '').strip()
-            materia_id = request.form.get('materia_id')
-            fecha_vencimiento = request.form.get('fecha_vencimiento')
-            valor_porcentaje = request.form.get('valor_porcentaje', type=float)
-            
-            # Validaciones
-            if not all([titulo, descripcion, materia_id, fecha_vencimiento, valor_porcentaje]):
-                flash('Todos los campos son obligatorios.', 'error')
-                return redirect(request.url)
-            
-            if valor_porcentaje < 0 or valor_porcentaje > 100:
-                flash('El valor debe estar entre 0 y 100.', 'error')
-                return redirect(request.url)
-            
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            
-            # Verificar que la materia pertenece al docente
-            cursor.execute("""
-                SELECT id, grupo_id FROM materias
-                WHERE id = %s AND docente_id = %s AND activo = 1
-            """, (materia_id, session['user_id']))
-            
-            materia = cursor.fetchone()
-            if not materia:
-                flash('Materia no válida.', 'error')
-                return redirect(request.url)
-            
-            # Crear tarea
-            cursor.execute("""
-                INSERT INTO tareas 
-                (titulo, descripcion, materia_id, docente_id, fecha_vencimiento, valor_porcentaje)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (titulo, descripcion, materia_id, session['user_id'], fecha_vencimiento, valor_porcentaje))
-            
-            tarea_id = cursor.lastrowid
-            mysql.connection.commit()
-            
-            # Procesar archivos adjuntos
-            archivos = request.files.getlist('archivos[]')
-            for archivo in archivos:
-                if archivo and archivo.filename and allowed_file(archivo.filename):
-                    filename = secure_filename(archivo.filename)
-                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    filename = f'{timestamp}_{filename}'
-                    
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'tareas', filename)
-                    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-                    archivo.save(filepath)
-                    
-                    cursor.execute("""
-                        INSERT INTO recursos 
-                        (titulo, tipo_archivo, nombre_archivo, referencia_tipo, referencia_id, materia_id)
-                        VALUES (%s, %s, %s, 'tarea', %s, %s)
-                    """, (archivo.filename, archivo.content_type, filename, tarea_id, materia_id))
-            
-            mysql.connection.commit()
-            
-            # Notificar a estudiantes matriculados
-            cursor.execute("""
-                SELECT estudiante_id FROM matriculas
-                WHERE materia_id = %s
-            """, (materia_id,))
-            estudiantes = cursor.fetchall()
-            
-            for estudiante in estudiantes:
-                crear_notificacion_interna(
-                    estudiante['estudiante_id'],
-                    'tarea_nueva',
-                    f'Nueva tarea: {titulo}',
-                    f'Vence: {fecha_vencimiento}',
-                    url_for('ver_tarea_detalle', tarea_id=tarea_id),
-                    tarea_id
-                )
-            
-            cursor.close()
-            
-            log_accion('crear_tarea', f'Tarea {tarea_id} "{titulo}" creada en materia {materia_id}',
-                      session['user_id'], 'tareas')
-            
-            flash(f'Tarea "{titulo}" creada exitosamente.', 'success')
-            return redirect(url_for('ver_tarea_detalle', tarea_id=tarea_id))
-            
-        except Exception as e:
-            mysql.connection.rollback()
-            flash(f'Error creando tarea: {str(e)}', 'error')
-            return redirect(request.url)
-
-    # GET: Mostrar formulario
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("""
-        SELECT m.id, m.nombre, g.nombre as grupo_nombre
-        FROM materias m
-        LEFT JOIN grupos g ON m.grupo_id = g.id
-        WHERE m.docente_id = %s AND m.activo = 1
-        ORDER BY m.nombre
-    """, (session['user_id'],))
-    materias = cursor.fetchall()
-    cursor.close()
-
-    return render_template('crear-tarea.html', materias=materias)
 
 @app.route('/entregar-tarea/<int:tarea_id>', methods=['POST'])
 @login_required
@@ -18424,7 +16889,7 @@ def entregar_tarea(tarea_id):
             'tarea_entregada',
             f'Nueva entrega de tarea: {tarea["titulo"]}',
             f'Por: {session.get("user_name")}',
-            url_for('ver_tarea_detalle', tarea_id=tarea_id),
+            url_for('panel_alumno', panel='tareas'),
             tarea_id
         )
         
@@ -23782,54 +22247,6 @@ def tutor_cancelar_cita_v2(cita_id):
 
 # --- JUSTIFICANTES MÉDICOS ---
 
-@app.route('/tutor/justificar_falta')
-@login_required
-@role_required('tutor')
-def tutor_justificar_falta_page():
-    """Página para subir justificantes médicos"""
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Obtener info del tutor
-    cursor.execute("SELECT nombre FROM usuarios WHERE id = %s", (session['user_id'],))
-    tutor = cursor.fetchone()
-    nombre = tutor['nombre'] if tutor else 'Tutor'
-    partes = nombre.split()
-    iniciales = ''.join([p[0].upper() for p in partes[:2]]) if partes else 'TU'
-    
-    # Obtener hijos del tutor
-    cursor.execute("""
-        SELECT u.id, u.nombre, u.numero_control
-        FROM usuarios u
-        JOIN tutores_estudiantes te ON u.id = te.estudiante_id
-        WHERE te.tutor_id = %s
-    """, (session['user_id'],))
-    hijos = cursor.fetchall()
-    
-    # Obtener justificantes anteriores
-    cursor.execute("""
-        SELECT j.*, u.nombre as alumno_nombre
-        FROM justificantes_tutor j
-        JOIN usuarios u ON j.alumno_id = u.id
-        WHERE j.tutor_id = %s
-        ORDER BY j.fecha_creacion DESC
-        LIMIT 20
-    """, (session['user_id'],))
-    justificantes = cursor.fetchall()
-    
-    for j in justificantes:
-        if j.get('fecha_falta'):
-            j['fecha_falta'] = j['fecha_falta'].strftime('%Y-%m-%d')
-        if j.get('fecha_creacion'):
-            j['fecha_creacion'] = j['fecha_creacion'].strftime('%Y-%m-%d %H:%M')
-    
-    cursor.close()
-    return render_template('justificar-falta.html',
-        nombre=nombre,
-        iniciales=iniciales,
-        hijos=hijos,
-        justificantes=justificantes
-    )
-
 
 @app.route('/api/tutor/justificantes', methods=['GET', 'POST'])
 @login_required
@@ -23923,36 +22340,6 @@ def tutor_justificantes():
 
 
 # --- AUTORIZACIONES DE EVENTOS ---
-
-@app.route('/tutor/autorizaciones')
-@login_required
-@role_required('tutor')
-def tutor_autorizaciones_page():
-    """Página para ver y firmar autorizaciones de eventos"""
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Obtener info del tutor
-    cursor.execute("SELECT nombre FROM usuarios WHERE id = %s", (session['user_id'],))
-    tutor = cursor.fetchone()
-    nombre = tutor['nombre'] if tutor else 'Tutor'
-    partes = nombre.split()
-    iniciales = ''.join([p[0].upper() for p in partes[:2]]) if partes else 'TU'
-    
-    # Obtener hijos del tutor
-    cursor.execute("""
-        SELECT u.id, u.nombre, u.numero_control, u.grado, u.grupo
-        FROM usuarios u
-        JOIN tutores_estudiantes te ON u.id = te.estudiante_id
-        WHERE te.tutor_id = %s
-    """, (session['user_id'],))
-    hijos = cursor.fetchall()
-    
-    cursor.close()
-    return render_template('autorizaciones.html',
-        nombre=nombre,
-        iniciales=iniciales,
-        hijos=hijos
-    )
 
 
 @app.route('/api/tutor/eventos', methods=['GET'])
@@ -24122,36 +22509,6 @@ def tutor_autorizaciones():
 
 
 # --- HISTORIAL DE PAGOS ---
-
-@app.route('/tutor/pagos')
-@login_required
-@role_required('tutor')
-def tutor_pagos_page():
-    """Página dedicada para ver historial de pagos"""
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    
-    # Obtener info del tutor
-    cursor.execute("SELECT nombre FROM usuarios WHERE id = %s", (session['user_id'],))
-    tutor = cursor.fetchone()
-    nombre = tutor['nombre'] if tutor else 'Tutor'
-    partes = nombre.split()
-    iniciales = ''.join([p[0].upper() for p in partes[:2]]) if partes else 'TU'
-    
-    # Obtener hijos
-    cursor.execute("""
-        SELECT u.id, u.nombre, u.numero_control
-        FROM usuarios u
-        JOIN tutores_estudiantes te ON u.id = te.estudiante_id
-        WHERE te.tutor_id = %s
-    """, (session['user_id'],))
-    hijos = cursor.fetchall()
-    
-    cursor.close()
-    return render_template('historial-pagos.html',
-        nombre=nombre,
-        iniciales=iniciales,
-        hijos=hijos
-    )
 
 
 @app.route('/api/tutor/pagos/historial', methods=['GET'])
@@ -28398,6 +26755,53 @@ def actualizar_estadisticas_grupo():
             print("[OK] Estadísticas de grupo actualizadas")
         except Exception as e:
             print(f"[ERROR] Error actualizando estadísticas: {e}")
+
+def detectar_rezago_alumnos(docente_id):
+    """Detecta alumnos con rezago para un docente (placeholder seguro)."""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT u.id, u.nombre, u.apellido, AVG(et.calificacion) as promedio
+            FROM usuarios u
+            JOIN matriculas mat ON mat.estudiante_id = u.id
+            JOIN materias m ON m.id = mat.materia_id
+            LEFT JOIN entregas_tareas et ON et.estudiante_id = u.id
+            WHERE m.docente_id = %s AND u.activo = 1 AND u.tipo_usuario = 'alumno'
+            GROUP BY u.id
+            HAVING promedio IS NOT NULL AND promedio < 70
+        """, (docente_id,))
+        rezago = cursor.fetchall()
+        cursor.close()
+        return rezago
+    except Exception as e:
+        print(f"[WARN] detectar_rezago_alumnos: {e}")
+        return []
+
+def generar_alertas_docente(docente_id):
+    """Genera alertas básicas para el docente (placeholder seguro)."""
+    try:
+        rezago = detectar_rezago_alumnos(docente_id)
+        if rezago:
+            log_accion('alerta_docente', f'Alumnos en rezago: {len(rezago)}', docente_id, 'docencia')
+    except Exception as e:
+        print(f"[WARN] generar_alertas_docente: {e}")
+
+def _calcular_carga_laboral_docente(docente_id):
+    """Calcula carga laboral del docente (placeholder seguro)."""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT COUNT(*) as materias, 
+                   (SELECT COUNT(*) FROM tareas t WHERE t.docente_id = %s) as tareas
+            FROM materias m
+            WHERE m.docente_id = %s AND m.activo = 1
+        """, (docente_id, docente_id))
+        carga = cursor.fetchone()
+        cursor.close()
+        return carga
+    except Exception as e:
+        print(f"[WARN] _calcular_carga_laboral_docente: {e}")
+        return {'materias': 0, 'tareas': 0}
 
 def tarea_diaria_docentes():
     """Ejecuta tareas diarias para todos los docentes (detección de rezago, alertas)"""

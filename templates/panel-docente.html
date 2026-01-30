@@ -323,10 +323,17 @@
             <section id="section-materias" class="content-section space-y-6">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold">Mis Materias</h2>
+                    <button onclick="openMateriaModal('crear')" class="bg-brand-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-plus mr-2"></i>Nueva Materia
+                    </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {% for m in materias %}
-                    <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition cursor-pointer"
+                    <div class="materia-card bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition cursor-pointer"
+                        data-id="{{ m.id }}"
+                        data-nombre="{{ m.nombre|e }}"
+                        data-descripcion="{{ (m.descripcion or '')|e }}"
+                        data-semestre="{{ m.semestre or '' }}"
                         onclick="loadSubjectDetails({{ m.id }})">
                         <div class="h-28 bg-gradient-to-r from-blue-500 to-cyan-400 p-4 flex items-end">
                             <h3 class="text-white font-bold text-lg">{{ m.nombre }}</h3>
@@ -338,6 +345,14 @@
                                 <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded">Semestre {{ m.semestre
                                     }}</span>
                                 <span class="text-gray-500">{{ m.quiz_generado }} quizzes</span>
+                            </div>
+                            <div class="flex justify-between mt-3">
+                                <button onclick="openMateriaFromCard(event, this)" class="text-brand-600 text-xs hover:underline">
+                                    <i class="fas fa-edit mr-1"></i>Editar
+                                </button>
+                                <button onclick="desactivarMateriaFromCard(event, this)" class="text-red-500 text-xs hover:underline">
+                                    <i class="fas fa-trash mr-1"></i>Desactivar
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1309,6 +1324,39 @@
             </div>
         </div>
 
+        <!-- MODAL: Crear/Editar Materia -->
+        <div id="modal-materia"
+            class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-enter">
+                <div class="p-6 border-b flex justify-between items-center">
+                    <h3 id="materia-modal-title" class="text-xl font-bold">Nueva Materia</h3>
+                    <button onclick="closeModal('modal-materia')" class="text-gray-400 hover:text-gray-600"><i
+                            class="fas fa-times"></i></button>
+                </div>
+                <form onsubmit="guardarMateria(event)" class="p-6 space-y-4">
+                    <input type="hidden" id="materia-id">
+                    <input type="hidden" id="materia-mode" value="crear">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nombre</label>
+                        <input type="text" id="materia-nombre" required class="w-full border rounded-lg px-4 py-2"
+                            placeholder="Nombre de la materia">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Descripción</label>
+                        <textarea id="materia-descripcion" rows="3" class="w-full border rounded-lg px-4 py-2"
+                            placeholder="Descripción breve"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Semestre</label>
+                        <input type="text" id="materia-semestre" required class="w-full border rounded-lg px-4 py-2"
+                            placeholder="Ej: 2025-1">
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-brand-600 text-white py-3 rounded-lg font-bold hover:bg-brand-700">Guardar</button>
+                </form>
+            </div>
+        </div>
+
         <!-- MODAL: Enviar Mensaje -->
         <div id="modal-mensaje"
             class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
@@ -1352,7 +1400,7 @@
                 if (sectionEl) sectionEl.classList.add('active');
 
                 // Highlight nav item if clicked
-                if (event && event.target) {
+                if (typeof event !== 'undefined' && event && event.target) {
                     const navItem = event.target.closest('.nav-item');
                     if (navItem) navItem.classList.add('active');
                 }
@@ -1388,6 +1436,82 @@
             function openModalReto() { document.getElementById('modal-reto').classList.remove('hidden'); }
             function openModalPerfil() { document.getElementById('modal-perfil').classList.remove('hidden'); }
             function openModalQR() { showSection('asistencia'); }
+
+            function openMateriaModal(mode = 'crear') {
+                document.getElementById('materia-mode').value = mode;
+                document.getElementById('materia-modal-title').textContent = mode === 'editar' ? 'Editar Materia' : 'Nueva Materia';
+                if (mode === 'crear') {
+                    document.getElementById('materia-id').value = '';
+                    document.getElementById('materia-nombre').value = '';
+                    document.getElementById('materia-descripcion').value = '';
+                    document.getElementById('materia-semestre').value = '';
+                }
+                document.getElementById('modal-materia').classList.remove('hidden');
+            }
+
+            function openMateriaFromCard(evt, btn) {
+                evt.stopPropagation();
+                const card = btn.closest('.materia-card');
+                if (!card) return;
+                document.getElementById('materia-id').value = card.dataset.id;
+                document.getElementById('materia-nombre').value = card.dataset.nombre || '';
+                document.getElementById('materia-descripcion').value = card.dataset.descripcion || '';
+                document.getElementById('materia-semestre').value = card.dataset.semestre || '';
+                openMateriaModal('editar');
+            }
+
+            function desactivarMateriaFromCard(evt, btn) {
+                evt.stopPropagation();
+                const card = btn.closest('.materia-card');
+                if (!card) return;
+                const materiaId = card.dataset.id;
+                Swal.fire({
+                    title: '¿Desactivar materia?',
+                    text: 'La materia dejará de estar activa.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonText: 'Sí, desactivar'
+                }).then(async result => {
+                    if (!result.isConfirmed) return;
+                    try {
+                        const res = await fetch(`/api/docente/materias/${materiaId}`, { method: 'DELETE' });
+                        const json = await res.json();
+                        if (json.success) {
+                            Swal.fire('Hecho', 'Materia desactivada', 'success').then(() => location.reload());
+                        } else {
+                            Swal.fire('Error', json.error || 'No se pudo desactivar', 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('Error', 'Error de conexión', 'error');
+                    }
+                });
+            }
+
+            async function guardarMateria(e) {
+                e.preventDefault();
+                const mode = document.getElementById('materia-mode').value;
+                const materiaId = document.getElementById('materia-id').value;
+                const payload = {
+                    nombre: document.getElementById('materia-nombre').value,
+                    descripcion: document.getElementById('materia-descripcion').value,
+                    semestre: document.getElementById('materia-semestre').value
+                };
+                try {
+                    const url = mode === 'editar' ? `/api/docente/materias/${materiaId}` : '/api/docente/materias';
+                    const method = mode === 'editar' ? 'PUT' : 'POST';
+                    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const json = await res.json();
+                    if (json.success) {
+                        Swal.fire('Éxito', 'Materia guardada', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', json.error || 'No se pudo guardar', 'error');
+                    }
+                } catch (e) {
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                }
+            }
 
             async function uploadDocentePhoto() {
                 const input = document.getElementById('docente-photo-input');
@@ -2821,6 +2945,10 @@
                 initCalendar();
                 cargarTutorias();
                 cargarMiHorario();
+
+                const params = new URLSearchParams(window.location.search);
+                const panel = params.get('panel') || 'dashboard';
+                showSection(panel);
             });
         </script>
 </body>

@@ -973,6 +973,13 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             renderBottomNav();
+            const params = new URLSearchParams(window.location.search);
+            const panel = params.get('panel');
+            if (panel && navItems.some(item => item.key === panel)) {
+                setActiveNav(panel);
+            } else {
+                showPanel('dashboard');
+            }
             loadLogs();
         });
     </script>
