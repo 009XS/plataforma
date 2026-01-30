@@ -165,7 +165,7 @@
                     <p class="text-xs text-gray-400">Docente</p>
                 </div>
             </button>
-            <a href="{{ url_for('logout') }}"
+            <a href="{{ url_for('logout') }}" onclick="cerrarSesion(event)"
                 class="mt-4 flex items-center justify-center w-full p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition text-sm">
                 <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
             </a>
@@ -329,22 +329,26 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {% for m in materias %}
-                    <div class="materia-card bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition cursor-pointer"
+                    <div class="materia-card bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition cursor-pointer group"
                         data-id="{{ m.id }}"
                         data-nombre="{{ m.nombre|e }}"
                         data-descripcion="{{ (m.descripcion or '')|e }}"
                         data-semestre="{{ m.semestre or '' }}"
                         onclick="loadSubjectDetails({{ m.id }})">
-                        <div class="h-28 bg-gradient-to-r from-blue-500 to-cyan-400 p-4 flex items-end">
+                        <div class="h-28 bg-gradient-to-r from-blue-500 to-cyan-400 p-4 flex items-end relative">
+                            <div class="absolute top-3 right-3 bg-white/20 text-white text-[11px] px-2 py-1 rounded-full backdrop-blur">
+                                Semestre {{ m.semestre }}
+                            </div>
+                            <div class="absolute top-3 left-3 bg-white/20 text-white text-[11px] px-2 py-1 rounded-full backdrop-blur">
+                                {{ m.quiz_generado }} quizzes
+                            </div>
                             <h3 class="text-white font-bold text-lg">{{ m.nombre }}</h3>
                         </div>
                         <div class="p-4">
-                            <p class="text-sm text-gray-500 mb-3">{{ m.descripcion[:60] if m.descripcion else 'Sin
-                                descripción' }}...</p>
-                            <div class="flex justify-between text-xs">
-                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded">Semestre {{ m.semestre
-                                    }}</span>
-                                <span class="text-gray-500">{{ m.quiz_generado }} quizzes</span>
+                            <p class="text-sm text-gray-500 mb-3">{{ m.descripcion[:60] if m.descripcion else 'Sin descripción' }}...</p>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="inline-flex items-center gap-1 text-gray-500"><i class="fas fa-layer-group"></i>Materia activa</span>
+                                <span class="text-gray-400">ID #{{ m.id }}</span>
                             </div>
                             <div class="flex justify-between mt-3">
                                 <button onclick="openMateriaFromCard(event, this)" class="text-brand-600 text-xs hover:underline">
@@ -401,6 +405,9 @@
                                     <button onclick="verEntregas({{ t.id }})"
                                         class="text-brand-600 hover:underline text-sm mr-2"><i class="fas fa-eye"></i>
                                         Ver</button>
+                                    <button onclick="editarTarea({{ t.id }})"
+                                        class="text-blue-600 hover:underline text-sm mr-2"><i
+                                            class="fas fa-edit"></i> Editar</button>
                                     <button onclick="detectarPlagio({{ t.id }})"
                                         class="text-purple-600 hover:underline text-sm mr-2" title="Detectar Plagio"><i
                                             class="fas fa-search"></i></button>
@@ -470,6 +477,29 @@
                         id="qr-display">
                         <i class="fas fa-qrcode text-6xl text-gray-300 mb-4"></i>
                         <p class="text-gray-500">El código QR aparecerá aquí</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold">Historial de Sesiones QR</h3>
+                            <button onclick="cargarHistorialQR()" class="text-sm text-brand-600 hover:underline"><i class="fas fa-sync mr-1"></i>Actualizar</button>
+                        </div>
+                        <select id="materia-qr-historial" class="w-full border rounded-lg px-4 py-2 mb-4">
+                            <option value="">Selecciona una materia</option>
+                            {% for m in materias %}
+                            <option value="{{ m.id }}">{{ m.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <div id="qr-historial-list" class="space-y-3">
+                            <div class="text-center text-gray-400 py-6">Selecciona una materia para ver sesiones</div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-bold mb-4">Asistencias por Sesión</h3>
+                        <div id="qr-asistencias-list" class="space-y-3">
+                            <div class="text-center text-gray-400 py-6">Selecciona una sesión para ver asistentes</div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -829,11 +859,13 @@
     <div id="modal-tarea" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-enter">
             <div class="p-6 border-b flex justify-between items-center">
-                <h3 class="text-xl font-bold">Nueva Tarea</h3>
+                <h3 id="tarea-modal-title" class="text-xl font-bold">Nueva Tarea</h3>
                 <button onclick="closeModal('modal-tarea')" class="text-gray-400 hover:text-gray-600"><i
                         class="fas fa-times"></i></button>
             </div>
-            <form id="form-tarea" onsubmit="crearTarea(event)" class="p-6 space-y-4">
+            <form id="form-tarea" onsubmit="guardarTarea(event)" class="p-6 space-y-4">
+                <input type="hidden" id="tarea-id">
+                <input type="hidden" id="tarea-mode" value="crear">
                 <div>
                     <label class="block text-sm font-medium mb-1">Título</label>
                     <input type="text" id="tarea-titulo" required class="w-full border rounded-lg px-4 py-2">
@@ -1188,16 +1220,16 @@
                     <form class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium mb-1">Nombre Completo</label>
-                            <input type="text" value="{{ nombre_docente }}"
+                            <input type="text" id="docente-nombre" value="{{ nombre_docente }}"
                                 class="w-full border rounded-lg px-3 py-2 bg-gray-50">
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-1">Especialidad</label>
-                            <input type="text" value="Ciencias Computacionales"
+                            <input type="text" id="docente-especialidad" value="{{ especialidad_docente }}"
                                 class="w-full border rounded-lg px-3 py-2">
                         </div>
                         <div class="pt-2">
-                            <button type="button"
+                            <button type="button" onclick="guardarPerfilDocente()"
                                 class="w-full bg-brand-600 text-white py-2 rounded-lg font-bold hover:bg-brand-700">Guardar
                                 Cambios</button>
                         </div>
@@ -1429,7 +1461,22 @@
             }
 
             // Modal openers
-            function openModalCrearTarea() { document.getElementById('modal-tarea').classList.remove('hidden'); }
+            function resetTareaForm() {
+                document.getElementById('tarea-id').value = '';
+                document.getElementById('tarea-mode').value = 'crear';
+                document.getElementById('tarea-titulo').value = '';
+                document.getElementById('tarea-desc').value = '';
+                document.getElementById('tarea-valor').value = 10;
+                document.getElementById('tarea-fecha').value = '';
+                const fileInput = document.getElementById('tarea-archivo');
+                if (fileInput) fileInput.value = '';
+                document.getElementById('tarea-modal-title').textContent = 'Nueva Tarea';
+            }
+
+            function openModalCrearTarea() {
+                resetTareaForm();
+                document.getElementById('modal-tarea').classList.remove('hidden');
+            }
             function openModalRecurso() { document.getElementById('modal-recurso').classList.remove('hidden'); }
             function openModalEvaluacion() { document.getElementById('modal-evaluacion').classList.remove('hidden'); }
             function openModalComunicado() { document.getElementById('modal-comunicado').classList.remove('hidden'); }
@@ -1547,6 +1594,50 @@
                 }
             }
 
+            async function guardarPerfilDocente() {
+                const nombre = document.getElementById('docente-nombre').value.trim();
+                const especialidad = document.getElementById('docente-especialidad').value.trim();
+                if (!nombre) {
+                    Swal.fire('Error', 'El nombre es obligatorio', 'warning');
+                    return;
+                }
+                try {
+                    const res = await fetch('/api/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ nombre, especialidad })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        const miniName = document.querySelector('#sidebar .text-left p.text-sm');
+                        if (miniName) miniName.textContent = nombre;
+                        const modalName = document.querySelector('#modal-perfil h2');
+                        if (modalName) modalName.textContent = nombre;
+                        Swal.fire('Guardado', 'Perfil actualizado correctamente', 'success');
+                    } else {
+                        Swal.fire('Error', data.error || 'No se pudo actualizar', 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                }
+            }
+
+            function cerrarSesion(e) {
+                if (e) e.preventDefault();
+                Swal.fire({
+                    title: 'Cerrar sesión',
+                    text: '¿Seguro que quieres cerrar sesión?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, salir',
+                    cancelButtonText: 'Cancelar'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/logout';
+                    }
+                });
+            }
+
             function lanzarAulaVirtual() {
                 Swal.fire({
                     title: 'Entrando al Aula Virtual',
@@ -1652,10 +1743,47 @@
 
             function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-            // Crear Tarea
-            async function crearTarea(e) {
+            // Crear o Editar Tarea
+            async function guardarTarea(e) {
                 e.preventDefault();
-                const fecha = document.getElementById('tarea-fecha').value.replace('T', ' ') + ':00';
+                const mode = document.getElementById('tarea-mode').value;
+                const tareaId = document.getElementById('tarea-id').value;
+                const fechaRaw = document.getElementById('tarea-fecha').value;
+                const fecha = fechaRaw ? fechaRaw.replace('T', ' ') + ':00' : '';
+
+                if (mode === 'editar') {
+                    const payload = {
+                        tarea_id: tareaId,
+                        titulo: document.getElementById('tarea-titulo').value,
+                        descripcion: document.getElementById('tarea-desc').value,
+                        fecha_vencimiento: fecha,
+                        valor_porcentaje: document.getElementById('tarea-valor').value
+                    };
+
+                    try {
+                        const res = await fetch('/api/docente/editar-tarea', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        const json = await res.json();
+                        if (json.success) {
+                            Swal.fire('Actualizada', 'Tarea actualizada correctamente', 'success');
+                            closeModal('modal-tarea');
+                            if (currentMateriaId) {
+                                loadSubjectDetails(currentMateriaId);
+                            } else {
+                                location.reload();
+                            }
+                        } else {
+                            Swal.fire('Error', json.error || 'No se pudo actualizar', 'error');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire('Error', 'Error de conexión', 'error');
+                    }
+                    return;
+                }
 
                 const formData = new FormData();
                 formData.append('titulo', document.getElementById('tarea-titulo').value);
@@ -1664,7 +1792,6 @@
                 formData.append('fecha_vencimiento', fecha);
                 formData.append('valor_porcentaje', document.getElementById('tarea-valor').value);
 
-                // Adjunto
                 const fileInput = document.getElementById('tarea-archivo');
                 if (fileInput.files.length > 0) {
                     Array.from(fileInput.files).forEach(file => formData.append('files', file));
@@ -1682,13 +1809,11 @@
                         Swal.fire('Éxito', 'Tarea creada correctamente', 'success');
                         closeModal('modal-tarea');
 
-                        // SPA Logic: Refresh current subject if it matches
                         const selectedMateria = document.getElementById('tarea-materia').value;
                         if (currentMateriaId && currentMateriaId == selectedMateria) {
                             loadSubjectDetails(currentMateriaId);
                         } else {
-                            // If not in SPA matching this subject, maybe reload or do nothing
-                            if (!currentMateriaId) location.reload(); // Fallback for Dashboard view
+                            if (!currentMateriaId) location.reload();
                         }
                     } else {
                         Swal.fire('Error', json.error || 'Error al crear tarea', 'error');
@@ -1839,12 +1964,73 @@
                         <p class="text-xs text-gray-400 mt-1 font-mono bg-gray-100 px-3 py-1 rounded">${json.codigo}</p>
                         <button onclick="generarQR()" class="mt-4 bg-green-100 text-green-700 px-4 py-2 rounded-lg text-sm hover:bg-green-200">Regenerar</button>
                     `;
+                        cargarHistorialQR();
                     } else {
                         Swal.fire('Error', json.error || 'Error al generar QR', 'error');
                         display.innerHTML = '<i class="fas fa-exclamation-triangle text-4xl text-red-300 mb-4"></i><p class="text-red-500">Error al generar</p>';
                     }
                 } catch (err) {
                     Swal.fire('Error', 'Error de conexión', 'error');
+                }
+            }
+
+            async function cargarHistorialQR() {
+                const materia = document.getElementById('materia-qr-historial')?.value;
+                const list = document.getElementById('qr-historial-list');
+                if (!list) return;
+                if (!materia) {
+                    list.innerHTML = '<div class="text-center text-gray-400 py-6">Selecciona una materia para ver sesiones</div>';
+                    return;
+                }
+                list.innerHTML = '<div class="text-center text-gray-400 py-6">Cargando sesiones...</div>';
+                try {
+                    const res = await fetch(`/api/docente/asistencia/qr/${materia}`);
+                    const sesiones = await res.json();
+                    if (!Array.isArray(sesiones) || sesiones.length === 0) {
+                        list.innerHTML = '<div class="text-center text-gray-400 py-6">Sin sesiones registradas</div>';
+                        return;
+                    }
+                    list.innerHTML = sesiones.map(s => `
+                        <div class="border rounded-lg p-3 hover:bg-gray-50">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold">Sesión ${s.codigo.substring(0, 6)}...</p>
+                                    <p class="text-xs text-gray-500">${s.fecha_generacion} · Válido hasta ${s.valido_hasta}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">${s.asistentes || 0} asistencias</span>
+                                    <button onclick="verAsistenciasSesion(${s.id})" class="block text-xs text-brand-600 hover:underline mt-2">Ver asistentes</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (err) {
+                    list.innerHTML = '<div class="text-center text-red-400 py-6">Error al cargar sesiones</div>';
+                }
+            }
+
+            async function verAsistenciasSesion(qrId) {
+                const list = document.getElementById('qr-asistencias-list');
+                if (!list) return;
+                list.innerHTML = '<div class="text-center text-gray-400 py-6">Cargando asistencias...</div>';
+                try {
+                    const res = await fetch(`/api/docente/asistencia/qr/sesion/${qrId}`);
+                    const data = await res.json();
+                    if (!Array.isArray(data) || data.length === 0) {
+                        list.innerHTML = '<div class="text-center text-gray-400 py-6">No hay asistencias registradas</div>';
+                        return;
+                    }
+                    list.innerHTML = data.map(a => `
+                        <div class="flex items-center justify-between border rounded-lg p-3">
+                            <div>
+                                <p class="text-sm font-semibold">${a.nombre}</p>
+                                <p class="text-xs text-gray-500">${a.numero_control || ''}</p>
+                            </div>
+                            <span class="text-xs text-gray-500">${a.fecha}</span>
+                        </div>
+                    `).join('');
+                } catch (err) {
+                    list.innerHTML = '<div class="text-center text-red-400 py-6">Error al cargar asistencias</div>';
                 }
             }
 
@@ -1936,7 +2122,20 @@
                 Swal.fire({ title: '¿Eliminar recurso?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Eliminar' }).then(r => {
                     if (r.isConfirmed) {
                         fetch('/api/eliminar-recurso', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recurso_id: id }) })
-                            .then(() => { Swal.fire('Eliminado', '', 'success'); cargarRecursos(); });
+                            .then(res => res.json())
+                            .then(j => {
+                                if (j.success) {
+                                    Swal.fire('Eliminado', 'Recurso eliminado correctamente', 'success');
+                                    if (currentMateriaId) {
+                                        loadSubjectDetails(currentMateriaId);
+                                    } else {
+                                        cargarRecursos();
+                                    }
+                                } else {
+                                    Swal.fire('Error', j.error || 'No se pudo eliminar', 'error');
+                                }
+                            })
+                            .catch(() => Swal.fire('Error', 'Error de conexión', 'error'));
                     }
                 });
             }
@@ -2497,10 +2696,17 @@
                     document.getElementById('tarea-desc').value = tarea.descripcion || '';
                     document.getElementById('tarea-materia').value = tarea.materia_id;
                     document.getElementById('tarea-valor').value = tarea.valor_porcentaje || 10;
+                    document.getElementById('tarea-id').value = tarea.id;
+                    document.getElementById('tarea-mode').value = 'editar';
+                    document.getElementById('tarea-modal-title').textContent = 'Editar Tarea';
+                    if (tarea.fecha_vencimiento) {
+                        const fecha = new Date(tarea.fecha_vencimiento);
+                        const pad = (n) => String(n).padStart(2, '0');
+                        const localValue = `${fecha.getFullYear()}-${pad(fecha.getMonth() + 1)}-${pad(fecha.getDate())}T${pad(fecha.getHours())}:${pad(fecha.getMinutes())}`;
+                        document.getElementById('tarea-fecha').value = localValue;
+                    }
 
-                    // Nota: Para edición real se necesitaría un endpoint PUT
-                    openModalCrearTarea();
-                    Swal.fire('Modo Edición', 'Modifica los campos y guarda para crear una nueva tarea (edición real requiere endpoint PUT).', 'info');
+                    document.getElementById('modal-tarea').classList.remove('hidden');
                 } catch (err) {
                     Swal.fire('Error', 'No se pudo cargar la tarea', 'error');
                 }
@@ -2866,11 +3072,11 @@
                             <div class="bg-white p-4 rounded-xl shadow-sm border hover:border-purple-300 transition group">
                                 <div class="flex justify-between items-start mb-2">
                                     <div class="bg-purple-100 p-2 rounded-lg text-purple-600"><i class="fas fa-file-alt"></i></div>
-                                    <button class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><i class="fas fa-trash"></i></button>
+                                    <button onclick="eliminarRecurso(${r.id})" class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><i class="fas fa-trash"></i></button>
                                 </div>
                                 <h4 class="font-medium text-sm truncate" title="${r.titulo}">${r.titulo}</h4>
                                 <p class="text-xs text-gray-500 mt-1">${new Date(r.fecha_creacion).toLocaleDateString()}</p>
-                                <a href="${r.nombre_archivo ? '/uploads/recursos/' + data.materia.id + '/' + r.nombre_archivo : '#'}" target="_blank" class="block mt-3 text-center bg-gray-50 text-gray-600 text-xs py-2 rounded hover:bg-purple-50 hover:text-purple-600 font-bold transition">Descargar</a>
+                                <a href="${r.url || (r.nombre_archivo ? '/uploads/' + r.nombre_archivo : '#')}" target="_blank" class="block mt-3 text-center bg-gray-50 text-gray-600 text-xs py-2 rounded hover:bg-purple-50 hover:text-purple-600 font-bold transition">Descargar</a>
                             </div>
                         `).join('');
                     } else {
@@ -2945,6 +3151,15 @@
                 initCalendar();
                 cargarTutorias();
                 cargarMiHorario();
+
+                const qrHistSelect = document.getElementById('materia-qr-historial');
+                if (qrHistSelect) {
+                    if (!qrHistSelect.value && qrHistSelect.options.length > 1) {
+                        qrHistSelect.selectedIndex = 1;
+                    }
+                    qrHistSelect.addEventListener('change', cargarHistorialQR);
+                    cargarHistorialQR();
+                }
 
                 const params = new URLSearchParams(window.location.search);
                 const panel = params.get('panel') || 'dashboard';

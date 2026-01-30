@@ -56,6 +56,7 @@ import pyotp
 import stripe
 import qrcode
 import openpyxl
+from urllib.parse import quote
 
 # PDF Generation with ReportLab
 try:
@@ -256,7 +257,10 @@ with app.app_context():
                 ("recursos", "ADD COLUMN IF NOT EXISTS descargas INT DEFAULT 0"),
                 ("asistencias", "ADD COLUMN IF NOT EXISTS lat DECIMAL(10,8)"),
                 ("asistencias", "ADD COLUMN IF NOT EXISTS lng DECIMAL(11,8)"),
-                ("materias", "ADD COLUMN IF NOT EXISTS quiz_generado JSON DEFAULT NULL")
+                ("asistencias", "ADD COLUMN IF NOT EXISTS materia_id INT DEFAULT NULL"),
+                ("asistencias", "ADD COLUMN IF NOT EXISTS qr_id INT DEFAULT NULL"),
+                ("materias", "ADD COLUMN IF NOT EXISTS quiz_generado JSON DEFAULT NULL"),
+                ("usuarios", "ADD COLUMN IF NOT EXISTS especialidad VARCHAR(255) DEFAULT NULL")
             ]
             for table, col_sql in extra_cols:
                 try:
@@ -2356,14 +2360,121 @@ def api_evaluacion_ia():
 def api_alumno_notas():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     if request.method == 'POST':
-        data = request.json
+        data = request.json or {}
+        titulo = (data.get('titulo') or '').strip()
+        contenido = data.get('contenido')
+        if not titulo:
+            return jsonify({'error': 'El título es requerido'}), 400
         cursor.execute("INSERT INTO notas (usuario_id, titulo, contenido) VALUES (%s, %s, %s)",
-                      (session['user_id'], data['titulo'], data['contenido']))
+                      (session['user_id'], titulo, contenido))
         mysql.connection.commit()
         return jsonify({'success': True})
     
     cursor.execute("SELECT * FROM notas WHERE usuario_id = %s ORDER BY fecha_modificacion DESC", (session['user_id'],))
     return jsonify(cursor.fetchall())
+
+
+@app.route('/api/alumno/notas/<int:nota_id>', methods=['GET', 'PUT', 'DELETE'])
+@login_required
+def api_alumno_notas_detalle(nota_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    if request.method == 'GET':
+        cursor.execute(
+            "SELECT * FROM notas WHERE id = %s AND usuario_id = %s",
+            (nota_id, session['user_id'])
+        )
+        nota = cursor.fetchone()
+        if not nota:
+            return jsonify({'error': 'Nota no encontrada'}), 404
+        return jsonify(nota)
+
+    if request.method == 'DELETE':
+        cursor.execute(
+            "DELETE FROM notas WHERE id = %s AND usuario_id = %s",
+            (nota_id, session['user_id'])
+        )
+        mysql.connection.commit()
+        return jsonify({'success': True})
+
+    data = request.json or {}
+    titulo = (data.get('titulo') or '').strip()
+    contenido = data.get('contenido')
+    if not titulo:
+        return jsonify({'error': 'El título es requerido'}), 400
+    cursor.execute(
+        """
+        UPDATE notas
+        SET titulo = %s, contenido = %s, fecha_modificacion = NOW()
+        WHERE id = %s AND usuario_id = %s
+        """,
+        (titulo, contenido, nota_id, session['user_id'])
+    )
+    mysql.connection.commit()
+    return jsonify({'success': True})
+
+# --- API Notas (compatibilidad con panel alumno) ---
+@app.route('/api/notes', methods=['GET', 'POST'])
+@login_required
+def api_notes():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    if request.method == 'POST':
+        data = request.json or {}
+        titulo = (data.get('titulo') or '').strip()
+        contenido = data.get('contenido')
+        if not titulo:
+            return jsonify({'error': 'El título es requerido'}), 400
+        cursor.execute(
+            "INSERT INTO notas (usuario_id, titulo, contenido) VALUES (%s, %s, %s)",
+            (session['user_id'], titulo, contenido)
+        )
+        mysql.connection.commit()
+        return jsonify({'success': True, 'id': cursor.lastrowid})
+
+    cursor.execute(
+        "SELECT * FROM notas WHERE usuario_id = %s ORDER BY fecha_modificacion DESC",
+        (session['user_id'],)
+    )
+    return jsonify(cursor.fetchall())
+
+
+@app.route('/api/notes/<int:nota_id>', methods=['GET', 'PUT', 'DELETE'])
+@login_required
+def api_notes_detalle(nota_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    if request.method == 'GET':
+        cursor.execute(
+            "SELECT * FROM notas WHERE id = %s AND usuario_id = %s",
+            (nota_id, session['user_id'])
+        )
+        nota = cursor.fetchone()
+        if not nota:
+            return jsonify({'error': 'Nota no encontrada'}), 404
+        return jsonify(nota)
+
+    if request.method == 'DELETE':
+        cursor.execute(
+            "DELETE FROM notas WHERE id = %s AND usuario_id = %s",
+            (nota_id, session['user_id'])
+        )
+        mysql.connection.commit()
+        return jsonify({'success': True})
+
+    data = request.json or {}
+    titulo = (data.get('titulo') or '').strip()
+    contenido = data.get('contenido')
+    if not titulo:
+        return jsonify({'error': 'El título es requerido'}), 400
+    cursor.execute(
+        """
+        UPDATE notas
+        SET titulo = %s, contenido = %s, fecha_modificacion = NOW()
+        WHERE id = %s AND usuario_id = %s
+        """,
+        (titulo, contenido, nota_id, session['user_id'])
+    )
+    mysql.connection.commit()
+    return jsonify({'success': True})
 
 @app.route('/api/alumno/encuestas', methods=['GET'])
 @login_required
@@ -2885,6 +2996,9 @@ def api_alumno_recursos(materia_id):
             ORDER BY fecha_creacion DESC
         """, (materia_id,))
         recursos = cursor.fetchall()
+        for r in recursos:
+            if r.get('nombre_archivo') and r['nombre_archivo'] != 'sin_archivo':
+                r['url'] = url_for('uploaded_file', filename=os.path.basename(r['nombre_archivo']))
         cursor.close()
         return jsonify(recursos)
     except Exception as e:
@@ -3750,6 +3864,72 @@ def api_docente_entregas_tarea(tarea_id):
                 e['calificacion'] = float(e['calificacion'])
 
         return jsonify(entregas)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Historial de sesiones QR y asistencias por sesión (docente)
+@app.route('/api/docente/asistencia/qr/<int:materia_id>', methods=['GET'])
+@login_required
+@role_required('docente')
+def api_docente_qr_historial(materia_id):
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT id FROM materias WHERE id = %s AND docente_id = %s AND activo = 1", (materia_id, session['user_id']))
+        if not cursor.fetchone():
+            cursor.close()
+            return jsonify({'error': 'Materia no encontrada'}), 404
+
+        cursor.execute("""
+            SELECT qa.id, qa.codigo, qa.fecha_generacion, qa.valido_hasta, qa.usos,
+                   (SELECT COUNT(*) FROM asistencias a WHERE a.qr_id = qa.id) as asistentes
+            FROM qr_asistencias qa
+            WHERE qa.materia_id = %s
+            ORDER BY qa.fecha_generacion DESC
+            LIMIT 20
+        """, (materia_id,))
+        sesiones = cursor.fetchall()
+        cursor.close()
+
+        for s in sesiones:
+            if s.get('fecha_generacion'):
+                s['fecha_generacion'] = s['fecha_generacion'].strftime('%d/%m/%Y %H:%M')
+            if s.get('valido_hasta'):
+                s['valido_hasta'] = s['valido_hasta'].strftime('%d/%m/%Y %H:%M')
+        return jsonify(sesiones)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/docente/asistencia/qr/sesion/<int:qr_id>', methods=['GET'])
+@login_required
+@role_required('docente')
+def api_docente_qr_sesion(qr_id):
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("""
+            SELECT qa.id, qa.materia_id
+            FROM qr_asistencias qa
+            JOIN materias m ON qa.materia_id = m.id
+            WHERE qa.id = %s AND m.docente_id = %s
+        """, (qr_id, session['user_id']))
+        sesion = cursor.fetchone()
+        if not sesion:
+            cursor.close()
+            return jsonify({'error': 'Sesión no encontrada'}), 404
+
+        cursor.execute("""
+            SELECT a.id, u.nombre, u.numero_control, a.fecha, a.lat, a.lng
+            FROM asistencias a
+            JOIN usuarios u ON a.estudiante_id = u.id
+            WHERE a.qr_id = %s
+            ORDER BY a.fecha DESC
+        """, (qr_id,))
+        asistencias = cursor.fetchall()
+        cursor.close()
+
+        for a in asistencias:
+            if a.get('fecha'):
+                a['fecha'] = a['fecha'].strftime('%d/%m/%Y %H:%M')
+        return jsonify(asistencias)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -6472,13 +6652,30 @@ def get_messages():
     if 'user_id' not in session:
         return jsonify({'error': 'No autorizado'}), 401
 
-    chat_id = request.args.get('chat_id')
-    if not chat_id:
-        return jsonify({'error': 'Chat ID requerido'}), 400
-
     user_id = session['user_id']
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
+
+    chat_id = request.args.get('chat_id')
+    if not chat_id:
+        cursor.execute("""
+            SELECT m.*, u.nombre AS remitente_nombre, u.avatar_url
+            FROM mensajes m
+            JOIN usuarios u ON m.remitente_id = u.id
+            WHERE m.destinatario_id = %s AND m.destinatario_tipo = 'usuario'
+            ORDER BY m.fecha_envio DESC
+        """, (user_id,))
+        mensajes = cursor.fetchall()
+
+        cursor.execute("""
+            UPDATE mensajes SET leido = 1
+            WHERE destinatario_id = %s AND remitente_id != %s AND leido = 0
+        """, (user_id, user_id))
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+        return jsonify(mensajes)
 
     if chat_id.startswith('group_'):
         materia_id = int(chat_id.split('_')[1])
@@ -6505,7 +6702,7 @@ def get_messages():
 
     mensajes = cursor.fetchall()
 
-    # Marcar como leídos (para el docente)
+    # Marcar como leídos
     cursor.execute("""
         UPDATE mensajes SET leido = 1 
         WHERE destinatario_id = %s AND remitente_id != %s AND leido = 0
@@ -6556,7 +6753,7 @@ def send_message():
             destinatario_tipo = 'usuario'
     elif destinatario_id:
         destinatario_id = int(destinatario_id)
-        destinatario_tipo = 'usuario'
+        destinatario_tipo = (data.get('destinatario_tipo') if is_json else request.form.get('destinatario_tipo')) or 'usuario'
     else:
         cursor.close()
         conn.close()
@@ -8507,6 +8704,14 @@ def api_materias():
 def panel_docente():
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Datos del docente
+        cursor.execute("""
+            SELECT nombre, email, foto_perfil, especialidad
+            FROM usuarios
+            WHERE id = %s AND tipo_usuario = 'docente'
+        """, (session['user_id'],))
+        docente_info = cursor.fetchone() or {}
         
         # Obtener materias del docente
         cursor.execute('''
@@ -8586,7 +8791,11 @@ def panel_docente():
                                total_students=total_students,
                                total_teachers=total_teachers,
                                mensajes=mensajes,
-                               retos=retos)
+                               retos=retos,
+                               nombre_docente=docente_info.get('nombre', ''),
+                               email_docente=docente_info.get('email', ''),
+                               foto_perfil=docente_info.get('foto_perfil'),
+                               especialidad_docente=docente_info.get('especialidad', ''))
     
     except Exception as e:
         print(f"Error en panel_docente: {str(e)}")
@@ -9120,7 +9329,7 @@ def crear_tarea1():
                 cursor.execute("""
                     INSERT INTO recursos (titulo, descripcion, tipo_archivo, nombre_archivo, fecha_creacion, materia_id)
                     VALUES (%s, %s, %s, %s, NOW(), %s)
-                """, (f"Recurso de tarea: {titulo}", descripcion, file.mimetype, file_path, materia_id))
+                """, (f"Recurso de tarea: {titulo}", descripcion, file.mimetype, filename, materia_id))
         
         mysql.connection.commit()
         cursor.close()
@@ -9454,7 +9663,7 @@ def handle_tasks():
 @login_required
 @role_required('docente')
 def handle_resources():
-    upload_path = app.config['UPLOAD_FOLDER']
+    upload_path = Path(app.config['UPLOAD_FOLDER'])
 
     if request.method == 'POST':
         try:
@@ -9463,7 +9672,7 @@ def handle_resources():
             materia_id = request.form.get('materia')
             files = request.files.getlist('files')
 
-            if not title or not description or not materia_id:
+            if not title or not materia_id:
                 return jsonify({'error': 'Faltan campos'}), 400
 
             materia_id = int(materia_id)
@@ -9530,7 +9739,7 @@ def handle_resources():
 
         for r in recursos:
             if r['nombre_archivo'] != 'sin_archivo':
-                r['url'] = f"/uploads/{r['nombre_archivo']}"
+                r['url'] = url_for('uploaded_file', filename=os.path.basename(r['nombre_archivo']))
 
         return jsonify(recursos), 200
 
@@ -9656,6 +9865,7 @@ def update_or_delete_announcement(announcement_id):
 
 # API para eliminar recurso (expandido con log)
 @app.route('/api/eliminar-recurso', methods=['POST'])
+@login_required
 def eliminar_recurso():
     data = request.get_json()
     recurso_id = data.get('recurso_id')
@@ -9665,12 +9875,26 @@ def eliminar_recurso():
 
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        
-        cursor.execute('SELECT nombre_archivo FROM recursos WHERE id = %s', (recurso_id,))
+
+        cursor.execute('''
+            SELECT r.nombre_archivo, m.docente_id
+            FROM recursos r
+            JOIN materias m ON r.materia_id = m.id
+            WHERE r.id = %s
+        ''', (recurso_id,))
         recurso = cursor.fetchone()
         
         if not recurso:
+            cursor.close()
             return jsonify({'error': 'Recurso no encontrado'}), 404
+
+        if session.get('user_role') not in ['docente', 'admin']:
+            cursor.close()
+            return jsonify({'error': 'No autorizado'}), 403
+
+        if session.get('user_role') == 'docente' and recurso['docente_id'] != session.get('user_id'):
+            cursor.close()
+            return jsonify({'error': 'Permiso denegado'}), 403
 
         nombre_archivo = recurso['nombre_archivo']
 
@@ -10142,6 +10366,10 @@ def generar_qr_asistencia1():
     valido_hasta = datetime.now() + timedelta(minutes=15)
 
     cursor = mysql.connection.cursor()
+    cursor.execute("SELECT id FROM materias WHERE id = %s AND docente_id = %s AND activo = 1", (materia_id, session['user_id']))
+    if not cursor.fetchone():
+        cursor.close()
+        return jsonify({'error': 'Materia inválida'}), 404
     cursor.execute("INSERT INTO qr_asistencias (materia_id, codigo, valido_hasta) VALUES (%s, %s, %s)",
                    (materia_id, codigo, valido_hasta))
     mysql.connection.commit()
@@ -10164,7 +10392,7 @@ def escaneo_qr():
     lng = request.json.get('lng')
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT materia_id, valido_hasta FROM qr_asistencias WHERE codigo = %s", (codigo,))
+    cursor.execute("SELECT id, materia_id, valido_hasta FROM qr_asistencias WHERE codigo = %s", (codigo,))
     qr = cursor.fetchone()
 
     if not qr or datetime.now() > qr['valido_hasta']:
@@ -10176,8 +10404,8 @@ def escaneo_qr():
     if not lat or not lng:
         return jsonify({'error': 'Geolocalización requerida'}), 400
 
-    cursor.execute("INSERT INTO asistencias (estudiante_id, presente, fecha, lat, lng) VALUES (%s, 1, NOW(), %s, %s)",
-                   (session['user_id'], lat, lng))
+    cursor.execute("INSERT INTO asistencias (estudiante_id, presente, fecha, lat, lng, materia_id, qr_id) VALUES (%s, 1, NOW(), %s, %s, %s, %s)",
+                   (session['user_id'], lat, lng, qr['materia_id'], qr['id']))
     cursor.execute("UPDATE qr_asistencias SET usos = usos + 1 WHERE codigo = %s", (codigo,))
     mysql.connection.commit()
     cursor.close()
@@ -12790,6 +13018,19 @@ def panel_admin():
     """Admin panel with system overview and real statistics."""
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        # Admin info
+        cursor.execute("SELECT nombre, avatar_url FROM usuarios WHERE id = %s", (session['user_id'],))
+        admin_info = cursor.fetchone() or {}
+        admin_nombre = admin_info.get('nombre') or session.get('user_name') or 'Administrador'
+        admin_avatar_url = admin_info.get('avatar_url')
+        if admin_avatar_url:
+            if admin_avatar_url.startswith('http'):
+                admin_avatar_resolved = admin_avatar_url
+            else:
+                admin_avatar_resolved = url_for('uploaded_file', filename=admin_avatar_url)
+        else:
+            admin_avatar_resolved = f"https://ui-avatars.com/api/?name={quote(admin_nombre)}&background=random"
         
         # User stats (grouped by type)
         cursor.execute("SELECT tipo_usuario, COUNT(*) as count FROM usuarios GROUP BY tipo_usuario")
@@ -12825,26 +13066,9 @@ def panel_admin():
         resultado_asist = cursor.fetchone()
         average_attendance = float(resultado_asist['asistencia']) if resultado_asist['asistencia'] else 0
         
-        # Notifications
-        cursor.execute("SELECT id, titulo as title, contenido as description, fecha_publicacion as time FROM comunicados ORDER BY fecha_publicacion DESC LIMIT 5")
-        notifications = cursor.fetchall()
-        
-        # Recent reports
-        cursor.execute("""
-            SELECT p.id, CONCAT('Pago pendiente: ', p.concepto) as name, p.fecha_vencimiento as time 
-            FROM pagos p WHERE pagado = 0 ORDER BY fecha_vencimiento ASC LIMIT 5
-        """)
-        recent_reports = cursor.fetchall()
-        
-        # Teachers with survey averages
-        cursor.execute("""
-            SELECT u.id as teacher_id, u.nombre as name, 'Materia Ejemplo' as subject, AVG(re.puntuacion) as average, COUNT(re.id) as responses, 80 as participation 
-            FROM usuarios u 
-            LEFT JOIN encuestas e ON 1=1
-            LEFT JOIN respuestas_encuestas re ON e.id = re.encuesta_id
-            WHERE u.tipo_usuario = 'docente' GROUP BY u.id LIMIT 5
-        """)
-        teachers = cursor.fetchall()
+        notifications = []
+        recent_reports = []
+        teachers = []
         
         # Activity logs (detailed version)
         cursor.execute("""
@@ -12874,6 +13098,8 @@ def panel_admin():
                                teachers=teachers,
                                logs=logs,
                                total_tareas=total_tareas,
+                       admin_nombre=admin_nombre,
+                       admin_avatar_url=admin_avatar_resolved,
                                session=session)
     except Exception as e:
         print(f"[ERROR PANEL ADMIN] {str(e)}")
@@ -13421,12 +13647,12 @@ def escanear_qr_asistencia():
     lng = request.json['lng']
     
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT materia_id, valido_hasta, usos FROM qr_asistencias WHERE codigo = %s", (codigo,))
+    cursor.execute("SELECT id, materia_id, valido_hasta, usos FROM qr_asistencias WHERE codigo = %s", (codigo,))
     qr = cursor.fetchone()
     if not qr or datetime.now() > qr['valido_hasta']:
         return jsonify({'error': 'Invalid or expired QR'}), 400
-    
-    cursor.execute("INSERT INTO asistencias (estudiante_id, presente, lat, lng) VALUES (%s, 1, %s, %s)", (session['user_id'], lat, lng))
+
+    cursor.execute("INSERT INTO asistencias (estudiante_id, presente, lat, lng, materia_id, qr_id) VALUES (%s, 1, %s, %s, %s, %s)", (session['user_id'], lat, lng, qr['materia_id'], qr['id']))
     cursor.execute("UPDATE qr_asistencias SET usos = usos + 1 WHERE codigo = %s", (codigo,))
     mysql.connection.commit()
     cursor.close()
@@ -18075,7 +18301,7 @@ def get_materia_details(materia_id):
         return jsonify({'error': str(e)}), 500
 
 # API: Subir Recurso (Docente)
-@app.route('/api/resources', methods=['POST'])
+@app.route('/api/resources/upload', methods=['POST'])
 @login_required
 @role_required('docente')
 def upload_resource():
@@ -18507,7 +18733,7 @@ def update_profile_settings():
         cursor = mysql.connection.cursor()
         
         # Solo permitir actualizar ciertos campos
-        allowed_fields = ['telefono', 'tema']
+        allowed_fields = ['telefono', 'tema', 'nombre', 'especialidad']
         updates = []
         values = []
         

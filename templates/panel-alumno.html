@@ -328,7 +328,7 @@
             <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mis Notas</h2>
         </div>
         <div id="notes-list" class="flex flex-col gap-3"></div>
-        <button onclick="openNoteModal()"
+        <button onclick="crearNota()"
             class="w-full py-3 rounded-lg bg-primary text-white font-bold shadow-lg hover:bg-blue-600 transition mt-4">Nueva
             Nota</button>
     </div>
@@ -998,7 +998,7 @@
             const list = document.getElementById('notes-list');
             list.innerHTML = '<div class="flex justify-center p-4"><span class="text-slate-400">Cargando notas...</span></div>';
             try {
-                const res = await fetch('/api/notes');
+                const res = await fetch('/api/alumno/notas');
                 const notes = await res.json();
                 
                 // Botón para crear nueva nota
@@ -1073,7 +1073,7 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
-                        const res = await fetch('/api/notes', {
+                        const res = await fetch('/api/alumno/notas', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify(result.value)
@@ -1091,11 +1091,15 @@
                 }
             });
         }
+
+        function openNoteModal() {
+            crearNota();
+        }
         
         async function editarNota(notaId) {
             try {
                 // Obtener datos de la nota
-                const res = await fetch('/api/notes/' + notaId);
+                const res = await fetch('/api/alumno/notas/' + notaId);
                 const nota = await res.json();
                 
                 Swal.fire({
@@ -1121,7 +1125,7 @@
                     }
                 }).then(async (result) => {
                     if (result.isConfirmed) {
-                        const updateRes = await fetch('/api/notes/' + notaId, {
+                        const updateRes = await fetch('/api/alumno/notas/' + notaId, {
                             method: 'PUT',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify(result.value)
@@ -1152,7 +1156,7 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
-                        const res = await fetch('/api/notes/' + notaId, {
+                        const res = await fetch('/api/alumno/notas/' + notaId, {
                             method: 'DELETE'
                         });
                         const data = await res.json();
@@ -3124,22 +3128,27 @@
                     const meta = o.meta_valor || 100;
                     const progreso = o.progreso_actual || 0;
                     const percent = Math.min((progreso / meta) * 100, 100);
+                    const fechaLimite = o.fecha_limite ? new Date(o.fecha_limite).toLocaleDateString('es-MX') : null;
                     return `
                         <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
                             <div class="flex justify-between items-start">
-                                <div>
+                                <div class="pr-2">
                                     <p class="font-semibold text-slate-900 dark:text-white">${o.titulo}</p>
                                     <p class="text-xs text-slate-500">${o.descripcion || ''}</p>
-                                    <p class="text-[10px] text-slate-400">${o.tipo} • ${o.categoria}</p>
+                                    <p class="text-[10px] text-slate-400 capitalize">${(o.tipo || 'corto_plazo').replace('_',' ')} • ${o.categoria || 'academico'}</p>
+                                    ${fechaLimite ? `<p class="text-[10px] text-slate-400">Vence: ${fechaLimite}</p>` : ''}
                                 </div>
-                                <span class="text-xs text-slate-500">${o.completado ? 'Completado' : 'En progreso'}</span>
+                                <span class="text-xs ${o.completado ? 'text-green-600' : 'text-slate-500'}">${o.completado ? 'Completado' : 'En progreso'}</span>
                             </div>
                             <div class="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-2">
                                 <div class="bg-primary h-1.5 rounded-full" style="width: ${percent}%"></div>
                             </div>
                             <div class="flex justify-between items-center mt-2">
                                 <span class="text-xs text-slate-500">${progreso}/${meta}</span>
-                                <button onclick="actualizarObjetivo(${o.id}, ${progreso}, ${meta}, ${o.completado ? 'true' : 'false'})" class="text-xs text-primary">Actualizar</button>
+                                <div class="flex items-center gap-3">
+                                    <button onclick="actualizarObjetivo(${o.id}, ${progreso}, ${meta}, ${o.completado ? 'true' : 'false'})" class="text-xs text-primary">Actualizar</button>
+                                    <button onclick="eliminarObjetivo(${o.id})" class="text-xs text-red-500">Eliminar</button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -3159,6 +3168,12 @@
                         <option value="corto_plazo">Corto plazo</option>
                         <option value="largo_plazo">Largo plazo</option>
                     </select>
+                    <select id="obj-categoria" class="swal2-input">
+                        <option value="academico">Académico</option>
+                        <option value="personal">Personal</option>
+                        <option value="salud">Salud</option>
+                        <option value="habitos">Hábitos</option>
+                    </select>
                     <input id="obj-meta" type="number" class="swal2-input" placeholder="Meta" value="100">
                     <input id="obj-fecha" type="date" class="swal2-input">
                 `,
@@ -3174,6 +3189,7 @@
                         titulo,
                         descripcion: document.getElementById('obj-desc').value,
                         tipo: document.getElementById('obj-tipo').value,
+                        categoria: document.getElementById('obj-categoria').value,
                         meta_valor: parseInt(document.getElementById('obj-meta').value || '100', 10),
                         fecha_limite: document.getElementById('obj-fecha').value
                     };
@@ -3213,6 +3229,30 @@
                         const data = await res.json();
                         if (!res.ok) throw new Error(data.error || 'Error al actualizar');
                         showToast('Objetivo actualizado', 'success');
+                        loadObjetivos();
+                    } catch (e) {
+                        showToast(e.message, 'error');
+                    }
+                }
+            });
+        }
+
+        function eliminarObjetivo(id) {
+            Swal.fire({
+                title: '¿Eliminar objetivo?',
+                text: 'Esta acción no se puede deshacer',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#ef4444'
+            }).then(async result => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch(`/api/alumno/objetivos/${id}`, { method: 'DELETE' });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || 'Error al eliminar');
+                        showToast('Objetivo eliminado', 'success');
                         loadObjetivos();
                     } catch (e) {
                         showToast(e.message, 'error');
