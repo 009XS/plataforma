@@ -5,15 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CECYTEM - Portal Académico</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --cecytem-green: #006b3e;
-            /* Verde institucional aprox */
-            --cecytem-dark-green: #004d2c;
-            --cecytem-gold: #d4af37;
+            --cecytem-green: #0ea5e9;
+            /* Paleta principal */
+            --cecytem-dark-green: #0369a1;
+            --cecytem-gold: #38bdf8;
             --text-dark: #1a1a1a;
             --text-light: #f5f5f5;
             --glass-bg: rgba(255, 255, 255, 0.1);
@@ -28,7 +28,7 @@
         }
 
         body {
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Inter', sans-serif;
             background: #0f172a;
             /* Fallback */
             color: var(--text-dark);
@@ -48,7 +48,7 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            background: linear-gradient(135deg, #004d2c, #006b3e, #0f172a);
+            background: linear-gradient(135deg, #0b6aa1, #0ea5e9, #0f172a);
         }
 
         .overlay-pattern {
@@ -74,6 +74,210 @@
             padding: 2rem;
             position: relative;
             z-index: 10;
+        }
+        
+        /* --- Rediseño Mobile First (Overrides) --- */
+        body {
+            background: #f8fafc !important;
+            color: #0f172a !important;
+            overflow: auto !important;
+        }
+        
+        #bg-canvas,
+        .overlay-pattern {
+            display: none !important;
+        }
+        
+        .main-container {
+            padding: 1.25rem !important;
+        }
+        
+        .glass-panel {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.15) !important;
+            height: auto !important;
+        }
+        
+        .panel-header {
+            background: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            padding: 1.25rem 1.5rem !important;
+        }
+        
+        .brand {
+            color: #0f172a !important;
+        }
+        
+        .brand-logo {
+            background: #0ea5e9 !important;
+            color: #ffffff !important;
+        }
+        
+        .date-display {
+            color: #64748b !important;
+        }
+        
+        .content-left {
+            color: #0f172a !important;
+        }
+
+        .panel-content {
+            flex-direction: column !important;
+            gap: 2rem !important;
+        }
+
+        .content-left,
+        .content-right {
+            width: 100% !important;
+            padding: 1.75rem !important;
+        }
+        
+        .welcome-badge {
+            background: rgba(14, 165, 233, 0.12) !important;
+            border-color: rgba(14, 165, 233, 0.5) !important;
+            color: #0ea5e9 !important;
+        }
+        
+        h1.hero-title span {
+            color: #0ea5e9 !important;
+        }
+
+        .hero-desc {
+            color: #475569 !important;
+        }
+
+        .role-title {
+            color: #0f172a !important;
+        }
+
+        .role-desc {
+            color: #64748b !important;
+        }
+        
+        .btn-outline {
+            color: #0ea5e9 !important;
+            border-color: rgba(14, 165, 233, 0.4) !important;
+            background: #ffffff !important;
+        }
+        
+        .btn-outline:hover {
+            background: rgba(14, 165, 233, 0.08) !important;
+        }
+        
+        .role-carousel-container {
+            position: relative !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transform: none !important;
+            height: 420px !important;
+        }
+        
+        .role-card {
+            position: absolute !important;
+            opacity: 0 !important;
+            transform: translateY(0) scale(0.9) !important;
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08) !important;
+            transition: all 0.45s ease !important;
+        }
+        
+        .role-card.hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        .role-card.active {
+            opacity: 1 !important;
+            transform: translateY(0) scale(1.02) !important;
+            border-color: var(--role-color, #0ea5e9) !important;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16) !important;
+            z-index: 10 !important;
+        }
+
+        .role-card.prev {
+            opacity: 0.5 !important;
+            transform: translateY(-140%) scale(0.9) !important;
+            filter: blur(1px) !important;
+            z-index: 5 !important;
+            pointer-events: auto !important;
+        }
+
+        .role-card.next {
+            opacity: 0.5 !important;
+            transform: translateY(140%) scale(0.9) !important;
+            filter: blur(1px) !important;
+            z-index: 5 !important;
+            pointer-events: auto !important;
+        }
+        
+        .role-icon {
+            color: var(--role-color, #0ea5e9) !important;
+        }
+
+        .role-action {
+            background: var(--role-color, #0ea5e9) !important;
+            color: #ffffff !important;
+        }
+
+        .role-action:hover {
+            filter: brightness(0.95) !important;
+        }
+        
+        .carousel-nav {
+            display: flex !important;
+            gap: 0.5rem !important;
+        }
+
+        .nav-dot.active {
+            background: var(--role-color, #0ea5e9) !important;
+        }
+        
+        .login-overlay {
+            background: rgba(15, 23, 42, 0.55) !important;
+        }
+        
+        .login-container {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+        
+        .form-label {
+            color: #475569 !important;
+        }
+        
+        .form-input {
+            background: #f8fafc !important;
+            border-color: #cbd5f5 !important;
+        }
+        
+        .btn-login {
+            background: #0ea5e9 !important;
+            color: #ffffff !important;
+        }
+        
+        .panel-footer {
+            color: #64748b !important;
+            background: transparent !important;
+        }
+
+        @media (max-width: 640px) {
+            .panel-header {
+                display: none !important;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .panel-content {
+                flex-direction: row !important;
+            }
+
+            .content-left,
+            .content-right {
+                padding: 3rem !important;
+            }
         }
 
         .glass-panel {
@@ -590,7 +794,7 @@
             }
 
             h1.hero-title {
-                font-size: 2.5rem;
+                font-size: 2.2rem;
             }
 
             .role-card {
@@ -730,31 +934,36 @@
                 id: 'alumno',
                 title: 'Alumno',
                 icon: 'fa-user-graduate',
-                desc: 'Accede a tus clases, calificaciones y recursos educativos.'
+                desc: 'Accede a tus clases, calificaciones y recursos educativos.',
+                color: '#10b981'
             },
             {
                 id: 'docente',
                 title: 'Docente',
                 icon: 'fa-chalkboard-teacher',
-                desc: 'Gestiona tus grupos, calificaciones y material didáctico.'
+                desc: 'Gestiona tus grupos, calificaciones y material didáctico.',
+                color: '#6366f1'
             },
             {
                 id: 'orientador',
                 title: 'Orientador',
                 icon: 'fa-compass',
-                desc: 'Herramientas de seguimiento y apoyo estudiantil.'
+                desc: 'Herramientas de seguimiento y apoyo estudiantil.',
+                color: '#f97316'
             },
             {
                 id: 'tutor',
                 title: 'Tutor',
                 icon: 'fa-user-friends',
-                desc: 'Consulta el progreso académico de tus hijos.'
+                desc: 'Consulta el progreso académico de tus hijos.',
+                color: '#f59e0b'
             },
             {
                 id: 'admin',
                 title: 'Administrativo',
                 icon: 'fa-cogs',
-                desc: 'Panel de control y configuración del sistema.'
+                desc: 'Panel de control y configuración del sistema.',
+                color: '#ec4899'
             }
         ];
 
@@ -778,6 +987,9 @@
                 const card = document.createElement('div');
                 card.className = 'role-card';
                 card.dataset.index = index;
+                if (role.color) {
+                    card.style.setProperty('--role-color', role.color);
+                }
                 card.innerHTML = `
                     <div class="role-icon"><i class="fas ${role.icon}"></i></div>
                     <div>
@@ -793,6 +1005,9 @@
                 // Create Nav Dot
                 const dot = document.createElement('div');
                 dot.className = 'nav-dot';
+                if (role.color) {
+                    dot.style.setProperty('--role-color', role.color);
+                }
                 dot.onclick = () => rotateTo(index);
                 nav.appendChild(dot);
             });

@@ -1,68 +1,41 @@
-<!DOCTYPE html>
-<html lang="es">
+{% extends "base.html" %}
+{% block title %}Acerca de | EduPlatform{% endblock %}
+{% block content %}
+<div class="space-y-8">
+    <div class="space-y-3">
+        <p class="text-sm text-brand-300 font-semibold uppercase tracking-[0.2em]">EduPlatform</p>
+        <h1 class="text-2xl md:text-3xl font-bold text-white">Acerca de la plataforma</h1>
+        <p class="text-slate-300 leading-relaxed">
+            EduPlatform es un ecosistema educativo digital que conecta estudiantes, docentes, tutores y
+            administradores en un entorno seguro, moderno y enfocado en resultados.
+        </p>
+    </div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acerca de | EduPlatform</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-    </style>
-</head>
-
-<body class="bg-gray-100 min-h-screen">
-    <header class="bg-white shadow-sm">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center">
-            <a href="/" class="text-blue-600 hover:text-blue-700 mr-4"><i class="fas fa-arrow-left"></i></a>
-            <h1 class="text-xl font-bold text-gray-800">Acerca de EduPlatform</h1>
+    <div class="grid gap-4 sm:grid-cols-2">
+        <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h2 class="text-lg font-semibold text-white">Misión</h2>
+            <p class="mt-2 text-sm text-slate-300">
+                Potenciar el aprendizaje con herramientas inteligentes, colaboración y seguimiento continuo.
+            </p>
         </div>
-    </header>
-    <main class="max-w-4xl mx-auto px-4 py-8">
-        <div class="bg-white rounded-xl shadow-sm p-8">
-            <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-800">Edu<span class="text-blue-500">Platform</span></h2>
-                <p class="text-gray-500 mt-2">Versión 2.0</p>
-            </div>
-
-            <div class="prose max-w-none">
-                <h3 class="text-lg font-bold text-gray-800 mb-2">¿Qué es EduPlatform?</h3>
-                <p class="text-gray-600 mb-4">
-                    EduPlatform es una plataforma educativa integral diseñada para conectar estudiantes,
-                    docentes, padres de familia y administradores en un ecosistema digital moderno y eficiente.
-                </p>
-
-                <h3 class="text-lg font-bold text-gray-800 mb-2 mt-6">Características Principales</h3>
-                <ul class="space-y-2 text-gray-600">
-                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Gestión de tareas y
-                        calificaciones</li>
-                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Sistema de
-                        gamificación con XP y EduCoins</li>
-                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Tutor virtual con IA
-                        (Gemini)</li>
-                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Videollamadas
-                        integradas</li>
-                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Portal para padres de
-                        familia</li>
-                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-2"></i> Encuestas de
-                        evaluación docente</li>
-                </ul>
-
-                <h3 class="text-lg font-bold text-gray-800 mb-2 mt-6">Equipo de Desarrollo</h3>
-                <p class="text-gray-600">
-                    Desarrollado con ❤️ por el equipo de CECyTEM Huixquilucan Plantel 32.
-                </p>
-            </div>
-
-            <div class="mt-8 pt-6 border-t border-gray-100 text-center text-gray-500 text-sm">
-                © 2026 EduPlatform. Todos los derechos reservados.
-            </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h2 class="text-lg font-semibold text-white">Versión</h2>
+            <p class="mt-2 text-sm text-slate-300">2.0 • Enero 2026</p>
         </div>
-    </main>
-</body>
+    </div>
 
-</html>
+    <div class="space-y-4">
+        <h2 class="text-lg font-semibold text-white">Características principales</h2>
+        <ul class="space-y-2 text-slate-300">
+            <li class="flex items-start gap-2"><i class="fas fa-check text-brand-300 mt-1"></i> Gestión de tareas, evaluaciones y reportes académicos.</li>
+            <li class="flex items-start gap-2"><i class="fas fa-check text-brand-300 mt-1"></i> Paneles personalizados para cada rol.</li>
+            <li class="flex items-start gap-2"><i class="fas fa-check text-brand-300 mt-1"></i> Gamificación con XP y EduCoins.</li>
+            <li class="flex items-start gap-2"><i class="fas fa-check text-brand-300 mt-1"></i> Comunicación y soporte integrados.</li>
+        </ul>
+    </div>
+
+    <div class="rounded-xl border border-white/10 bg-white/5 p-5 text-sm text-slate-300">
+        Desarrollado por el equipo de CECyTEM Huixquilucan Plantel 32.
+    </div>
+</div>
+{% endblock %}

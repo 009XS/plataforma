@@ -1233,6 +1233,11 @@
                                 class="w-full bg-brand-600 text-white py-2 rounded-lg font-bold hover:bg-brand-700">Guardar
                                 Cambios</button>
                         </div>
+                        <div class="pt-1">
+                            <button type="button" onclick="cerrarSesion(event)"
+                                class="w-full bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700">Cerrar
+                                sesión</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -1738,7 +1743,6 @@
                 document.getElementById('detalle-nombre').textContent = nombre;
                 document.getElementById('detalle-matricula').textContent = matricula || 'Sin matrícula';
                 document.getElementById('detalle-avatar').textContent = nombre.charAt(0).toUpperCase();
-                // Aquí se podría hacer fetch a /api/estudiante-detalle/${id} si existiera
             }
 
             function closeModal(id) { document.getElementById(id).classList.add('hidden'); }

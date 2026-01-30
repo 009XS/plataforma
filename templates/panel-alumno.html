@@ -2816,10 +2816,6 @@
                 didOpen: () => Swal.showLoading()
             }).then(async () => {
                 try {
-                    // Fetch Quiz Data (Mock or Real)
-                    // const res = await fetch(`/api/quiz/${quizId}`);
-                    // currentQuiz = await res.json();
-
                     // Mock Data
                     currentQuiz = {
                         id: quizId,
@@ -2913,9 +2909,6 @@
                 timerProgressBar: true,
                 didOpen: () => Swal.showLoading()
             }).then(async () => {
-                // Mock Backend Submission
-                // await fetch('/api/submit_quiz', { method: 'POST', body: JSON.stringify(quizAnswers) });
-
                 // Mock Score randomized
                 const score = Math.floor(Math.random() * 3) + 8; // 8, 9 or 10
 

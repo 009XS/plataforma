@@ -1,116 +1,34 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ayuda - EduPlatform</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .container {
-            background: #FFFFFF;
-            border-radius: 16px;
-            padding: 40px;
-            box-shadow: rgba(0,0,0,0.1) 0px 4px 12px;
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .logo {
-            font-size: 24px;
-            font-weight: 700;
-            color: #000000;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo span {
-            color: #8A6BBE;
-        }
-
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #000000;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .faq-item {
-            margin-bottom: 20px;
-            border-bottom: 1px solid #E8E9EA;
-            padding-bottom: 20px;
-        }
-
-        .faq-question {
-            font-size: 16px;
-            font-weight: 600;
-            color: #000000;
-            margin-bottom: 10px;
-        }
-
-        .faq-answer {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.6;
-        }
-
-        .back-link {
-            display: block;
-            text-align: center;
-            font-size: 13px;
-            color: #8A6BBE;
-            margin-top: 30px;
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="logo">Edu<span>Platform</span></div>
-        
-        <h1>Ayuda y Preguntas Frecuentes</h1>
-        
-        <div class="faq-item">
-            <div class="faq-question">¿Cómo inicio sesión?</div>
-            <div class="faq-answer">Ingresa tu Número de Control, CURP y selecciona tu tipo de usuario en la página de login.</div>
-        </div>
-        
-        <div class="faq-item">
-            <div class="faq-question">¿Qué hago si olvidé mis credenciales?</div>
-            <div class="faq-answer">Usa la opción "Olvidaste tu contraseña" en la página de login para recuperarlas vía email.</div>
-        </div>
-        
-        <div class="faq-item">
-            <div class="faq-question">¿Cómo subo una tarea?</div>
-            <div class="faq-answer">En tu panel de alumno, ve a la sección de tareas y usa el botón de subir tarea.</div>
-        </div>
-        
-        <div class="faq-item">
-            <div class="faq-question">¿Dónde veo mis calificaciones?</div>
-            <div class="faq-answer">En la sección de progreso de tu panel personal.</div>
-        </div>
-        
-        <div class="faq-item">
-            <div class="faq-question">¿Cómo contacto al soporte?</div>
-            <div class="faq-answer">Usa el enlace de Soporte Técnico en la página de login.</div>
-        </div>
-        
-        <a href="{{ url_for('login') }}" class="back-link">Volver al Login</a>
+{% extends "base.html" %}
+{% block title %}Ayuda | EduPlatform{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="space-y-2">
+        <p class="text-sm text-brand-300 font-semibold uppercase tracking-[0.2em]">Centro de ayuda</p>
+        <h1 class="text-2xl md:text-3xl font-bold text-white">Preguntas frecuentes</h1>
+        <p class="text-slate-300">Respuestas rápidas para comenzar.</p>
     </div>
-</body>
-</html>
+
+    <div class="space-y-4">
+        <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h2 class="text-base font-semibold text-white">¿Cómo inicio sesión?</h2>
+            <p class="mt-2 text-sm text-slate-300">Ingresa tu número de control, CURP y selecciona tu tipo de usuario en la página de inicio de sesión.</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h2 class="text-base font-semibold text-white">¿Qué hago si olvidé mis credenciales?</h2>
+            <p class="mt-2 text-sm text-slate-300">Solicita el restablecimiento desde el formulario de acceso o contacta a soporte.</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h2 class="text-base font-semibold text-white">¿Cómo subo una tarea?</h2>
+            <p class="mt-2 text-sm text-slate-300">En tu panel de alumno abre la sección de tareas y utiliza el botón de subir entrega.</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h2 class="text-base font-semibold text-white">¿Dónde veo mis calificaciones?</h2>
+            <p class="mt-2 text-sm text-slate-300">Consulta la sección de progreso en tu panel personal.</p>
+        </div>
+        <div class="rounded-xl border border-white/10 bg-white/5 p-5">
+            <h2 class="text-base font-semibold text-white">¿Cómo contacto al soporte?</h2>
+            <p class="mt-2 text-sm text-slate-300">Utiliza el formulario de soporte o el correo oficial indicado en Soporte.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

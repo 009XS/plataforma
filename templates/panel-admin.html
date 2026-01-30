@@ -104,6 +104,13 @@
                     <h3 class="text-2xl font-bold" id="stat-promedio">{{ general_average }}</h3>
                 </div>
             </div>
+            <div class="w-full px-4 mt-4">
+                <button onclick="openAdvancedMenu()"
+                    class="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition">
+                    <span class="material-symbols-outlined text-[20px]">apps</span>
+                    Accesos directos avanzados
+                </button>
+            </div>
         </div>
 
         <main class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6 pb-24" id="dashboard-view">
@@ -122,22 +129,6 @@
                         <p class="text-xs text-slate-400">Tareas registradas</p>
                         <p class="text-lg font-bold" id="stat-tareas">{{ total_tareas }}</p>
                     </div>
-                </div>
-            </section>
-
-            <section class="w-full">
-                <div class="flex items-center justify-between mb-3 px-1">
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Configuración de perfil</h3>
-                </div>
-                <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800">
-                    <label class="text-sm font-medium text-slate-600 dark:text-slate-300">Subir foto de perfil</label>
-                    <div class="flex items-center gap-3 mt-2">
-                        <input id="admin-photo-input" type="file" accept="image/*" class="flex-1 text-sm" />
-                        <button type="button" onclick="uploadAdminPhoto()"
-                            class="px-3 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-blue-600 transition">Subir</button>
-                    </div>
-                    <p class="text-xs text-slate-400 mt-2">Formatos permitidos: jpg, png, jpeg, gif, webp.</p>
-                    <div id="admin-photo-msg" class="mt-2 text-xs"></div>
                 </div>
             </section>
 
@@ -359,6 +350,54 @@
             <div id="rendimiento-list" class="flex flex-col gap-3"></div>
         </div>
 
+        <div id="perfil-view"
+            class="hidden absolute inset-0 w-full h-full max-w-md mx-auto bg-white dark:bg-background-dark p-4 space-y-4 pb-24 overflow-y-auto z-20">
+            <div class="flex items-center gap-2 mb-2">
+                <button onclick="showPanel('dashboard')"
+                    class="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-white">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Mi perfil</h2>
+            </div>
+            <div class="bg-white dark:bg-surface-dark rounded-xl p-5 border border-slate-100 dark:border-slate-800">
+                <div class="flex flex-col items-center text-center">
+                    <div class="h-24 w-24 rounded-full border-4 border-white dark:border-surface-dark shadow-md bg-cover bg-center"
+                        style="background-image: url('{{ admin_avatar_url }}');"></div>
+                    <h3 class="mt-3 text-lg font-bold text-slate-900 dark:text-white">{{ admin_nombre }}</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ admin_email }}</p>
+                </div>
+                <div class="mt-6">
+                    <label class="text-sm font-medium text-slate-600 dark:text-slate-300">Subir foto de perfil</label>
+                    <div class="flex items-center gap-3 mt-2">
+                        <input id="admin-photo-input" type="file" accept="image/*" class="flex-1 text-sm" />
+                        <button type="button" onclick="uploadAdminPhoto()"
+                            class="px-3 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-blue-600 transition">Subir</button>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">Formatos permitidos: jpg, png, jpeg, gif, webp.</p>
+                    <div id="admin-photo-msg" class="mt-2 text-xs"></div>
+                </div>
+                <div class="mt-6">
+                    <a href="/logout"
+                        class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 text-white py-2 text-sm font-semibold hover:bg-red-700 transition">
+                        <span class="material-symbols-outlined text-[20px]">logout</span>
+                        Cerrar sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="advanced-menu" class="hidden fixed inset-0 z-40 bg-black/40 items-stretch justify-center">
+            <div class="ml-auto h-full w-72 max-w-full bg-white dark:bg-background-dark shadow-2xl p-4 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Accesos avanzados</h3>
+                    <button onclick="closeAdvancedMenu()" class="text-slate-400 hover:text-slate-600">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div id="advanced-menu-list" class="flex flex-col gap-2"></div>
+            </div>
+        </div>
+
         <nav
             class="fixed bottom-0 left-0 right-0 z-30 max-w-md mx-auto bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg">
             <div class="flex h-16 items-center justify-between px-1" id="bottom-nav"></div>
@@ -376,6 +415,8 @@
             <div class="mt-3 space-y-3">
                 <input id="usuario-id" type="hidden" />
                 <input id="usuario-nombre" type="text" placeholder="Nombre completo"
+                    class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
+                <input id="usuario-apellido" type="text" placeholder="Apellido(s)"
                     class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
                 <input id="usuario-email" type="email" placeholder="Email"
                     class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface-dark px-3 py-2 text-sm" />
@@ -538,6 +579,11 @@
             { key: 'dashboard', icon: 'home', label: 'Inicio', action: () => showPanel('dashboard') },
             { key: 'usuarios', icon: 'group', label: 'Usuarios', action: () => showPanel('usuarios') },
             { key: 'grupos', icon: 'groups', label: 'Grupos', action: () => showPanel('grupos') },
+            { key: 'accesos', icon: 'apps', label: 'Accesos', action: () => openAdvancedMenu() }
+        ];
+
+        const advancedItems = [
+            { key: 'perfil', icon: 'account_circle', label: 'Perfil', action: () => showPanel('perfil') },
             { key: 'horarios', icon: 'schedule', label: 'Horarios', action: () => showPanel('horarios') },
             { key: 'reportes', icon: 'description', label: 'Reportes', action: () => showPanel('reportes') },
             { key: 'encuestas', icon: 'quiz', label: 'Encuestas', action: () => showPanel('encuestas') },
@@ -545,7 +591,7 @@
             { key: 'notificaciones', icon: 'notifications', label: 'Avisos', action: () => showPanel('notificaciones') },
             { key: 'logs', icon: 'history', label: 'Logs', action: () => showPanel('logs') },
             { key: 'backups', icon: 'database', label: 'Backups', action: () => showPanel('backups') },
-            { key: 'logout', icon: 'logout', label: 'Salir', action: () => window.location.href = '/logout' }
+            { key: 'logout', icon: 'logout', label: 'Cerrar sesión', action: () => window.location.href = '/logout' }
         ];
 
         let activeNav = 'dashboard';
@@ -559,6 +605,34 @@
                     <span class="text-[10px] font-semibold">${item.label}</span>
                 </a>
             `).join('');
+        }
+
+        function renderAdvancedMenu() {
+            const container = document.getElementById('advanced-menu-list');
+            container.innerHTML = advancedItems.map(item => `
+                <button onclick="handleAdvancedAction('${item.key}')"
+                    class="w-full flex items-center gap-3 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary transition">
+                    <span class="material-symbols-outlined text-[20px]">${item.icon}</span>
+                    ${item.label}
+                </button>
+            `).join('');
+        }
+
+        function handleAdvancedAction(key) {
+            const item = advancedItems.find(i => i.key === key);
+            closeAdvancedMenu();
+            if (item && typeof item.action === 'function') item.action();
+        }
+
+        function openAdvancedMenu() {
+            document.getElementById('advanced-menu').classList.remove('hidden');
+            document.getElementById('advanced-menu').classList.add('flex');
+        }
+
+        function closeAdvancedMenu() {
+            const menu = document.getElementById('advanced-menu');
+            menu.classList.add('hidden');
+            menu.classList.remove('flex');
         }
 
         function setActiveNav(key) {
@@ -580,6 +654,7 @@
             const reportesView = document.getElementById('reportes-view');
             const encuestasView = document.getElementById('encuestas-view');
             const rendimientoView = document.getElementById('rendimiento-view');
+            const perfilView = document.getElementById('perfil-view');
 
             dashboard.classList.add('hidden');
             header.classList.add('hidden');
@@ -592,6 +667,7 @@
             reportesView.classList.add('hidden');
             encuestasView.classList.add('hidden');
             rendimientoView.classList.add('hidden');
+            perfilView.classList.add('hidden');
 
             if (panelName === 'usuarios') {
                 usuariosView.classList.remove('hidden');
@@ -619,6 +695,8 @@
             } else if (panelName === 'backups') {
                 backupsView.classList.remove('hidden');
                 loadBackups();
+            } else if (panelName === 'perfil') {
+                perfilView.classList.remove('hidden');
             } else {
                 dashboard.classList.remove('hidden');
                 header.classList.remove('hidden');
@@ -628,6 +706,11 @@
                 activeNav = panelName;
                 renderBottomNav();
             }
+        }
+
+        function toNumber(value, fallback = 0) {
+            const num = Number(value);
+            return Number.isFinite(num) ? num : fallback;
         }
 
         function showToast(message, isError = false) {
@@ -741,7 +824,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex-1">
                                 <p class="text-xs text-slate-400">${u.email}</p>
-                                <p class="text-base font-semibold text-slate-900 dark:text-white">${u.nombre}</p>
+                                <p class="text-base font-semibold text-slate-900 dark:text-white">${u.nombre} ${u.apellido || ''}</p>
                                 <p class="text-xs text-slate-500 dark:text-slate-400">${u.tipo_usuario} • ${u.numero_control || ''}</p>
                             </div>
                             <div class="flex flex-col items-end gap-2">
@@ -767,6 +850,7 @@
             document.getElementById('usuario-modal-title').textContent = usuario ? 'Editar usuario' : 'Nuevo usuario';
             document.getElementById('usuario-id').value = usuario ? usuario.id : '';
             document.getElementById('usuario-nombre').value = usuario ? usuario.nombre : '';
+            document.getElementById('usuario-apellido').value = usuario ? (usuario.apellido || '') : '';
             document.getElementById('usuario-email').value = usuario ? usuario.email : '';
             document.getElementById('usuario-numero').value = usuario ? usuario.numero_control || '' : '';
             document.getElementById('usuario-curp').value = usuario ? usuario.curp || '' : '';
@@ -839,6 +923,7 @@
                 const id = document.getElementById('usuario-id').value;
                 const payload = {
                     nombre: document.getElementById('usuario-nombre').value.trim(),
+                    apellido: document.getElementById('usuario-apellido').value.trim(),
                     tipo_usuario: document.getElementById('usuario-rol').value,
                     email: document.getElementById('usuario-email').value.trim(),
                     telefono: document.getElementById('usuario-telefono').value.trim(),
@@ -1306,7 +1391,7 @@
                 list.innerHTML = encuestas.map(e => `
                     <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
                         <p class="text-sm font-semibold text-slate-900 dark:text-white">${e.titulo || 'Encuesta'}</p>
-                        <p class="text-xs text-slate-500">Promedio: ${(e.promedio || 0).toFixed(1)} • Respuestas: ${e.respuestas || 0}</p>
+                        <p class="text-xs text-slate-500">Promedio: ${toNumber(e.promedio, 0).toFixed(1)} • Respuestas: ${toNumber(e.respuestas, 0)}</p>
                     </div>
                 `).join('');
             } catch (error) {
@@ -1404,23 +1489,23 @@
                 list.innerHTML = `
                     <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800">
                         <p class="text-xs text-slate-400">Pagos</p>
-                        <p class="text-sm text-slate-700 dark:text-slate-300">Total: $${(pagos.total || 0).toLocaleString()}</p>
-                        <p class="text-sm text-slate-700 dark:text-slate-300">Pagado: $${(pagos.pagado || 0).toLocaleString()}</p>
-                        <p class="text-sm text-slate-700 dark:text-slate-300">Pendientes: ${pagos.pendientes || 0}</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300">Total: $${toNumber(pagos.total, 0).toLocaleString()}</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300">Pagado: $${toNumber(pagos.pagado, 0).toLocaleString()}</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300">Pendientes: ${toNumber(pagos.pendientes, 0)}</p>
                     </div>
                     <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800">
                         <p class="text-xs text-slate-400">Asistencia</p>
-                        <p class="text-sm text-slate-700 dark:text-slate-300">Promedio global: ${(asistencias.promedio_global || 0).toFixed(1)}%</p>
-                        <p class="text-sm text-slate-700 dark:text-slate-300">Faltas totales: ${asistencias.faltas_total || 0}</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300">Promedio global: ${toNumber(asistencias.promedio_global, 0).toFixed(1)}%</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300">Faltas totales: ${toNumber(asistencias.faltas_total, 0)}</p>
                     </div>
                     <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800">
                         <p class="text-xs text-slate-400">Gamificación</p>
-                        <p class="text-sm text-slate-700 dark:text-slate-300">XP promedio: ${(gamificacion.promedios?.xp_promedio || 0).toFixed(0)}</p>
-                        <p class="text-sm text-slate-700 dark:text-slate-300">Racha promedio: ${(gamificacion.promedios?.racha_promedio || 0).toFixed(1)} días</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300">XP promedio: ${toNumber(gamificacion.promedios?.xp_promedio, 0).toFixed(0)}</p>
+                        <p class="text-sm text-slate-700 dark:text-slate-300">Racha promedio: ${toNumber(gamificacion.promedios?.racha_promedio, 0).toFixed(1)} días</p>
                     </div>
                     <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-slate-100 dark:border-slate-800">
                         <p class="text-xs text-slate-400">Encuestas</p>
-                        ${(encuestas || []).slice(0, 3).map(e => `<p class="text-sm text-slate-700 dark:text-slate-300">${e.titulo}: ${(e.promedio || 0).toFixed(1)} (${e.respuestas || 0})</p>`).join('') || '<p class="text-sm text-slate-500">Sin datos</p>'}
+                        ${(encuestas || []).slice(0, 3).map(e => `<p class="text-sm text-slate-700 dark:text-slate-300">${e.titulo}: ${toNumber(e.promedio, 0).toFixed(1)} (${toNumber(e.respuestas, 0)})</p>`).join('') || '<p class="text-sm text-slate-500">Sin datos</p>'}
                     </div>
                 `;
             } catch (error) {
@@ -1431,6 +1516,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             renderBottomNav();
+            renderAdvancedMenu();
             const params = new URLSearchParams(window.location.search);
             const panel = params.get('panel');
             if (panel && navItems.some(item => item.key === panel)) {
@@ -1438,6 +1524,7 @@
             } else {
                 showPanel('dashboard');
             }
+            loadMetrics();
             loadLogs();
         });
     </script>

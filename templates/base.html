@@ -43,13 +43,59 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+
+        .bg-grid {
+            background-image: radial-gradient(rgba(148, 163, 184, 0.2) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            backdrop-filter: blur(16px);
+        }
     </style>
 
     {% block extra_head %}{% endblock %}
 </head>
 
-<body class="bg-gray-100 min-h-screen">
-    {% block content %}{% endblock %}
+<body class="min-h-screen bg-slate-950 text-slate-100">
+    <div class="relative min-h-screen overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900"></div>
+        <div class="absolute inset-0 opacity-40 bg-grid"></div>
+
+        <div class="relative z-10">
+            <header class="max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
+                <a href="/" class="flex items-center gap-3 text-white font-semibold">
+                    <span class="w-10 h-10 rounded-full bg-brand-500 text-slate-900 flex items-center justify-center font-bold">E</span>
+                    <span class="text-lg">Edu<span class="text-brand-300">Platform</span></span>
+                </a>
+                <nav class="hidden md:flex items-center gap-5 text-sm text-slate-300">
+                    <a href="/" class="hover:text-white transition">Inicio</a>
+                    <a href="{{ url_for('help_page') }}" class="hover:text-white transition">Ayuda</a>
+                    <a href="{{ url_for('contact') }}" class="hover:text-white transition">Contacto</a>
+                    <a href="{{ url_for('support') }}" class="hover:text-white transition">Soporte</a>
+                    <a href="{{ url_for('privacy') }}" class="hover:text-white transition">Privacidad</a>
+                    <a href="{{ url_for('terms') }}" class="hover:text-white transition">Términos</a>
+                </nav>
+                <a href="{{ url_for('login') }}" class="hidden sm:inline-flex items-center gap-2 bg-brand-500 text-slate-900 px-4 py-2 rounded-full text-sm font-semibold hover:bg-brand-400 transition">
+                    <i class="fas fa-right-to-bracket"></i>
+                    Iniciar sesión
+                </a>
+            </header>
+
+            <main class="max-w-4xl mx-auto px-4 pb-16">
+                <div class="glass-card rounded-2xl shadow-2xl p-6 md:p-10">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+
+            <footer class="max-w-6xl mx-auto px-4 pb-10 text-sm text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
+                <span>© 2026 EduPlatform. Todos los derechos reservados.</span>
+                <span>CECyTEM Huixquilucan Plantel 32</span>
+            </footer>
+        </div>
+    </div>
 
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

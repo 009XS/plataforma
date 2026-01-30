@@ -2271,21 +2271,38 @@ def api_buscar_alumnos():
     cursor.execute("SELECT id, nombre, numero_control FROM usuarios WHERE tipo_usuario='alumno' AND (nombre LIKE %s OR numero_control LIKE %s) LIMIT 10", (search, search))
     return jsonify(cursor.fetchall())
 
-@app.route('/api/enviar_reporte', methods=['POST'])
+@app.route('/api/enviar_reporte_simple', methods=['POST'])
 @login_required
 @role_required('orientador', 'docente') # Docentes también pueden reportar
-def api_enviar_reporte():
-    data = request.json
+def api_enviar_reporte_simple():
+    data = request.json or {}
+    alumno_id = data.get('alumno_id')
+    tipo = data.get('tipo')
+    descripcion = (data.get('descripcion') or '').strip()
+
+    if not alumno_id or not tipo or not descripcion:
+        return jsonify({'error': 'Faltan datos'}), 400
+
+    orientador_id = data.get('orientador_id')
+    if not orientador_id:
+        if session.get('user_role') == 'orientador':
+            orientador_id = session['user_id']
+        else:
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute("SELECT id FROM usuarios WHERE tipo_usuario = 'orientador' AND activo = 1 ORDER BY id LIMIT 1")
+            row = cursor.fetchone()
+            cursor.close()
+            orientador_id = row['id'] if row else None
+
+    if not orientador_id:
+        return jsonify({'error': 'No hay orientador disponible'}), 400
+
     cursor = mysql.connection.cursor()
     cursor.execute("""
-        INSERT INTO reportes_conducta (alumno_id, reportado_por, tipo, descripcion, fecha_reporte)
+        INSERT INTO reportes_conducta (alumno_id, orientador_id, tipo, descripcion, fecha_reporte)
         VALUES (%s, %s, %s, %s, NOW())
-    """, (data['alumno_id'], session['user_id'], data['tipo'], data['descripcion']))
+    """, (alumno_id, orientador_id, tipo, descripcion))
     mysql.connection.commit()
-    
-    # Notificar al tutor si existe
-    # (Lógica simplificada, se podría expandir)
-    
     return jsonify({'success': True, 'message': 'Reporte registrado'})
 
 @app.route('/api/buscar_horarios', methods=['GET'])
@@ -2293,7 +2310,24 @@ def api_enviar_reporte():
 def api_buscar_horarios():
     grupo = request.args.get('grupo')
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM horarios_grupos WHERE grupo = %s", (grupo,))
+    if grupo:
+        cursor.execute(
+            """
+            SELECT id, grupo, semestre, archivo_nombre, archivo_ruta, fecha_actualizacion
+            FROM horarios_clases
+            WHERE grupo = %s
+            ORDER BY fecha_actualizacion DESC
+            """,
+            (grupo,)
+        )
+    else:
+        cursor.execute(
+            """
+            SELECT id, grupo, semestre, archivo_nombre, archivo_ruta, fecha_actualizacion
+            FROM horarios_clases
+            ORDER BY fecha_actualizacion DESC
+            """
+        )
     return jsonify(cursor.fetchall())
 
 @app.route('/api/orientador/avisos', methods=['POST'])
@@ -2314,20 +2348,36 @@ def api_orientador_avisos():
 @login_required
 @role_required('orientador')
 def api_orientador_justificantes_crear():
-    data = request.json
-    # Buscar ID de alumno por nombre (asumiendo input de nombre) o ID directo si el frontend lo maneja
-    # Aquí asumimos que el frontend envía nombre y lo buscamos (limitación del diseño actual)
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT id FROM usuarios WHERE nombre = %s AND rol='alumno'", (data['alumno'],))
-    alumno = cursor.fetchone()
-    
-    if not alumno: return jsonify({'error': 'Alumno no encontrado'}), 404
-    
+    data = request.json or {}
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    alumno_id = data.get('alumno_id')
+    alumno_busqueda = (data.get('alumno') or '').strip()
+
+    if not alumno_id and not alumno_busqueda:
+        return jsonify({'error': 'Faltan datos del alumno'}), 400
+
+    if not alumno_id:
+        cursor.execute(
+            """
+            SELECT id FROM usuarios 
+            WHERE tipo_usuario = 'alumno' AND (nombre LIKE %s OR numero_control LIKE %s)
+            LIMIT 1
+            """,
+            (f"%{alumno_busqueda}%", f"%{alumno_busqueda}%")
+        )
+        alumno = cursor.fetchone()
+        if not alumno:
+            cursor.close()
+            return jsonify({'error': 'Alumno no encontrado'}), 404
+        alumno_id = alumno['id']
+
     cursor.execute("""
         INSERT INTO justificantes (alumno_id, tutor_id, fecha_falta, motivo, estado, comentarios_escuela)
         VALUES (%s, %s, %s, %s, 'aprobado', 'Generado por Orientación')
-    """, (alumno[0], session['user_id'], data['fecha'], data['motivo']))
+    """, (alumno_id, session['user_id'], data.get('fecha'), data.get('motivo')))
     mysql.connection.commit()
+    cursor.close()
     return jsonify({'success': True, 'message': 'Justificante generado'})
 
 
@@ -2500,13 +2550,25 @@ def api_alumno_encuestas_list():
 
 @app.route('/api/eliminar_horario', methods=['POST'])
 @login_required
-@role_required('orientador')
+@role_required('orientador', 'admin')
 def api_eliminar_horario():
     data = request.json
     horario_id = data.get('id')
+    archivo_ruta = data.get('archivo_ruta')
     cursor = mysql.connection.cursor()
-    cursor.execute("DELETE FROM horarios_grupos WHERE id = %s", (horario_id,))
+    cursor.execute("SELECT archivo_ruta FROM horarios_clases WHERE id = %s", (horario_id,))
+    row = cursor.fetchone()
+    cursor.execute("DELETE FROM horarios_clases WHERE id = %s", (horario_id,))
     mysql.connection.commit()
+    if not archivo_ruta and row:
+        archivo_ruta = row[0]
+    if archivo_ruta:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], archivo_ruta)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
     return jsonify({'success': True})
 
 @app.route('/app')
@@ -4602,10 +4664,10 @@ def api_orientador_eliminar_recordatorio(id):
     return jsonify({'status': 'ok'})
 
 # 13. REPORTES INSTITUCIONALES
-@app.route('/api/orientador/reportes', methods=['GET', 'POST'])
+@app.route('/api/orientador/reportes-institucionales', methods=['GET', 'POST'])
 @login_required
 @role_required('orientador')
-def api_orientador_reportes():
+def api_orientador_reportes_institucionales():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     if request.method == 'POST':
         data = request.json
@@ -4618,7 +4680,7 @@ def api_orientador_reportes():
         _generar_reporte_institucional(reporte_id)
         return jsonify({'status': 'ok', 'id': reporte_id})
     cursor.execute("SELECT * FROM reportes_institucionales WHERE orientador_id = %s ORDER BY fecha_creacion DESC LIMIT 20", (session['user_id'],))
-    return jsonify(cursor.fetchall())
+    return jsonify({'reportes': cursor.fetchall()})
 
 def _generar_reporte_institucional(reporte_id):
     try:
@@ -6453,6 +6515,11 @@ def api_admin_descargar_exportacion(id):
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     """Servir archivos desde el directorio de uploads"""
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if not os.path.exists(file_path):
+        if filename == 'default_avatar.png':
+            return redirect("https://ui-avatars.com/api/?name=Usuario&background=0D8ABC&color=fff")
+        return jsonify({'error': 'Archivo no encontrado'}), 404
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/')
@@ -7052,11 +7119,12 @@ def panel_orientador():
         cursor.execute("SELECT COUNT(*) as total FROM usuarios WHERE tipo_usuario = 'alumno' AND activo = 1")
         total_alumnos = cursor.fetchone()['total']
         
-        # 2. Alertas activas
+        # 2. Alertas activas (panel orientador)
         cursor.execute("""
-            SELECT COUNT(*) as total FROM alertas_academicas 
-            WHERE activa = 1
-        """)
+            SELECT COUNT(*) as total FROM alertas_orientador
+            WHERE estado != 'cerrada'
+              AND (orientador_id = %s OR orientador_id IS NULL)
+        """, (orientador_id,))
         alertas_activas = cursor.fetchone()['total']
         
         # 3. Citas pendientes del orientador
@@ -7083,13 +7151,14 @@ def panel_orientador():
         
         # 6. Últimas alertas
         cursor.execute("""
-            SELECT aa.*, u.nombre as alumno_nombre, u.numero_control
-            FROM alertas_academicas aa
-            JOIN usuarios u ON aa.alumno_id = u.id
-            WHERE aa.activa = 1
-            ORDER BY aa.fecha_creacion DESC
+            SELECT a.*, u.nombre as alumno_nombre, u.numero_control
+            FROM alertas_orientador a
+            JOIN usuarios u ON a.alumno_id = u.id
+            WHERE a.estado != 'cerrada'
+              AND (a.orientador_id = %s OR a.orientador_id IS NULL)
+            ORDER BY a.fecha_creacion DESC
             LIMIT 5
-        """)
+        """, (orientador_id,))
         ultimas_alertas = cursor.fetchall()
         
         # 7. Próximas citas
@@ -7382,14 +7451,16 @@ def crear_cita_orientacion():
         cursor = mysql.connection.cursor()
         cursor.execute("""
             INSERT INTO citas_orientacion 
-            (alumno_id, orientador_id, fecha, hora, motivo, estado)
-            VALUES (%s, %s, %s, %s, %s, 'confirmada')
+            (alumno_id, orientador_id, fecha, hora, motivo, estado, notas)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (
             data['alumno_id'],
             session['user_id'],
             data['fecha'],
             data['hora'],
-            data['motivo']
+            data['motivo'],
+            data.get('estado', 'pendiente'),
+            data.get('notas')
         ))
         cita_id = cursor.lastrowid
         mysql.connection.commit()
@@ -7524,46 +7595,49 @@ def eliminar_cita_orientacion(cita_id):
 @login_required
 @role_required('orientador')
 def listar_alertas_academicas():
-    """Listar todas las alertas académicas"""
+    """Listar alertas del orientador (centralizadas)"""
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        activa = request.args.get('activa', '1')
-        tipo = request.args.get('tipo', '')
+        estado = request.args.get('estado', '')
         nivel = request.args.get('nivel', '')
-        
+        tipo = request.args.get('tipo', '')
+        asignada = request.args.get('asignada', '')
+
         sql = """
-            SELECT aa.*, u.nombre as alumno_nombre, u.numero_control, u.semestre,
-                   c.nombre as creador_nombre
-            FROM alertas_academicas aa
-            JOIN usuarios u ON aa.alumno_id = u.id
-            LEFT JOIN usuarios c ON aa.creado_por = c.id
-            WHERE 1=1
+            SELECT a.*, u.nombre as alumno_nombre, u.numero_control, u.semestre
+            FROM alertas_orientador a
+            JOIN usuarios u ON a.alumno_id = u.id
+            WHERE (a.orientador_id = %s OR a.orientador_id IS NULL)
         """
-        params = []
-        
-        if activa:
-            sql += " AND aa.activa = %s"
-            params.append(int(activa))
-        if tipo:
-            sql += " AND aa.tipo = %s"
-            params.append(tipo)
+        params = [session['user_id']]
+
+        if estado:
+            sql += " AND a.estado = %s"
+            params.append(estado)
         if nivel:
-            sql += " AND aa.nivel = %s"
+            sql += " AND a.nivel = %s"
             params.append(nivel)
-            
-        sql += " ORDER BY aa.fecha_creacion DESC"
-        
+        if tipo:
+            sql += " AND a.tipo_alerta = %s"
+            params.append(tipo)
+        if asignada in ('0', '1'):
+            sql += " AND a.asignada = %s"
+            params.append(int(asignada))
+
+        sql += " ORDER BY a.fecha_creacion DESC"
+
         cursor.execute(sql, params)
         alertas = cursor.fetchall()
         cursor.close()
-        
-        # Formatear fechas
+
         for alerta in alertas:
-            if alerta['fecha_creacion']:
+            if alerta.get('fecha_creacion'):
                 alerta['fecha_creacion'] = alerta['fecha_creacion'].strftime('%Y-%m-%d %H:%M:%S')
-            if alerta['fecha_resolucion']:
-                alerta['fecha_resolucion'] = alerta['fecha_resolucion'].strftime('%Y-%m-%d %H:%M:%S')
-        
+            if alerta.get('fecha_asignacion'):
+                alerta['fecha_asignacion'] = alerta['fecha_asignacion'].strftime('%Y-%m-%d %H:%M:%S')
+            if alerta.get('fecha_cierre'):
+                alerta['fecha_cierre'] = alerta['fecha_cierre'].strftime('%Y-%m-%d %H:%M:%S')
+
         return jsonify({'alertas': alertas}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -8943,9 +9017,9 @@ def crear_usuario():
     try:
         cursor = mysql.connection.cursor()
         cursor.execute("""
-            INSERT INTO usuarios (nombre, email, numero_control, curp, tipo_usuario, password_hash, telefono, direccion, semestre, rango, xp, educoins)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'bronce', 0, 0)
-        """, (data['nombre'], data['email'], data['numero_control'], data['curp'], data['tipo_usuario'], password_hash, data['telefono'], data['direccion'], data.get('semestre')))
+            INSERT INTO usuarios (nombre, apellido, email, numero_control, curp, tipo_usuario, password_hash, telefono, direccion, semestre, rango, xp, educoins)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'bronce', 0, 0)
+        """, (data['nombre'], data.get('apellido', ''), data['email'], data['numero_control'], data['curp'], data['tipo_usuario'], password_hash, data['telefono'], data['direccion'], data.get('semestre')))
         user_id = cursor.lastrowid
         mysql.connection.commit()
         cursor.close()
@@ -8973,10 +9047,10 @@ def actualizar_usuario():
         cursor = mysql.connection.cursor()
         update_query = """
             UPDATE usuarios SET 
-                nombre = %s, tipo_usuario = %s, email = %s, telefono = %s, numero_control = %s, 
+                nombre = %s, apellido = %s, tipo_usuario = %s, email = %s, telefono = %s, numero_control = %s, 
                 curp = %s, direccion = %s, semestre = %s, avatar_url = %s, tema = %s
         """
-        params = [data['nombre'], data['tipo_usuario'], data['email'], data['telefono'], data['numero_control'], data['curp'], data['direccion'], data.get('semestre'), data.get('avatar_url', 'default_avatar.png'), data.get('tema', 'light')]
+        params = [data['nombre'], data.get('apellido', ''), data['tipo_usuario'], data['email'], data['telefono'], data['numero_control'], data['curp'], data['direccion'], data.get('semestre'), data.get('avatar_url', 'default_avatar.png'), data.get('tema', 'light')]
         if password_hash:
             update_query += ", password_hash = %s"
             params.append(password_hash)
@@ -9129,10 +9203,10 @@ def subir_horario_admin():
     return jsonify({'error': 'Formato no permitido'}), 400
 
 # API para eliminar horario (versión legacy)
-@app.route('/api/eliminar_horario', methods=['POST'])
+@app.route('/api/eliminar_horario_admin', methods=['POST'])
 @login_required
 @role_required('admin')
-def eliminar_horario_legacy():
+def eliminar_horario_admin():
     try:
         data = request.get_json()
         horario_id = data.get('id')
@@ -9175,8 +9249,8 @@ def eliminar_horario_legacy():
         return jsonify({'error': 'Error interno del servidor'}), 500
 
 # API para buscar horarios
-@app.route('/api/buscar_horarios', methods=['GET'])
-def buscar_horarios():
+@app.route('/api/buscar_horarios_public', methods=['GET'])
+def buscar_horarios_public():
     """Buscar todos los horarios cargados"""
     try:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -10019,10 +10093,10 @@ def get_progress():
         return jsonify({'error': 'Error al obtener progreso'}), 500
 
 # API para buscar alumnos (expandido)
-@app.route('/api/buscar_alumnos')
+@app.route('/api/orientador/buscar_alumnos_detalle')
 @login_required
 @role_required('orientador')
-def buscar_alumnos():
+def buscar_alumnos_detalle():
     query = request.args.get('q', '').strip()
     if len(query) < 3:
         return jsonify([])
@@ -10048,15 +10122,31 @@ def buscar_alumnos():
 # API para enviar reporte (expandido con evidencia)
 @app.route('/api/enviar_reporte', methods=['POST'])
 @login_required
-@role_required('orientador')
+@role_required('orientador', 'docente')
 def enviar_reporte():
-    alumno_id = request.form.get('alumno_id')
-    tipo = request.form.get('tipo')
-    descripcion = request.form.get('descripcion', '').strip()
+    data = request.get_json(silent=True) if request.is_json else None
+
+    alumno_id = (data or {}).get('alumno_id') or request.form.get('alumno_id')
+    tipo = (data or {}).get('tipo') or request.form.get('tipo')
+    descripcion = ((data or {}).get('descripcion') or request.form.get('descripcion') or '').strip()
+    orientador_id = (data or {}).get('orientador_id') or request.form.get('orientador_id')
     file = request.files.get('evidencia')
 
     if not alumno_id or not tipo or not descripcion:
         return jsonify({'error': 'Faltan datos'}), 400
+
+    if not orientador_id:
+        if session.get('user_role') == 'orientador':
+            orientador_id = session['user_id']
+        else:
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute("SELECT id FROM usuarios WHERE tipo_usuario = 'orientador' AND activo = 1 ORDER BY id LIMIT 1")
+            row = cursor.fetchone()
+            cursor.close()
+            orientador_id = row['id'] if row else None
+
+    if not orientador_id:
+        return jsonify({'error': 'No hay orientador disponible'}), 400
 
     evidencia_ruta = None
     if file and allowed_file(file.filename):
@@ -10070,14 +10160,14 @@ def enviar_reporte():
             INSERT INTO reportes_conducta 
             (alumno_id, orientador_id, tipo, descripcion, evidencia_ruta) 
             VALUES (%s, %s, %s, %s, %s)
-        """, (alumno_id, session['user_id'], tipo, descripcion, evidencia_ruta))
+        """, (alumno_id, orientador_id, tipo, descripcion, evidencia_ruta))
         mysql.connection.commit()
         reporte_id = cursor.lastrowid
         cursor.close()
         
         log_accion('enviar_reporte', f'Reporte ID {reporte_id} para alumno {alumno_id}', session['user_id'])
         
-        return jsonify({'success': 'Reporte guardado'})
+        return jsonify({'success': True, 'message': 'Reporte guardado', 'id': reporte_id})
     
     except Exception as e:
         mysql.connection.rollback()
@@ -13020,9 +13110,10 @@ def panel_admin():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
         # Admin info
-        cursor.execute("SELECT nombre, avatar_url FROM usuarios WHERE id = %s", (session['user_id'],))
+        cursor.execute("SELECT nombre, avatar_url, email FROM usuarios WHERE id = %s", (session['user_id'],))
         admin_info = cursor.fetchone() or {}
         admin_nombre = admin_info.get('nombre') or session.get('user_name') or 'Administrador'
+        admin_email = admin_info.get('email') or session.get('user_email') or ''
         admin_avatar_url = admin_info.get('avatar_url')
         if admin_avatar_url:
             if admin_avatar_url.startswith('http'):
@@ -13099,6 +13190,7 @@ def panel_admin():
                                logs=logs,
                                total_tareas=total_tareas,
                        admin_nombre=admin_nombre,
+                           admin_email=admin_email,
                        admin_avatar_url=admin_avatar_resolved,
                                session=session)
     except Exception as e:
@@ -14098,7 +14190,7 @@ def validate_user_input(nombre, email):
 
 @app.before_request
 def before_request():
-    if not request.is_secure and not app.debug:
+    if not request.is_secure and not app.debug and not app.testing:
         url = request.url.replace("http://", "https://", 1)
         return redirect(url, code=301)
 
@@ -14152,6 +14244,12 @@ def forbidden(error):
 @app.errorhandler(Exception)
 def handle_exception(e):
     logging.error(f"Unhandled exception: {str(e)}")
+    try:
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            return e
+    except Exception:
+        pass
     return "Internal Server Error", 500
 
 # Complete the app.
@@ -16376,6 +16474,39 @@ def crear_tablas_usuarios_grupos():
     """Crear o verificar tablas relacionadas con usuarios y grupos."""
     try:
         cursor = mysql.connection.cursor()
+        def _column_exists(table, column):
+            cursor.execute(
+                """
+                SELECT 1
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s
+                """,
+                (app.config['MYSQL_DB'], table, column)
+            )
+            return cursor.fetchone() is not None
+
+        def _index_exists(table, index_name):
+            cursor.execute(
+                """
+                SELECT 1
+                FROM INFORMATION_SCHEMA.STATISTICS
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND INDEX_NAME = %s
+                """,
+                (app.config['MYSQL_DB'], table, index_name)
+            )
+            return cursor.fetchone() is not None
+
+        def _fk_exists(table, column, ref_table):
+            cursor.execute(
+                """
+                SELECT 1
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s
+                  AND REFERENCED_TABLE_NAME = %s
+                """,
+                (app.config['MYSQL_DB'], table, column, ref_table)
+            )
+            return cursor.fetchone() is not None
         # Tabla grupos (si no existe)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS grupos (
@@ -16395,24 +16526,59 @@ def crear_tablas_usuarios_grupos():
         """)
         
         # Verificar y agregar columnas faltantes en usuarios
-        cursor.execute("""
-            ALTER TABLE usuarios
-            ADD COLUMN IF NOT EXISTS apellido VARCHAR(100) NOT NULL AFTER nombre,
-            ADD COLUMN IF NOT EXISTS matricula VARCHAR(50) AFTER email,
-            ADD COLUMN IF NOT EXISTS grupo_id INT AFTER matricula,
-            ADD COLUMN IF NOT EXISTS fecha_nacimiento DATE AFTER grupo_id,
-            ADD COLUMN IF NOT EXISTS token_reset VARCHAR(255) AFTER password_hash,
-            ADD COLUMN IF NOT EXISTS token_expira DATETIME AFTER token_reset,
-            ADD COLUMN IF NOT EXISTS fecha_ultimo_cambio_password DATETIME AFTER token_expira,
-            ADD COLUMN IF NOT EXISTS intentos_login_fallidos INT DEFAULT 0 AFTER activo,
-            ADD COLUMN IF NOT EXISTS bloqueado_hasta DATETIME AFTER intentos_login_fallidos,
-            ADD INDEX IF NOT EXISTS idx_grupo (grupo_id),
-            ADD INDEX IF NOT EXISTS idx_matricula (matricula),
-            ADD INDEX IF NOT EXISTS idx_activo (activo),
-            ADD INDEX IF NOT EXISTS idx_ultimo_acceso (ultimo_acceso),
-            ADD CONSTRAINT fk_usuario_grupo FOREIGN KEY IF NOT EXISTS (grupo_id)
-                REFERENCES grupos(id) ON DELETE SET NULL
-        """)
+        usuarios_cols = {
+            'apellido': "ALTER TABLE usuarios ADD COLUMN apellido VARCHAR(100) NOT NULL DEFAULT '' AFTER nombre",
+            'matricula': "ALTER TABLE usuarios ADD COLUMN matricula VARCHAR(50) AFTER email",
+            'grupo_id': "ALTER TABLE usuarios ADD COLUMN grupo_id INT AFTER matricula",
+            'fecha_nacimiento': "ALTER TABLE usuarios ADD COLUMN fecha_nacimiento DATE AFTER grupo_id",
+            'token_reset': "ALTER TABLE usuarios ADD COLUMN token_reset VARCHAR(255) AFTER password_hash",
+            'token_expira': "ALTER TABLE usuarios ADD COLUMN token_expira DATETIME AFTER token_reset",
+            'fecha_ultimo_cambio_password': "ALTER TABLE usuarios ADD COLUMN fecha_ultimo_cambio_password DATETIME AFTER token_expira",
+            'intentos_login_fallidos': "ALTER TABLE usuarios ADD COLUMN intentos_login_fallidos INT DEFAULT 0 AFTER activo",
+            'bloqueado_hasta': "ALTER TABLE usuarios ADD COLUMN bloqueado_hasta DATETIME AFTER intentos_login_fallidos"
+        }
+        for col, ddl in usuarios_cols.items():
+            try:
+                if not _column_exists('usuarios', col):
+                    cursor.execute(ddl)
+            except Exception:
+                pass
+
+        # Verificar columnas faltantes en grupos (para instalaciones antiguas)
+        grupos_cols = {
+            'tutor_id': "ALTER TABLE grupos ADD COLUMN tutor_id INT NULL",
+            'capacidad_maxima': "ALTER TABLE grupos ADD COLUMN capacidad_maxima INT DEFAULT 40",
+            'activo': "ALTER TABLE grupos ADD COLUMN activo TINYINT(1) DEFAULT 1",
+            'fecha_creacion': "ALTER TABLE grupos ADD COLUMN fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP"
+        }
+        for col, ddl in grupos_cols.items():
+            try:
+                if not _column_exists('grupos', col):
+                    cursor.execute(ddl)
+            except Exception:
+                pass
+
+        # Índices en usuarios
+        try:
+            if not _index_exists('usuarios', 'idx_grupo'):
+                cursor.execute("CREATE INDEX idx_grupo ON usuarios (grupo_id)")
+            if not _index_exists('usuarios', 'idx_matricula'):
+                cursor.execute("CREATE INDEX idx_matricula ON usuarios (matricula)")
+            if not _index_exists('usuarios', 'idx_activo'):
+                cursor.execute("CREATE INDEX idx_activo ON usuarios (activo)")
+            if not _index_exists('usuarios', 'idx_ultimo_acceso'):
+                cursor.execute("CREATE INDEX idx_ultimo_acceso ON usuarios (ultimo_acceso)")
+        except Exception:
+            pass
+
+        # FK usuarios->grupos (evitar duplicados)
+        try:
+            if _column_exists('usuarios', 'grupo_id') and _column_exists('grupos', 'id') and not _fk_exists('usuarios', 'grupo_id', 'grupos'):
+                cursor.execute(
+                    "ALTER TABLE usuarios ADD CONSTRAINT fk_usuario_grupo FOREIGN KEY (grupo_id) REFERENCES grupos(id) ON DELETE SET NULL"
+                )
+        except Exception:
+            pass
         
         mysql.connection.commit()
         cursor.close()
@@ -20030,9 +20196,9 @@ def alumno_mark_all_notifications_read():
         return jsonify({'success': False}), 500
 
 # ==================== PROFILE API ====================
-@app.route('/api/profile/upload-photo', methods=['POST'])
+@app.route('/api/profile/upload-photo-legacy', methods=['POST'])
 @login_required
-def alumno_upload_profile_photo():
+def alumno_upload_profile_photo_legacy():
     """Subir foto de perfil"""
     try:
         if 'photo' not in request.files:
@@ -21152,10 +21318,10 @@ def tutor_reporte_seguimiento():
 
 # ==================== ORIENTADOR - ENDPOINTS FALTANTES ====================
 
-@app.route('/api/orientador/avisos', methods=['GET', 'POST'])
+@app.route('/api/orientador/avisos-comunicados', methods=['GET', 'POST'])
 @login_required
 @role_required('orientador')
-def orientador_avisos():
+def orientador_avisos_comunicados():
     """Gestión de avisos institucionales"""
     if request.method == 'POST':
         try:
@@ -21868,10 +22034,10 @@ def admin_notificacion_global():
 
 # ==================== ENDPOINTS ORIENTADOR ====================
 
-@app.route('/api/buscar_alumnos', methods=['GET'])
+@app.route('/api/orientador/buscar_alumnos_basico', methods=['GET'])
 @login_required
 @role_required('orientador') 
-def buscar_alumnos_orientador_endpoint():
+def buscar_alumnos_orientador_basico():
     """Buscador de alumnos para el orientador"""
     query = request.args.get('q', '')
     if len(query) < 3:
@@ -21891,10 +22057,10 @@ def buscar_alumnos_orientador_endpoint():
     cursor.close()
     return jsonify(alumnos)
 
-@app.route('/api/enviar_reporte', methods=['POST'])
+@app.route('/api/orientador/enviar-reporte-json', methods=['POST'])
 @login_required
 @role_required('orientador')
-def enviar_reporte_conducta():
+def enviar_reporte_conducta_json():
     """Guardar reporte de conducta"""
     try:
         data = request.json
@@ -21907,7 +22073,7 @@ def enviar_reporte_conducta():
             
         cursor = mysql.connection.cursor()
         cursor.execute("""
-            INSERT INTO reportes_conducta (alumno_id, orientador_id, tipo, descripcion, fecha)
+            INSERT INTO reportes_conducta (alumno_id, orientador_id, tipo, descripcion, fecha_reporte)
             VALUES (%s, %s, %s, %s, NOW())
         """, (alumno_id, session['user_id'], tipo, descripcion))
         
@@ -21922,10 +22088,10 @@ def enviar_reporte_conducta():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/buscar_horarios', methods=['GET'])
+@app.route('/api/orientador/buscar_horarios_detalle', methods=['GET'])
 @login_required
 @role_required('orientador')
-def buscar_horarios_grupo():
+def buscar_horarios_grupo_detalle():
     """Buscar horarios de clase por grupo"""
     grupo = request.args.get('grupo')
     if not grupo:
@@ -21944,10 +22110,10 @@ def buscar_horarios_grupo():
     cursor.close()
     return jsonify(horarios)
 
-@app.route('/api/eliminar_horario', methods=['POST'])
+@app.route('/api/orientador/eliminar_horario_simple', methods=['POST'])
 @login_required
 @role_required('orientador')
-def eliminar_horario_clase():
+def eliminar_horario_clase_simple():
     """Eliminar un horario de clase"""
     try:
         data = request.json
@@ -21966,10 +22132,10 @@ def eliminar_horario_clase():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/orientador/avisos', methods=['POST'])
+@app.route('/api/orientador/avisos-avanzado', methods=['POST'])
 @login_required
 @role_required('orientador')
-def orientador_enviar_aviso():
+def orientador_enviar_aviso_avanzado():
     """Enviar aviso o recordatorio a grupo o alumno específico"""
     try:
         data = request.json
@@ -22022,10 +22188,10 @@ def orientador_enviar_aviso():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/orientador/justificantes', methods=['POST'])
+@app.route('/api/orientador/justificantes-legacy', methods=['POST'])
 @login_required
 @role_required('orientador')
-def orientador_crear_justificante():
+def orientador_crear_justificante_legacy():
     """Crear justificante de falta para un alumno"""
     try:
         data = request.json
@@ -22086,12 +22252,13 @@ def orientador_alumnos_grupo(grupo):
         
         # Buscar alumnos del grupo
         cursor.execute("""
-            SELECT id, nombre, numero_control, email
-            FROM usuarios 
-            WHERE tipo_usuario = 'alumno' 
-            AND (grupo LIKE %s OR grado LIKE %s)
-            ORDER BY nombre
-        """, (f"%{grupo}%", f"%{grupo}%"))
+            SELECT u.id, u.nombre, u.numero_control, u.email, g.nombre as grupo
+            FROM usuarios u
+            LEFT JOIN grupos g ON u.grupo_id = g.id
+            WHERE u.tipo_usuario = 'alumno'
+              AND (g.nombre LIKE %s OR u.semestre LIKE %s OR u.numero_control LIKE %s)
+            ORDER BY u.nombre
+        """, (f"%{grupo}%", f"%{grupo}%", f"%{grupo}%"))
         alumnos = cursor.fetchall()
         cursor.close()
         
@@ -22139,7 +22306,7 @@ def orientador_registrar_asistencias():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/orientador/reportes', methods=['GET'])
+@app.route('/api/orientador/reportes-historial', methods=['GET'])
 @login_required
 @role_required('orientador')
 def orientador_historial_reportes():
@@ -27410,9 +27577,9 @@ def api_portfolio_list():
 
 # ============ 4. NOTAS DE CLASE APIs ============
 
-@app.route('/api/notes', methods=['GET', 'POST'])
+@app.route('/api/class-notes', methods=['GET', 'POST'])
 @login_required
-def api_notes():
+def api_class_notes():
     """Listar o crear notas de clase"""
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     user_id = session['user_id']
@@ -27441,9 +27608,9 @@ def api_notes():
     return jsonify(cursor.fetchall())
 
 
-@app.route('/api/notes/<int:note_id>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/api/class-notes/<int:note_id>', methods=['GET', 'PUT', 'DELETE'])
 @login_required
-def api_notes_detail(note_id):
+def api_class_notes_detail(note_id):
     """Ver, actualizar o eliminar nota específica"""
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     user_id = session['user_id']

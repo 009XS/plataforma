@@ -1,3 +1,11 @@
+import warnings
+
+warnings.filterwarnings(
+    "ignore",
+    message=r"(?s).*google\.generativeai.*",
+    category=FutureWarning,
+)
+
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
