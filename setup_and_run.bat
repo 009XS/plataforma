@@ -119,6 +119,9 @@ if %errorLevel% neq 0 (
         echo.
         echo     La aplicación requiere MySQL para funcionar.
         echo.
+    ) else (
+        REM Agregar MySQL al PATH para esta sesión
+        set "PATH=!MYSQL_PATH!;%PATH%"
     )
 ) else (
     for /f "tokens=*" %%i in ('mysql --version 2^>^&1') do set MYSQL_VERSION=%%i
@@ -132,7 +135,11 @@ echo.
 echo [5/10] Configurando entorno virtual...
 cd /d "%~dp0"
 
-if exist "venv" (
+set "VENV_DIR=%~dp0venv"
+set "PYTHON_EXE=python"
+set "PIP_EXE=pip"
+
+if exist "%VENV_DIR%" (
     echo     ✓ Entorno virtual existente encontrado
 ) else (
     echo     Creando nuevo entorno virtual...
@@ -150,180 +157,72 @@ echo.
 :: STEP 6: Activate Virtual Environment and Upgrade pip
 :: ============================================================================
 echo [6/10] Activando entorno virtual y actualizando pip...
-if exist "venv\Scripts\activate.bat" (
-    call venv\Scripts\activate.bat
+if exist "%VENV_DIR%\Scripts\activate.bat" (
+    call "%VENV_DIR%\Scripts\activate.bat"
+    set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
+    set "PIP_EXE=%VENV_DIR%\Scripts\pip.exe"
     echo     ✓ Entorno virtual activado
 ) else (
     echo     ⚠️  Usando Python global
 )
 
-python -m pip install --upgrade pip setuptools wheel --quiet
+"%PYTHON_EXE%" -m pip install --upgrade pip setuptools wheel --quiet
 echo     ✓ pip, setuptools y wheel actualizados
 echo.
 
 :: ============================================================================
 :: STEP 7: Install Core Dependencies First
 :: ============================================================================
-echo [7/10] Instalando dependencias core...
+echo [7/10] Instalando dependencias del proyecto...
 echo.
 
-:: Install PyMySQL first (Windows-friendly MySQL connector)
-echo     [7.1] Instalando PyMySQL ^(conector MySQL para Windows^)...
-pip install pymysql --quiet --no-warn-script-location 2>nul
-echo          ✓ PyMySQL instalado
-
-:: Install Flask and core web framework
-echo     [7.2] Instalando Flask y framework web...
-pip install Flask==3.0.0 --quiet --no-warn-script-location 2>nul
-pip install flask-cors==4.0.0 --quiet --no-warn-script-location 2>nul
-pip install flask-socketio==5.3.6 --quiet --no-warn-script-location 2>nul
-pip install Werkzeug==3.0.1 --quiet --no-warn-script-location 2>nul
-echo          ✓ Flask core instalado
-
-:: Install gevent for async
-echo     [7.3] Instalando gevent ^(async support^)...
-pip install gevent==24.11.1 --quiet --no-warn-script-location 2>nul
-pip install gevent-websocket==0.10.1 --quiet --no-warn-script-location 2>nul
-echo          ✓ gevent instalado
-
-:: Try to install mysqlclient, fall back to PyMySQL adapter
-echo     [7.4] Configurando flask-mysqldb...
-pip install flask-mysqldb --quiet --no-warn-script-location 2>nul
-if %errorLevel% neq 0 (
-    echo          ⚠️  flask-mysqldb falló.
-    echo          Configurando adaptador PyMySQL...
-    pip install PyMySQL[rsa] --quiet --no-warn-script-location 2>nul
+if not exist "requirements.txt" (
+    echo     ✗ No se encontró requirements.txt
+    echo     Asegúrate de ejecutar este script desde la carpeta del proyecto.
+    pause
+    exit /b 1
 )
-echo          ✓ MySQL connector configurado
-echo.
 
-:: ============================================================================
-:: STEP 8: Install All Requirements (with error handling)
-:: ============================================================================
-echo [8/10] Instalando todas las dependencias de requirements.txt...
-echo     Esto puede tomar varios minutos...
-echo.
-
-:: Install requirements with logging
-echo     [8.0] Instalando requirements.txt...
-pip install -r requirements.txt --no-warn-script-location > install_log.txt 2>&1
+echo     Instalando requirements.txt (esto puede tardar unos minutos)...
+"%PYTHON_EXE%" -m pip install -r requirements.txt --no-warn-script-location > install_log.txt 2>&1
 if %errorLevel% neq 0 (
-    echo     ⚠️  Hubo advertencias o errores durante la instalación masiva.
+    echo     ⚠️  Hubo errores durante la instalación.
     echo     Revisa install_log.txt para más detalles.
-    echo     Intentando instalar paquetes clave individualmente...
+    pause
 ) else (
-    echo     ✓ Requerimientos instalados.
+    echo     ✓ Requerimientos instalados correctamente.
 )
-
-:: Force install problematic packages one by one
-echo     [8.1] Verificando paquetes problemáticos...
-
-:: NumPy and SciPy
-pip install numpy --quiet --no-warn-script-location 2>nul
-pip install scipy --quiet --no-warn-script-location 2>nul
-echo          ✓ NumPy y SciPy
-
-:: Pandas
-pip install pandas --quiet --no-warn-script-location 2>nul
-echo          ✓ Pandas
-
-:: Scikit-learn
-pip install scikit-learn --quiet --no-warn-script-location 2>nul
-echo          ✓ Scikit-learn
-
-:: Google Generative AI (Gemini)
-pip install google-generativeai --quiet --no-warn-script-location 2>nul
-echo          ✓ Google Generative AI
-
-:: PyTorch (CPU version for Windows - smaller download)
-echo     [8.2] Instalando PyTorch ^(versión CPU^)...
-pip install torch --quiet --no-warn-script-location 2>nul
-if %errorLevel% neq 0 (
-    echo          ⚠️  PyTorch completo falló, intentando versión ligera...
-    pip install torch --index-url https://download.pytorch.org/whl/cpu --quiet --no-warn-script-location 2>nul
-)
-echo          ✓ PyTorch
-
-:: Security packages
-pip install pyotp==2.9.0 --quiet --no-warn-script-location 2>nul
-pip install RestrictedPython==8.0 --quiet --no-warn-script-location 2>nul
-echo          ✓ Paquetes de seguridad
-
-:: Google OAuth
-pip install google-auth google-auth-oauthlib google-auth-httplib2 --quiet --no-warn-script-location 2>nul
-echo          ✓ Google OAuth
-
-:: PDF and document processing
-pip install pdfplumber==0.10.4 --quiet --no-warn-script-location 2>nul
-pip install reportlab==4.1.0 --quiet --no-warn-script-location 2>nul
-echo          ✓ Procesamiento de documentos
-
-:: Firebase
-pip install firebase-admin==6.4.0 --quiet --no-warn-script-location 2>nul
-echo          ✓ Firebase
-
-:: Payment processing
-pip install stripe==8.2.0 --quiet --no-warn-script-location 2>nul
-echo          ✓ Stripe (pagos)
-
-:: Flask extensions
-pip install Flask-SQLAlchemy==3.1.1 Flask-Migrate==4.0.5 --quiet --no-warn-script-location 2>nul
-pip install Flask-JWT-Extended==4.6.0 Flask-Limiter==3.5.0 --quiet --no-warn-script-location 2>nul
-pip install Flask-APScheduler==1.13.1 --quiet --no-warn-script-location 2>nul
-echo          ✓ Extensiones Flask
-
-:: Other scientific packages
-pip install sympy mpmath matplotlib --quiet --no-warn-script-location 2>nul
-pip install networkx==3.2.1 --quiet --no-warn-script-location 2>nul
-pip install qutip --quiet --no-warn-script-location 2>nul
-pip install astropy --quiet --no-warn-script-location 2>nul
-pip install control==0.9.4 --quiet --no-warn-script-location 2>nul
-pip install statsmodels --quiet --no-warn-script-location 2>nul
-pip install PuLP==2.8.0 --quiet --no-warn-script-location 2>nul
-echo          ✓ Paquetes científicos
-
-:: QR and Excel
-pip install qrcode[pil]==7.4.2 --quiet --no-warn-script-location 2>nul
-pip install openpyxl==3.1.2 --quiet --no-warn-script-location 2>nul
-echo          ✓ QR Code y Excel
-
-:: Games and misc
-pip install pygame --quiet --no-warn-script-location 2>nul
-pip install python-chess==1.999 --quiet --no-warn-script-location 2>nul
-pip install mido MIDIUtil --quiet --no-warn-script-location 2>nul
-echo          ✓ Pygame y utilidades
-
-:: Scheduler and utilities
-pip install APScheduler==3.10.4 schedule==1.2.1 --quiet --no-warn-script-location 2>nul
-pip install tqdm==4.66.1 --quiet --no-warn-script-location 2>nul
-pip install email-validator==2.1.0.post1 --quiet --no-warn-script-location 2>nul
-echo          ✓ Schedulers y utilidades
-
 echo.
-echo     ✓ Todas las dependencias instaladas
+
+:: ============================================================================
+:: STEP 8: Quick Checks (optional files)
+:: ============================================================================
+echo [8/10] Verificando archivos opcionales...
+if exist "client_secret.json" (
+    echo     ✓ client_secret.json encontrado
+) else (
+    echo     ⚠️  client_secret.json no encontrado (Google OAuth deshabilitado)
+)
+if exist "firebase_admin.json" (
+    echo     ✓ firebase_admin.json encontrado
+) else (
+    echo     ⚠️  firebase_admin.json no encontrado (Firebase deshabilitado)
+)
 echo.
 
 :: ============================================================================
 :: STEP 9: Setup Configuration Files
 :: ============================================================================
 echo [9/10] Configurando archivos de configuración...
-
-if not exist "config.py" (
-    if exist "config_example.py" (
-        copy "config_example.py" "config.py" >nul
-        echo     ✓ config.py creado desde config_example.py
-    )
-) else (
+if exist "config.py" (
     echo     ✓ config.py ya existe
-)
-
-if not exist ".env" (
-    if exist ".env.example" (
-        copy ".env.example" ".env" >nul
-        echo     ✓ .env creado desde .env.example
-    )
 ) else (
+    echo     ⚠️  config.py no encontrado
+)
+if exist ".env" (
     echo     ✓ .env ya existe
+) else (
+    echo     ℹ️  .env no existe (opcional)
 )
 echo.
 
@@ -332,20 +231,31 @@ echo.
 :: ============================================================================
 echo [10/10] Verificando base de datos MySQL...
 
-where mysql >nul 2>&1
-if %errorLevel% equ 0 (
-    echo     Intentando conectar a MySQL...
-    echo     Si se pide contraseña, ingresa tu contraseña de root de MySQL.
-    echo.
-    
-    REM Try to create database if it doesn't exist
-    mysql -u root -e "CREATE DATABASE IF NOT EXISTS eduplatform CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>nul
+set "MYSQL_EXE="
+for /f "delims=" %%i in ('where mysql 2^>nul') do (
+    if not defined MYSQL_EXE set "MYSQL_EXE=%%i"
+)
+
+if defined MYSQL_EXE (
+    echo     ✓ MySQL detectado: %MYSQL_EXE%
+    set "MYSQL_USER=root"
+    set /p MYSQL_USER=Usuario MySQL (default root): 
+    if "%MYSQL_USER%"=="" set "MYSQL_USER=root"
+    set /p MYSQL_PASS=Contraseña MySQL (deja vacío si no tiene): 
+
+    if "%MYSQL_PASS%"=="" (
+        set "MYSQL_AUTH=-u %MYSQL_USER%"
+    ) else (
+        set "MYSQL_AUTH=-u %MYSQL_USER% -p%MYSQL_PASS%"
+    )
+
+    "%MYSQL_EXE%" %MYSQL_AUTH% -e "CREATE DATABASE IF NOT EXISTS eduplatform CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>nul
     if %errorLevel% equ 0 (
         echo     ✓ Base de datos 'eduplatform' verificada/creada
     ) else (
         echo     ⚠️  No se pudo verificar la base de datos automáticamente.
         echo     Ejecuta manualmente:
-        echo        mysql -u root -p
+        echo        mysql -u %MYSQL_USER% -p
         echo        CREATE DATABASE eduplatform;
     )
 ) else (
@@ -396,38 +306,45 @@ echo ║                    🛠️  UTILIDADES Y SCRIPTS                       
 echo ╚════════════════════════════════════════════════════════════════════════╝
 echo.
 echo   1. Crear Usuario de Prueba (Admin)
-echo   2. Analizar Backend (Rutas y Tablas)
-echo   3. Listar Usuarios (Debug)
+echo   2. Crear Usuario Tutor
+echo   3. Sembrar Base de Datos
 echo   4. Probar Conexión Gemini AI
-echo   5. Volver al Menú Principal
+echo   5. Verificar Endpoints
+echo   6. Volver al Menú Principal
 echo.
 set /p U_OP="Elige una opción: "
 
 if "%U_OP%"=="1" (
     echo Ejecutando create_test_user.py...
-    python scripts/create_test_user.py
+    "%PYTHON_EXE%" scripts/create_test_user.py
     pause
     goto UTILITIES
 )
 if "%U_OP%"=="2" (
-    echo Ejecutando analyze_backend.py...
-    python scripts/analyze_backend.py
+    echo Ejecutando create_tutor_user.py...
+    "%PYTHON_EXE%" scripts/create_tutor_user.py
     pause
     goto UTILITIES
 )
 if "%U_OP%"=="3" (
-    echo Ejecutando debug_users.py...
-    python scripts/debug_users.py
+    echo Ejecutando seed_db.py...
+    "%PYTHON_EXE%" seed_db.py
     pause
     goto UTILITIES
 )
 if "%U_OP%"=="4" (
     echo Ejecutando test_gemini.py...
-    python tests/test_gemini.py
+    "%PYTHON_EXE%" tests/test_gemini.py
     pause
     goto UTILITIES
 )
-if "%U_OP%"=="5" goto MENU_PRINCIPAL
+if "%U_OP%"=="5" (
+    echo Ejecutando verify_endpoints.py...
+    "%PYTHON_EXE%" tests/verify_endpoints.py
+    pause
+    goto UTILITIES
+)
+if "%U_OP%"=="6" goto MENU_PRINCIPAL
 goto UTILITIES
 
 :START_APP
@@ -442,7 +359,7 @@ echo.
 echo ────────────────────────────────────────────────────────────────────────
 echo.
 
-python app.py
+"%PYTHON_EXE%" app.py
 
 if %errorLevel% neq 0 (
     echo.
