@@ -114,16 +114,9 @@ FLUSH PRIVILEGES;
 
 ### 5. Configurar la Aplicación
 
-#### Opción A: Editar app.py directamente
+#### Opción A: Variables de Entorno en tu sistema
 
-Editar las líneas de configuración en `app.py`:
-
-```python
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'eduuser'
-app.config['MYSQL_PASSWORD'] = 'tu_password_segura'
-app.config['MYSQL_DB'] = 'eduplatform'
-```
+Configura variables de entorno del sistema operativo (PowerShell, CMD o panel de Windows).
 
 #### Opción B: Usar Variables de Entorno (Recomendado)
 
@@ -136,13 +129,30 @@ MYSQL_USER=eduuser
 MYSQL_PASSWORD=tu_password_segura
 MYSQL_DB=eduplatform
 
+APP_ENV=production
+FLASK_DEBUG=0
+TRUST_PROXY=1
+SOCKETIO_CORS_ALLOWED_ORIGINS=https://tu-dominio.com
+SESSION_TTL_MINUTES=180
+
+EMAIL_FROM=tu_email@gmail.com
 EMAIL_USER=tu_email@gmail.com
 EMAIL_PASS=tu_app_password
 
+GEMINI_API_KEY=tu_gemini_api_key
+STRIPE_SECRET_KEY=sk_test_xxx
+
+GOOGLE_CLIENT_ID=tu_google_client_id
+GOOGLE_CLIENT_SECRET=tu_google_client_secret
+GOOGLE_REDIRECT_URI=http://127.0.0.1:5000/google_callback
+
 # Opcional
-OPENAI_API_KEY=sk-...
-STRIPE_SECRET_KEY=sk_test_...
+SUPPORT_EMAIL=soporte@tudominio.com
+SCHEDULER_ENABLED=1
+ROUTE_DEDUP_KEEP=first
 ```
+
+La app carga automaticamente `.env` al iniciar (`python-dotenv`).
 
 ### 6. Configurar Servicios Externos (Opcional)
 
@@ -166,6 +176,8 @@ STRIPE_SECRET_KEY=sk_test_...
 ```bash
 python app.py
 ```
+
+Nota sobre Windows: en Python 3.14 algunos wheels de `gevent`/`mysqlclient` pueden requerir compilador C++. Si falla `pip install -r requirements.txt`, usa Python 3.13 o instala Build Tools de Visual C++.
 
 La aplicación estará disponible en: `http://127.0.0.1:5000`
 

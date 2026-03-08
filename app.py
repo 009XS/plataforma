@@ -1,5 +1,11 @@
 import os
 import warnings
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    # Permitir ejecución sin python-dotenv instalado.
+    pass
 # Suppress Google Generative AI deprecation warnings
 warnings.filterwarnings("ignore", message=".*google.genai.*")
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -25,6 +31,7 @@ from flask import (
     url_for, session, jsonify, flash,
     send_file, send_from_directory, current_app, Response
 )
+from collections import defaultdict
 import json
 import uuid
 import time
@@ -33,13 +40,89 @@ import schedule
 import csv
 import traceback
 import logging
+import threading
 import pymysql
 pymysql.install_as_MySQLdb()
-from flask_mysqldb import MySQL
+try:
+    from flask_mysqldb import MySQL
+except ImportError:
+    class MySQL:
+        def __init__(self, app):
+            self.app = app
+            self._local = threading.local()
+
+        def _connect(self):
+            cfg = self.app.config
+            import MySQLdb
+            cursor_class = getattr(MySQLdb.cursors, cfg.get('MYSQL_CURSORCLASS', 'DictCursor'))
+            return pymysql.connect(
+                host=cfg.get('MYSQL_HOST', 'localhost'),
+                user=cfg.get('MYSQL_USER', 'root'),
+                password=cfg.get('MYSQL_PASSWORD', ''),
+                database=cfg.get('MYSQL_DB'),
+                cursorclass=cursor_class,
+                autocommit=False,
+                connect_timeout=cfg.get('MYSQL_CONNECT_TIMEOUT', 5),
+                read_timeout=cfg.get('MYSQL_READ_TIMEOUT', 5),
+                write_timeout=cfg.get('MYSQL_WRITE_TIMEOUT', 5),
+            )
+
+        @property
+        def connection(self):
+            conn = getattr(self._local, 'conn', None)
+            if conn is None or not conn.open:
+                conn = self._connect()
+                self._local.conn = conn
+            return conn
+
+class _DummyCursor:
+    def execute(self, *args, **kwargs):
+        return None
+
+    def fetchone(self):
+        return None
+
+    def fetchall(self):
+        return []
+
+    def close(self):
+        return None
+
+class _DummyConnection:
+    open = False
+
+    def cursor(self, *args, **kwargs):
+        return _DummyCursor()
+
+    def commit(self):
+        return None
+
+    def close(self):
+        return None
+
+class _SafeMySQL:
+    def __init__(self, mysql_obj, app):
+        self._mysql = mysql_obj
+        self._app = app
+        self._warned = False
+
+    def __getattr__(self, name):
+        return getattr(self._mysql, name)
+
+    @property
+    def connection(self):
+        try:
+            return self._mysql.connection
+        except Exception as e:
+            if not self._warned:
+                print(f"[WARN] MySQL no disponible, se usara conexion dummy: {e}")
+                self._warned = True
+            return _DummyConnection()
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_apscheduler import APScheduler
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 import MySQLdb
 import MySQLdb.cursors
 import smtplib
@@ -84,54 +167,79 @@ import subprocess
 import gzip
 import shutil
 import time
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.graphics.shapes import Drawing
-from reportlab.graphics.charts.barcharts import VerticalBarChart
+
+
+def _is_truthy(value: str) -> bool:
+    return str(value).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _parse_origin_list(raw: str):
+    if not raw:
+        return []
+    return [origin.strip() for origin in raw.split(',') if origin.strip()]
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_FOLDER_ABS = BASE_DIR / "uploads"
 UPLOAD_FOLDER_ABS.mkdir(parents=True, exist_ok=True)
-
-
-
-import threading
-
-
 app = Flask(__name__)
+
+APP_ENV = os.environ.get('APP_ENV', os.environ.get('FLASK_ENV', 'development')).lower()
+IS_PRODUCTION = APP_ENV in {'production', 'prod'}
+
+if _is_truthy(os.environ.get('TRUST_PROXY', '0')):
+    # Ajuste para despliegues detrás de reverse proxy (Nginx/Cloudflare/etc.).
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+
 scheduler = APScheduler()
 scheduler.init_app(app)
-scheduler.start()
+if _is_truthy(os.environ.get('SCHEDULER_ENABLED', '1')):
+    try:
+        scheduler.start()
+    except Exception as scheduler_error:
+        print(f"[WARN] No se pudo iniciar APScheduler: {scheduler_error}")
 
 # Configuración de la aplicación
-app.config['SECRET_KEY'] = 'tu_clave_secreta_muy_segura_aqui'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.environ.get('FLASK_SECRET_KEY', 'dev-change-this-secret'))
 app.config['UPLOAD_FOLDER'] = str(UPLOAD_FOLDER_ABS)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
+app.config['SESSION_COOKIE_SECURE'] = IS_PRODUCTION
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=int(os.environ.get('SESSION_TTL_MINUTES', '180')))
+app.config['PREFERRED_URL_SCHEME'] = 'https' if IS_PRODUCTION else 'http'
 
-# Configuración de email (reemplaza con tus credenciales reales)
+if IS_PRODUCTION and app.config['SECRET_KEY'] in {'', 'dev-change-this-secret', 'tu_clave_secreta_muy_segura_aqui'}:
+    raise RuntimeError('SECRET_KEY insegura para produccion. Configura SECRET_KEY en el entorno.')
+
+# Configuración de email
+default_email_from = os.environ.get('EMAIL_FROM', '')
 app.config['EMAIL_SERVER'] = 'smtp.gmail.com'
 app.config['EMAIL_PORT'] = 587
-app.config['EMAIL_USER'] = 'cecytemhuixquilucan32@gmail.com'  # Reemplaza
-app.config['EMAIL_PASS'] = 'chim ejgn lcrz yush'  # Usa app password para Gmail
-app.config['EMAIL_FROM'] = 'cecytemhuixquilucan32@gmail.com'
-app.config['SUPPORT_EMAIL'] = 'cecytemhuixquilucan32@gmail.com'  # Email de soporte
+app.config['EMAIL_USER'] = os.environ.get('EMAIL_USER', default_email_from)
+app.config['EMAIL_PASS'] = os.environ.get('EMAIL_PASS', '')
+app.config['EMAIL_FROM'] = default_email_from
+app.config['SUPPORT_EMAIL'] = os.environ.get('SUPPORT_EMAIL', default_email_from)
 
 # Configuración de MySQL
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'  # Tu usuario de MySQL
-app.config['MYSQL_PASSWORD'] = ''  # Tu contraseña de MySQL
-app.config['MYSQL_DB'] = 'eduplatform'
+app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
+app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
+app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD', '')
+app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'eduplatform')
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 app.config['MYSQL_AUTORECONNECT'] = True
+app.config['MYSQL_CONNECT_TIMEOUT'] = 5
+app.config['MYSQL_READ_TIMEOUT'] = 5
+app.config['MYSQL_WRITE_TIMEOUT'] = 5
 
 # API Key para Google Gemini
-app.config['GEMINI_API_KEY'] = 'AIzaSyBe-IS8DDhhu8qDATObhFF1-x6vl2rV3JU'
-genai.configure(api_key=app.config['GEMINI_API_KEY'])
+app.config['GEMINI_API_KEY'] = os.environ.get('GEMINI_API_KEY', '').strip()
+if app.config['GEMINI_API_KEY']:
+    genai.configure(api_key=app.config['GEMINI_API_KEY'])
+else:
+    print("[WARN] GEMINI_API_KEY no configurada - funciones de IA limitadas")
 
 # Stripe para pagos
-stripe.api_key = 'your_stripe_secret_key'
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', '').strip()
 
 # Firebase para notificaciones push
 try:
@@ -151,27 +259,38 @@ except Exception as e:
 # Configuración de Google OAuth
 try:
     with open('client_secret.json', 'r') as f:
-        credentials = json.load(f)
-        if 'installed' in credentials:
-            GOOGLE_CLIENT_ID = credentials['installed']['client_id']
-            GOOGLE_CLIENT_SECRET = credentials['installed']['client_secret']
+        google_oauth_config = json.load(f)
+        if 'installed' in google_oauth_config:
+            GOOGLE_CLIENT_ID = google_oauth_config['installed']['client_id']
+            GOOGLE_CLIENT_SECRET = google_oauth_config['installed']['client_secret']
         else:
-            GOOGLE_CLIENT_ID = credentials['web']['client_id']
-            GOOGLE_CLIENT_SECRET = credentials['web']['client_secret']
+            GOOGLE_CLIENT_ID = google_oauth_config['web']['client_id']
+            GOOGLE_CLIENT_SECRET = google_oauth_config['web']['client_secret']
     print(f"Credenciales cargadas: Client ID = {GOOGLE_CLIENT_ID}")
 except FileNotFoundError:
-    print("Archivo client_secret.json no encontrado. Usando valores hardcodeados.")
-    GOOGLE_CLIENT_ID = '574670790760-oaltjnphc4j3uhpt217iglt52pjn.apps.googleusercontent.com'
-    GOOGLE_CLIENT_SECRET = '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'
+    print("Archivo client_secret.json no encontrado. Se usaran variables de entorno de Google OAuth.")
+    GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
+    GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '').strip()
+except Exception as e:
+    print(f"Error cargando credenciales de Google OAuth: {e}")
+    GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
+    GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '').strip()
 
-GOOGLE_REDIRECT_URI = 'http://127.0.0.1:5000/google_callback'
+if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+    print("[WARN] Credenciales de Google OAuth incompletas; login con Google deshabilitado")
+
+GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', 'http://127.0.0.1:5000/google_callback')
 
 # Extensiones de archivo permitidas para uploads
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'mp4', 'webp'}
 
 # Inicializar MySQL
 mysql = MySQL(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+mysql = _SafeMySQL(mysql, app)
+socketio_origins = _parse_origin_list(
+    os.environ.get('SOCKETIO_CORS_ALLOWED_ORIGINS', os.environ.get('CORS_ALLOWED_ORIGINS', ''))
+)
+socketio = SocketIO(app, cors_allowed_origins=socketio_origins if socketio_origins else None)
 # Crear directorio de uploads si no existe
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -181,7 +300,19 @@ db_config = {
     'host': app.config['MYSQL_HOST'],
     'user': app.config['MYSQL_USER'],
     'password': app.config['MYSQL_PASSWORD'],
+    'connect_timeout': app.config['MYSQL_CONNECT_TIMEOUT'],
+    'read_timeout': app.config['MYSQL_READ_TIMEOUT'],
+    'write_timeout': app.config['MYSQL_WRITE_TIMEOUT'],
 }
+
+def _is_tablespace_error(err: Exception) -> bool:
+    try:
+        if getattr(err, "args", None):
+            if err.args[0] == 1813:
+                return True
+    except Exception:
+        pass
+    return "Tablespace for table" in str(err)
 try:
     conn = MySQLdb.connect(**db_config)
     cursor = conn.cursor()
@@ -965,7 +1096,10 @@ with app.app_context():
         cursor.close()
         print("Base de datos y tablas creadas/verificadas exitosamente.")
     except Exception as e:
-        print(f"Error al crear las tablas: {str(e)}")
+        if _is_tablespace_error(e):
+            print(f"[WARN] Tablespace existente detectado; se omite creación de tablas afectadas: {e}")
+        else:
+            print(f"Error al crear las tablas: {str(e)}")
 
 # Extensiones de archivos permitidas (expandido)
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'ppt', 'pptx', 'mp4', 'mp3', 'py', 'csv', 'xlsx', 'json'}
@@ -2210,14 +2344,51 @@ def api_tutor_autorizaciones():
 @login_required
 @role_required('tutor')
 def api_tutor_pagos():
-    # Simulación de pagos (ya que no tenemos tabla de pagos completa definida en el plan inicial, usamos datos dummy o tabla pagos si existe)
-    # Asumimos que no existe tabla pagos compleja, retornamos datos simulados para el mockup
-    pagos = [
-        {'concepto': 'Colegiatura Septiembre', 'monto': 3500, 'fecha_limite': '2024-09-30', 'estado': 'pagado'},
-        {'concepto': 'Colegiatura Octubre', 'monto': 3500, 'fecha_limite': '2024-10-31', 'estado': 'pendiente'},
-        {'concepto': 'Seguro Escolar', 'monto': 1200, 'fecha_limite': '2024-08-15', 'estado': 'pagado'}
-    ]
-    return jsonify(pagos)
+    """Devuelve pagos reales de los hijos asociados al tutor."""
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT estudiante_id FROM tutores_estudiantes WHERE tutor_id = %s", (session['user_id'],))
+        hijos_ids = [row['estudiante_id'] for row in cursor.fetchall()]
+
+        if not hijos_ids:
+            cursor.close()
+            return jsonify([])
+
+        format_strings = ','.join(['%s'] * len(hijos_ids))
+
+        # Priorizar pagos_pendientes si existe; en instalaciones antiguas usar tabla pagos.
+        try:
+            cursor.execute(f"""
+                SELECT p.id, p.concepto, p.monto, p.fecha_vencimiento, COALESCE(p.estado, 'pendiente') AS estado,
+                       u.nombre AS alumno_nombre
+                FROM pagos_pendientes p
+                JOIN usuarios u ON p.estudiante_id = u.id
+                WHERE p.estudiante_id IN ({format_strings})
+                ORDER BY p.fecha_vencimiento ASC
+            """, tuple(hijos_ids))
+            pagos = cursor.fetchall()
+        except Exception:
+            cursor.execute(f"""
+                SELECT p.id, p.concepto, p.monto, p.fecha_vencimiento,
+                       IF(p.pagado = 1, 'pagado', 'pendiente') AS estado,
+                       u.nombre AS alumno_nombre
+                FROM pagos p
+                JOIN usuarios u ON p.estudiante_id = u.id
+                WHERE p.estudiante_id IN ({format_strings})
+                ORDER BY p.fecha_vencimiento ASC
+            """, tuple(hijos_ids))
+            pagos = cursor.fetchall()
+
+        for pago in pagos:
+            if pago.get('monto') is not None:
+                pago['monto'] = float(pago['monto'])
+            if pago.get('fecha_vencimiento'):
+                pago['fecha_vencimiento'] = pago['fecha_vencimiento'].strftime('%Y-%m-%d')
+
+        cursor.close()
+        return jsonify(pagos)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/tutor/comunicados', methods=['GET'])
 @login_required
@@ -6515,12 +6686,16 @@ def api_admin_descargar_exportacion(id):
 @app.route('/uploads/<path:filename>')
 def uploaded_file(filename):
     """Servir archivos desde el directorio de uploads"""
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    normalized = os.path.normpath(filename).replace('\\', '/')
+    if normalized.startswith('../') or normalized.startswith('/'):
+        return jsonify({'error': 'Ruta de archivo invalida'}), 400
+
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], normalized)
     if not os.path.exists(file_path):
         if filename == 'default_avatar.png':
             return redirect("https://ui-avatars.com/api/?name=Usuario&background=0D8ABC&color=fff")
         return jsonify({'error': 'Archivo no encontrado'}), 404
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    return send_from_directory(app.config['UPLOAD_FOLDER'], normalized)
 
 @app.route('/')
 def index():
@@ -13871,19 +14046,25 @@ def submit_feedback():
 
 # Add table for feedback
 with app.app_context():
-    cursor = mysql.connection.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS user_feedback (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT NOT NULL,
-            rating INT NOT NULL,
-            comments TEXT,
-            submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
-        )
-    """)
-    mysql.connection.commit()
-    cursor.close()
+    try:
+        cursor = mysql.connection.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_feedback (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                rating INT NOT NULL,
+                comments TEXT,
+                submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES usuarios(id) ON DELETE CASCADE
+            )
+        """)
+        mysql.connection.commit()
+        cursor.close()
+    except Exception as e:
+        if _is_tablespace_error(e):
+            print(f"[WARN] Tablespace existente detectado; se omite creación de user_feedback: {e}")
+        else:
+            print(f"Error al crear tabla user_feedback: {e}")
 
 # Certification generation
 from reportlab.pdfgen import canvas
@@ -14190,7 +14371,8 @@ def validate_user_input(nombre, email):
 
 @app.before_request
 def before_request():
-    if not request.is_secure and not app.debug and not app.testing:
+    enforce_https = _is_truthy(os.environ.get('ENFORCE_HTTPS', '1'))
+    if IS_PRODUCTION and enforce_https and not request.is_secure and not app.testing:
         url = request.url.replace("http://", "https://", 1)
         return redirect(url, code=301)
 
@@ -16582,7 +16764,7 @@ def crear_tablas_usuarios_grupos():
         
         mysql.connection.commit()
         cursor.close()
-        print("✓ Tablas de usuarios y grupos verificadas/creadas")
+        print("[OK] Tablas de usuarios y grupos verificadas/creadas")
         
     except Exception as e:
         print(f"Error creando tablas: {str(e)}")
@@ -17421,7 +17603,7 @@ def crear_tablas_mensajeria_notificaciones():
         
         mysql.connection.commit()
         cursor.close()
-        print("✓ Tablas de mensajería y notificaciones creadas")
+        print("[OK] Tablas de mensajeria y notificaciones creadas")
         
     except Exception as e:
         print(f"Error creando tablas de mensajería: {str(e)}")
@@ -17547,7 +17729,7 @@ def crear_tablas_herramientas_estudio():
         
         mysql.connection.commit()
         cursor.close()
-        print("✓ Tablas de herramientas de estudio creadas")
+        print("[OK] Tablas de herramientas de estudio creadas")
         
     except Exception as e:
         print(f"Error creando tablas de estudio: {str(e)}")
@@ -27861,54 +28043,198 @@ def get_student_dashboard_data():
     """Devuelve todos los datos estadísticos y misiones del alumno en una sola llamada"""
     user_name = session.get('user_name', 'Usuario')
     user_id = session.get('user_id', 0)
-    
+
     stats = {
         "nombre": user_name,
-        "avatar": f"https://ui-avatars.com/api/?name={user_name}",
+        "avatar": f"https://ui-avatars.com/api/?name={user_name.replace(' ', '+')}&background=random",
         "xp": 0,
         "nivel": 1,
         "monedas": 0,
         "xp_percent": 0
     }
-    
-    # 2. Obtener Misiones (Ejemplo: hardcoded o desde DB si tienes tabla Misiones)
-    misiones = [
-        {"id": 1, "title": "Completar 2 Tareas", "type": "target", "progress": 1, "total": 2, "xp_reward": 50},
-        {"id": 2, "title": "Leer 15 mins", "type": "reading", "progress": 15, "total": 15, "xp_reward": 30}
-    ]
+    missions = []
 
-    return jsonify({
-        "stats": stats,
-        "missions": misiones
-    })
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+        cursor.execute(
+            """
+            SELECT nombre, xp, educoins, racha, avatar_url, foto_perfil, semestre
+            FROM usuarios
+            WHERE id = %s
+            """,
+            (user_id,)
+        )
+        alumno = cursor.fetchone() or {}
+
+        nombre = alumno.get('nombre') or user_name
+        xp = int(alumno.get('xp') or 0)
+        nivel = max(1, (xp // 100) + 1)
+        xp_percent = int(xp % 100)
+        monedas = int(alumno.get('educoins') or 0)
+        racha = int(alumno.get('racha') or 0)
+        avatar_raw = alumno.get('avatar_url') or alumno.get('foto_perfil')
+
+        if avatar_raw and str(avatar_raw).startswith(('http://', 'https://')):
+            avatar = avatar_raw
+        elif avatar_raw:
+            avatar = url_for('uploaded_file', filename=avatar_raw)
+        else:
+            avatar = f"https://ui-avatars.com/api/?name={nombre.replace(' ', '+')}&background=random"
+
+        stats = {
+            "nombre": nombre,
+            "avatar": avatar,
+            "xp": xp,
+            "nivel": nivel,
+            "monedas": monedas,
+            "xp_percent": xp_percent
+        }
+
+        cursor.execute(
+            """
+            SELECT COUNT(*) AS total
+            FROM entregas_tareas
+            WHERE estudiante_id = %s
+              AND fecha_entrega >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            """,
+            (user_id,)
+        )
+        completadas_semana = int((cursor.fetchone() or {}).get('total') or 0)
+
+        pendientes = 0
+        semestre = alumno.get('semestre')
+        if semestre:
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS pendientes
+                FROM tareas t
+                JOIN materias m ON t.materia_id = m.id
+                LEFT JOIN entregas_tareas et ON et.tarea_id = t.id AND et.estudiante_id = %s
+                WHERE t.activo = 1
+                  AND m.activo = 1
+                  AND m.semestre = %s
+                  AND et.id IS NULL
+                """,
+                (user_id, semestre)
+            )
+            pendientes = int((cursor.fetchone() or {}).get('pendientes') or 0)
+        else:
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS pendientes
+                FROM tareas t
+                LEFT JOIN entregas_tareas et ON et.tarea_id = t.id AND et.estudiante_id = %s
+                WHERE t.activo = 1
+                  AND et.id IS NULL
+                """,
+                (user_id,)
+            )
+            pendientes = int((cursor.fetchone() or {}).get('pendientes') or 0)
+
+        missions = [
+            {
+                "id": "mision-tareas-semana",
+                "title": "Entregar 3 tareas esta semana",
+                "type": "target",
+                "progress": min(completadas_semana, 3),
+                "total": 3,
+                "xp_reward": 50
+            },
+            {
+                "id": "mision-racha",
+                "title": "Mantener racha de 7 dias",
+                "type": "streak",
+                "progress": min(racha, 7),
+                "total": 7,
+                "xp_reward": 30
+            },
+            {
+                "id": "mision-pendientes",
+                "title": "Reducir tareas pendientes",
+                "type": "target",
+                "progress": 0 if pendientes > 0 else 1,
+                "total": 1,
+                "xp_reward": 20
+            }
+        ]
+
+        cursor.close()
+    except Exception as e:
+        print(f"[WARN] No se pudo construir dashboard dinamico: {e}")
+
+    return jsonify({"stats": stats, "missions": missions})
 
 @app.route('/api/student/assignments', methods=['GET'])
 @login_required
 def get_student_assignments():
     """Obtiene las tareas pendientes del alumno"""
-    # Aquí deberías hacer la consulta real a tu base de datos:
-    # tareas = Tarea.query.filter_by(grupo_id=current_user.grupo_id).all()
-    
-    # Simulación de respuesta basada en estructura DB (Modifica según tus modelos reales)
-    # Esto es para que el frontend no se rompa mientras conectas la DB real
-    return jsonify([
-        {
-            "id": 101,
-            "title": "Ecuaciones Cuadráticas",
-            "subject": "Matemáticas",
-            "status": "Pending", 
-            "due_date": "25 Ene",
-            "type": "homework"
-        },
-        {
-            "id": 102,
-            "title": "Reporte de Laboratorio",
-            "subject": "Biología",
-            "status": "In Progress", 
-            "due_date": "28 Ene",
-            "type": "lab"
-        }
-    ])
+    try:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        user_id = session['user_id']
+
+        cursor.execute("SELECT semestre FROM usuarios WHERE id = %s", (user_id,))
+        alumno = cursor.fetchone() or {}
+        semestre = alumno.get('semestre')
+
+        params = [user_id]
+        semester_filter = ""
+        if semestre:
+            semester_filter = " AND m.semestre = %s "
+            params.append(semestre)
+
+        query = f"""
+            SELECT
+                t.id,
+                t.titulo AS title,
+                COALESCE(m.nombre, 'Sin materia') AS subject,
+                t.fecha_vencimiento AS due_date,
+                CASE
+                    WHEN et.id IS NOT NULL THEN 'Submitted'
+                    WHEN t.fecha_vencimiento < NOW() THEN 'Overdue'
+                    ELSE 'Pending'
+                END AS status
+            FROM tareas t
+            LEFT JOIN materias m ON t.materia_id = m.id
+            LEFT JOIN entregas_tareas et ON t.id = et.tarea_id AND et.estudiante_id = %s
+            WHERE t.activo = 1
+            {semester_filter}
+            ORDER BY t.fecha_vencimiento ASC
+            LIMIT 100
+        """
+
+        cursor.execute(query, tuple(params))
+        rows = cursor.fetchall()
+        cursor.close()
+
+        assignments = []
+        for row in rows:
+            due_date = row.get('due_date')
+            if due_date and hasattr(due_date, 'strftime'):
+                due_label = due_date.strftime('%d/%m/%Y')
+            else:
+                due_label = str(due_date) if due_date else None
+
+            title_lower = (row.get('title') or '').lower()
+            subject_lower = (row.get('subject') or '').lower()
+            task_type = 'homework'
+            if 'lab' in title_lower or 'laboratorio' in title_lower or 'lab' in subject_lower:
+                task_type = 'lab'
+            elif 'proyecto' in title_lower:
+                task_type = 'project'
+
+            assignments.append({
+                "id": row.get('id'),
+                "title": row.get('title'),
+                "subject": row.get('subject'),
+                "status": row.get('status'),
+                "due_date": due_label,
+                "type": task_type
+            })
+
+        return jsonify(assignments)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/student/upload-assignment', methods=['POST'])
 @login_required
@@ -27916,34 +28242,143 @@ def upload_assignment():
     """Maneja la subida de archivos de tareas"""
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
-    
+
     file = request.files['file']
-    assignment_id = request.form.get('assignment_id')
-    
+    assignment_id = request.form.get('assignment_id', type=int)
+
+    if not assignment_id:
+        return jsonify({"error": "assignment_id es requerido"}), 400
+
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
-    if file:
-        # Asegúrate de crear la carpeta 'uploads/tareas'
-        upload_folder = os.path.join(current_app.root_path, 'uploads', 'tareas')
-        os.makedirs(upload_folder, exist_ok=True)
-        
-        filename = f"{session['user_id']}_{assignment_id}_{secure_filename(file.filename)}"
-        file.save(os.path.join(upload_folder, filename))
-        
-        # AQUÍ: Guardar registro en la tabla 'Entrega' de la base de datos
-        # nueva_entrega = Entrega(alumno_id=current_user.id, tarea_id=assignment_id, archivo=filename...)
-        # db.session.add(nueva_entrega)
-        # db.session.commit()
-        
-        return jsonify({"success": True, "message": "Tarea subida correctamente"})
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Tipo de archivo no permitido"}), 400
 
-    return jsonify({"error": "Error desconocido"}), 500
+    try:
+        upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'tareas', str(assignment_id))
+        os.makedirs(upload_folder, exist_ok=True)
+
+        filename = secure_filename(f"{session['user_id']}_{int(time.time())}_{file.filename}")
+        file_path = os.path.join(upload_folder, filename)
+        file.save(file_path)
+
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute(
+            "SELECT id FROM entregas_tareas WHERE tarea_id = %s AND estudiante_id = %s",
+            (assignment_id, session['user_id'])
+        )
+        existing = cursor.fetchone()
+
+        if existing:
+            cursor.execute(
+                """
+                UPDATE entregas_tareas
+                SET archivo_nombre = %s,
+                    archivo_ruta = %s,
+                    fecha_entrega = NOW()
+                WHERE id = %s
+                """,
+                (filename, file_path, existing['id'])
+            )
+            entrega_id = existing['id']
+            xp_otorgado = 0
+        else:
+            cursor.execute(
+                """
+                INSERT INTO entregas_tareas (tarea_id, estudiante_id, archivo_nombre, archivo_ruta, fecha_entrega)
+                VALUES (%s, %s, %s, %s, NOW())
+                """,
+                (assignment_id, session['user_id'], filename, file_path)
+            )
+            entrega_id = cursor.lastrowid
+            cursor.execute(
+                "UPDATE usuarios SET xp = xp + 10 WHERE id = %s",
+                (session['user_id'],)
+            )
+            xp_otorgado = 10
+
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Tarea subida correctamente",
+            "entrega_id": entrega_id,
+            "xp_otorgado": xp_otorgado
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    response.headers.setdefault('X-Frame-Options', 'DENY')
+    response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+    response.headers.setdefault('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+    if IS_PRODUCTION:
+        response.headers.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+    return response
+
+
+def deduplicate_flask_routes(flask_app, keep: str = 'first'):
+    """Elimina colisiones de rutas exactas (mismo path y mismos métodos HTTP)."""
+    normalized_keep = (keep or 'first').strip().lower()
+    if normalized_keep not in {'first', 'last'}:
+        normalized_keep = 'first'
+
+    grouped_rules = defaultdict(list)
+    ordered_rules = list(flask_app.url_map.iter_rules())
+
+    for idx, rule in enumerate(ordered_rules):
+        methods = tuple(sorted(m for m in rule.methods if m not in {'HEAD', 'OPTIONS'}))
+        key = (rule.rule, methods)
+        grouped_rules[key].append((idx, rule))
+
+    removed_count = 0
+    for _, entries in grouped_rules.items():
+        if len(entries) <= 1:
+            continue
+
+        entries = sorted(entries, key=lambda item: item[0])
+        keep_rule = entries[0][1] if normalized_keep == 'first' else entries[-1][1]
+
+        for _, rule in entries:
+            if rule is keep_rule:
+                continue
+
+            endpoint_rules = flask_app.url_map._rules_by_endpoint.get(rule.endpoint, [])
+            if rule in endpoint_rules:
+                endpoint_rules.remove(rule)
+
+            if rule in flask_app.url_map._rules:
+                flask_app.url_map._rules.remove(rule)
+
+            if not endpoint_rules:
+                flask_app.url_map._rules_by_endpoint.pop(rule.endpoint, None)
+                flask_app.view_functions.pop(rule.endpoint, None)
+
+            removed_count += 1
+
+    if removed_count > 0:
+        flask_app.url_map._remap = True
+
+    return removed_count
+
+
+route_cleanup_mode = os.environ.get('ROUTE_DEDUP_KEEP', 'first')
+removed_route_count = deduplicate_flask_routes(app, keep=route_cleanup_mode)
+if removed_route_count:
+    print(f"[INFO] Rutas duplicadas depuradas: {removed_route_count} (modo={route_cleanup_mode})")
 
 
 # ==================== MAIN EXECUTION ====================
 
 if __name__ == '__main__':
+    debug_mode = _is_truthy(os.environ.get('FLASK_DEBUG', '0')) and not IS_PRODUCTION
+    bind_host = os.environ.get('HOST', '0.0.0.0')
+
     # Inicializa solo una vez las tablas principales y adicionales
     with app.app_context():
         try:
@@ -27993,23 +28428,23 @@ if __name__ == '__main__':
         print(f"[WARN] No se pudo iniciar scheduler: {e}")
     
     # Lógica de puerto robusto (Rollover)
-    print("DEBUG: Verificando modo de ejecución (SocketIO vs Standard)...")
+    print("Verificando modo de ejecución (SocketIO vs Standard)...")
     if 'socketio' in globals() and socketio:
-         print("Usando SocketIO con Auto-Port...")
-         for port in range(initial_port, initial_port + 10):
-             try:
-                 print(f"---> Intentando iniciar en puerto {port}...")
-                 # Desactivamos reloader siempre para evitar problemas de threading/handler en Windows
-                 socketio.run(app, host='0.0.0.0', port=port, debug=True, use_reloader=False)
-                 break # Si funciona, salimos
-             except OSError as e:
-                 if "WinError 10048" in str(e) or "Address already in use" in str(e):
-                     print(f"[BUSY] Puerto {port} ocupado. Probando siguiente...")
-                     continue
-                 else:
-                     print(f"[ERROR] Error fatal en puerto {port}: {e}")
-                     raise e
+        print("Usando SocketIO con Auto-Port...")
+        for port in range(initial_port, initial_port + 10):
+            try:
+                print(f"---> Intentando iniciar en puerto {port}...")
+                # Desactivamos reloader siempre para evitar problemas de threading/handler en Windows
+                socketio.run(app, host=bind_host, port=port, debug=debug_mode, use_reloader=False)
+                break  # Si funciona, salimos
+            except OSError as e:
+                if "WinError 10048" in str(e) or "Address already in use" in str(e):
+                    print(f"[BUSY] Puerto {port} ocupado. Probando siguiente...")
+                    continue
+                else:
+                    print(f"[ERROR] Error fatal en puerto {port}: {e}")
+                    raise e
     else:
-         print("Usando Flask standard run...")
-         app.run(host='0.0.0.0', port=initial_port, debug=True, use_reloader=False)
+        print("Usando Flask standard run...")
+        app.run(host=bind_host, port=initial_port, debug=debug_mode, use_reloader=False)
 

@@ -2,6 +2,7 @@ venv/
 __pycache__/
 .env
 *.log
+install_log.txt
 firebase_admin.json
 client_secret.json
 uploads/
